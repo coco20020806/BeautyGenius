@@ -31,7 +31,7 @@ cd "<repo-root>"
 
 1. 读 parse run 的 `tutorial.json`
 2. 按步组装文本包：`instruction`、`taxonomy_primary`、`taxonomy_sub_steps`、`product`、`adaptation_note`
-3. 调用文本 LLM（见 [prompt-qwen.md](prompt-qwen.md)）
+3. 调用文本 LLM（`qwen3.7-plus` + `MultiModalConversation`，见 [prompt-qwen.md](prompt-qwen.md)）
 4. 合并补丁：写入 `display_product`、`display_product_tier`、`technique`；可选回填 `product.name`
 5. 写回 `tutorial.json`，并写 `understanding_meta.json`
 

@@ -14,9 +14,9 @@ ProgressCallback = Callable[[int, str], None]
 class MapperConfig:
     api_key: str = ""
     base_url: str = "https://dashscope.aliyuncs.com/api/v1"
-    text_model: str = "qwen3.5-flash"
+    text_model: str = "qwen3.7-plus"
     vision_model: str = "qwen3.7-plus"
-    repair_model: str = "qwen3.5-flash"
+    repair_model: str = "qwen3.7-plus"
     ffmpeg_path: str | None = None
     enable_text_enrich: bool = True
     enable_vision_enrich: bool = True

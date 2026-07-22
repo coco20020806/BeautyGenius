@@ -9,11 +9,22 @@ from pathlib import Path
 from typing import Any
 
 import dashscope
-from dashscope import Generation, MultiModalConversation
+from dashscope import MultiModalConversation
 
 from video_parse.config import ParseConfig
 from video_parse.preprocess import to_file_uri
 from video_parse.taxonomy import repair_taxonomy_hint, taxonomy_summary_for_prompt
+
+
+def _message_text(raw_content: Any) -> str:
+    if isinstance(raw_content, list) and raw_content:
+        first = raw_content[0]
+        if isinstance(first, dict):
+            return str(first.get("text", "") or "")
+        return str(first)
+    if isinstance(raw_content, str):
+        return raw_content
+    return ""
 
 VISION_USER = (
     "请分析该美妆教程视频，严格按 taxonomy 输出上述 JSON。"
@@ -97,12 +108,7 @@ def call_vision(
         raw = getattr(response, "message", str(response))
         (run_dir / "raw_vision_error.txt").write_text(str(raw), encoding="utf-8")
         raise RuntimeError(f"视频理解 API 失败: {raw}")
-    content = response.output.choices[0].message.content
-    text = ""
-    if isinstance(content, list) and content:
-        text = content[0].get("text", "")
-    elif isinstance(content, str):
-        text = content
+    text = _message_text(response.output.choices[0].message.content)
     (run_dir / "raw_vision_response.txt").write_text(text, encoding="utf-8")
     try:
         parsed = json.loads(text)
@@ -112,24 +118,32 @@ def call_vision(
 
 
 def repair_json(config: ParseConfig, broken: str, run_dir: Path) -> dict[str, Any]:
+    """Repair broken vision JSON via multimodal endpoint (qwen3.7-plus)."""
     dashscope.api_key = config.api_key
     dashscope.base_http_api_url = config.base_url
     hint = repair_taxonomy_hint(config.skill_dir)
-    response = Generation.call(
+    messages = [
+        {
+            "role": "system",
+            "content": [
+                {
+                    "text": (
+                        "Fix to valid JSON with steps array for beauty tutorial. "
+                        f"Return JSON only. {hint}"
+                    )
+                }
+            ],
+        },
+        {"role": "user", "content": [{"text": broken[:12000]}]},
+    ]
+    response = MultiModalConversation.call(
         api_key=config.api_key,
         model=config.repair_model,
-        messages=[
-            {
-                "role": "system",
-                "content": f"Fix to valid JSON with steps array for beauty tutorial. Return JSON only. {hint}",
-            },
-            {"role": "user", "content": broken},
-        ],
+        messages=messages,
         response_format={"type": "json_object"},
-        result_format="message",
     )
     if response.status_code != HTTPStatus.OK:
         raise RuntimeError(f"JSON 修复失败: {getattr(response, 'message', response)}")
-    text = response.output.choices[0].message.content
+    text = _message_text(response.output.choices[0].message.content)
     (run_dir / "raw_vision_repaired.txt").write_text(text, encoding="utf-8")
     return json.loads(text)

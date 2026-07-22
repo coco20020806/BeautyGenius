@@ -21,7 +21,7 @@ class ParseConfig:
     base_url: str = "https://dashscope.aliyuncs.com/api/v1"
     vision_model: str = "qwen3.7-plus"
     asr_model: str = "fun-asr"
-    repair_model: str = "qwen3.5-flash"
+    repair_model: str = "qwen3.7-plus"
     max_upload_bytes: int = 100 * 1024 * 1024
     video_fps: float = 1.5
     ffmpeg_path: str | None = None

@@ -57,6 +57,8 @@ def test_get_step_diagrams_idle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     assert len(body["steps"]) == 1
     assert body["steps"][0]["stepId"] == "blush_01"
     assert body["steps"][0]["imageUrl"] is None
+    assert body["steps"][0]["videoClip"] == {"start": 0.0, "end": 1.0}
+    assert body["videoUrl"] == f"http://127.0.0.1:8000/media/{task['taskId']}/v.mp4"
 
 
 def test_post_step_diagrams_starts_job(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

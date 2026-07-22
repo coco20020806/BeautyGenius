@@ -94,6 +94,7 @@ class LocalMakeupService implements MakeupService {
       contract_version: 'tutorial.v1',
       tutorial_id: `tutorial_${taskId}`,
       title: '清透玫瑰通勤妆',
+      videoUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
       steps: [
         {
           step_id: 'base_01',
@@ -151,12 +152,14 @@ class LocalMakeupService implements MakeupService {
     return {
       taskId,
       status: 'completed' as const,
+      videoUrl: tutorial.videoUrl,
       steps: tutorial.steps.map((step, index) => ({
         stepId: step.step_id,
         index,
         heading: `步骤 ${index + 1} · ${step.taxonomy_primary ?? step.step_id}`,
         imageUrl: faceBefore,
         status: 'ok' as const,
+        videoClip: step.video_clip,
       })),
     };
   }

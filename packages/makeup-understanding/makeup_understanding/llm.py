@@ -1,4 +1,8 @@
-"""DashScope text JSON helpers."""
+"""DashScope text JSON helpers.
+
+qwen3.7-plus must use MultiModalConversation (multimodal-generation).
+Generation (text-generation) returns ``url error, please check url!``.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import dashscope
-from dashscope import Generation
+from dashscope import MultiModalConversation
 
 from makeup_understanding.config import UnderstandingConfig
 
@@ -33,32 +37,15 @@ def extract_json_object(text: str) -> dict[str, Any]:
     return json.loads(m.group(0))
 
 
-def repair_json(
-    config: UnderstandingConfig,
-    raw: str,
-    run_dir: Path,
-    *,
-    dump_name: str,
-) -> dict[str, Any]:
-    _configure(config)
-    response = Generation.call(
-        api_key=config.api_key,
-        model=config.repair_model,
-        messages=[
-            {
-                "role": "system",
-                "content": "Fix the following into a single valid JSON object. Return JSON only.",
-            },
-            {"role": "user", "content": raw[:12000]},
-        ],
-        response_format={"type": "json_object"},
-        result_format="message",
-    )
-    if response.status_code != HTTPStatus.OK:
-        raise RuntimeError(f"JSON repair API 失败: {getattr(response, 'message', response)}")
-    text = response.output.choices[0].message.content
-    (run_dir / dump_name).write_text(text if isinstance(text, str) else str(text), encoding="utf-8")
-    return extract_json_object(text if isinstance(text, str) else str(text))
+def _message_text(raw_content: Any) -> str:
+    if isinstance(raw_content, list) and raw_content:
+        first = raw_content[0]
+        if isinstance(first, dict):
+            return str(first.get("text", "") or "")
+        return str(first)
+    if isinstance(raw_content, str):
+        return raw_content
+    return ""
 
 
 def call_text_json(
@@ -70,21 +57,49 @@ def call_text_json(
     dump_name: str,
 ) -> dict[str, Any]:
     _configure(config)
-    response = Generation.call(
+    messages = [
+        {"role": "system", "content": [{"text": system}]},
+        {"role": "user", "content": [{"text": user}]},
+    ]
+    response = MultiModalConversation.call(
         api_key=config.api_key,
         model=config.text_model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
+        messages=messages,
         response_format={"type": "json_object"},
-        result_format="message",
     )
     if response.status_code != HTTPStatus.OK:
         raise RuntimeError(f"makeup-understanding API 失败: {getattr(response, 'message', response)}")
-    text = response.output.choices[0].message.content
-    (run_dir / dump_name).write_text(text if isinstance(text, str) else str(text), encoding="utf-8")
+    text = _message_text(response.output.choices[0].message.content)
+    (run_dir / dump_name).write_text(text, encoding="utf-8")
     try:
-        return extract_json_object(text if isinstance(text, str) else str(text))
+        return extract_json_object(text)
     except (json.JSONDecodeError, ValueError):
-        return repair_json(config, str(text), run_dir, dump_name=f"repaired_{dump_name}")
+        return repair_json(config, text, run_dir, dump_name=f"repaired_{dump_name}")
+
+
+def repair_json(
+    config: UnderstandingConfig,
+    raw: str,
+    run_dir: Path,
+    *,
+    dump_name: str,
+) -> dict[str, Any]:
+    _configure(config)
+    messages = [
+        {
+            "role": "system",
+            "content": [{"text": "Fix the following into a single valid JSON object. Return JSON only."}],
+        },
+        {"role": "user", "content": [{"text": raw[:12000]}]},
+    ]
+    response = MultiModalConversation.call(
+        api_key=config.api_key,
+        model=config.repair_model,
+        messages=messages,
+        response_format={"type": "json_object"},
+    )
+    if response.status_code != HTTPStatus.OK:
+        raise RuntimeError(f"JSON repair API 失败: {getattr(response, 'message', response)}")
+    text = _message_text(response.output.choices[0].message.content)
+    (run_dir / dump_name).write_text(text, encoding="utf-8")
+    return extract_json_object(text)

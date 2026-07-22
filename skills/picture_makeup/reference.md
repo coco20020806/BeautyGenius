@@ -38,7 +38,7 @@ Tutorial 映射：[`tutorial-mapper`](../tutorial-mapper/SKILL.md)
 
 - **文本与视觉均用** `MultiModalConversation.call`（`file://` 图片或纯 `[{"text":...}]`）
 - **勿用** `Generation.call` 调 `qwen3.7-plus`（会 `url error`）
-- JSON 解析失败时可参考 tutorial-mapper 的 `repair_json`（`qwen3.5-flash`），非必须
+- JSON 解析失败时可参考 tutorial-mapper 的 `repair_json`（`qwen3.7-plus`），非必须
 
 ## Skill 路径（canonical）
 

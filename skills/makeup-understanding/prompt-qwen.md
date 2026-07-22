@@ -34,3 +34,8 @@
 ```
 
 用户消息应包含：`tutorial_id`、逐步的 `step_id`、`part`、`taxonomy_primary`、`taxonomy_sub_steps`、`product`、`instruction`（可截断）、`adaptation_note`。
+
+## API 调用
+
+使用 `qwen3.7-plus`，经 `dashscope.MultiModalConversation.call`（`base_http_api_url = https://dashscope.aliyuncs.com/api/v1`）。  
+**不要**对该模型使用 `Generation.call`（text-generation），否则会返回 `url error, please check url!`。

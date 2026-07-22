@@ -101,6 +101,8 @@ export interface Tutorial {
   tutorial_id: string;
   title: string;
   steps: TutorialStep[];
+  /** 上传原片的公开播放地址（API 追加，不在磁盘 tutorial.json 内） */
+  videoUrl?: string;
 }
 
 export interface DevSkipPreviewResult {
@@ -132,6 +134,7 @@ export interface StepDiagramItem {
   finalPrompt?: string;
   /** 单步生成失败时的错误信息（来自 picture-makeup manifest） */
   error?: string;
+  videoClip?: { start: number; end: number };
 }
 
 export type StepDiagramsJobStatus = 'idle' | 'processing' | 'completed' | 'failed';
@@ -142,6 +145,7 @@ export interface StepDiagramsResponse {
   progress?: { done: number; total: number; currentStepId?: string };
   steps: StepDiagramItem[];
   failureReason?: string;
+  videoUrl?: string;
 }
 
 export interface StepDiagramsStartResult {

@@ -89,29 +89,25 @@ def _hints_from_tutorial(
     return hints
 
 
-def before_image_filename(preview_run_dir: Path) -> str:
-    display = preview_run_dir / "target_display.jpg"
-    if display.is_file():
-        return "target_display.jpg"
+def before_image_filename(_preview_run_dir: Path) -> str:
+    """妆前对比图：始终用与 preview_01 同尺寸的 target.jpg（不用 display 裁切）。"""
     return "target.jpg"
 
 
+def after_image_filename(_preview_run_dir: Path) -> str:
+    """妆后对比图：始终用对齐后的 preview_01.jpg。"""
+    return "preview_01.jpg"
+
+
 def comparison_from_alignment(alignment: dict[str, Any] | None) -> dict[str, Any] | None:
+    """对比框尺寸跟全图 pair（target.jpg / preview_01.jpg）走 target_size。"""
     if not alignment:
         return None
-    size = alignment.get("display_size")
-    if isinstance(size, list) and len(size) == 2:
-        w, h = int(size[0]), int(size[1])
-    else:
-        target_size = alignment.get("target_size")
-        if not (isinstance(target_size, list) and len(target_size) == 2):
-            return None
-        w, h = int(target_size[0]), int(target_size[1])
-    out: dict[str, Any] = {"width": w, "height": h}
-    obj = alignment.get("object_position")
-    if isinstance(obj, str) and obj.strip():
-        out["objectPosition"] = obj.strip()
-    return out
+    target_size = alignment.get("target_size")
+    if not (isinstance(target_size, list) and len(target_size) == 2):
+        return None
+    w, h = int(target_size[0]), int(target_size[1])
+    return {"width": w, "height": h}
 
 
 def assemble_makeup_preview(
@@ -146,8 +142,9 @@ def assemble_makeup_preview(
 
     base = API_PUBLIC_BASE_URL
     before_name = before_image_filename(preview_run_dir)
+    after_name = after_image_filename(preview_run_dir)
     before_image = f"{base}/media/{task_id}/{before_name}"
-    after_image = f"{base}/media/{task_id}/preview_01.jpg"
+    after_image = f"{base}/media/{task_id}/{after_name}"
 
     alignment = (preview_doc or {}).get("alignment")
     comparison = comparison_from_alignment(alignment if isinstance(alignment, dict) else None)
@@ -178,7 +175,6 @@ def publish_media_files(task_id: str, preview_run_dir: Path, task_dir: Path) -> 
     media_dir.mkdir(parents=True, exist_ok=True)
     mapping = {
         "target.jpg": preview_run_dir / "target.jpg",
-        "target_display.jpg": preview_run_dir / "target_display.jpg",
         "preview_01.jpg": preview_run_dir / "preview_01.jpg",
     }
     for name, src in mapping.items():

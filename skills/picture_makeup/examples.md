@@ -42,7 +42,7 @@ out/steps/  # 按 step_id 分子目录
   "text_model": "qwen3.7-plus",
   "vision_model": "qwen3.7-plus",
   "image_model": "wan2.7-image-pro",
-  "diagram": { "prompt_text_version": "diagram-1" },
+  "diagram": { "prompt_text_version": "diagram-2" },
   "steps": [
     {
       "step_id": "blush_01",

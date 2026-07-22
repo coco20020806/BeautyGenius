@@ -157,8 +157,13 @@ h1, h2, h3, p { margin-top: 0; }
 .diagram-gallery-page { padding-bottom: 24px; }
 .diagram-progress { margin: 0; color: var(--faint); font-size: 11px; }
 .diagram-progress-banner { margin: 0 0 12px; padding: 8px 10px; color: var(--muted); border-radius: 10px; background: var(--rose-soft); font-size: 11px; text-align: center; }
-.diagram-gallery { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
-.diagram-card { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.72); }
+.diagram-gallery-layout { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 10px; align-items: start; }
+.diagram-gallery { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; scroll-margin-top: 12px; }
+.diagram-step-index { position: sticky; top: max(18px, env(safe-area-inset-top)); z-index: 5; display: grid; gap: 6px; justify-items: center; padding: 4px 0; max-height: calc(100dvh - 48px); overflow-y: auto; }
+.diagram-step-index__btn { display: grid; width: 30px; height: 30px; place-items: center; color: var(--muted); border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.88); font-size: 11px; font-weight: 600; cursor: pointer; }
+.diagram-step-index__btn.is-active,
+.diagram-step-index__btn[aria-current='true'] { color: var(--rose); border-color: rgba(189,89,98,.35); background: var(--rose-soft); }
+.diagram-card { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.72); scroll-margin-top: 12px; }
 .diagram-card h2 { margin: 0 0 10px; font-size: 12px; font-weight: 600; }
 .diagram-card__media { overflow: hidden; border-radius: 12px; background: #f0ebe8; }
 .diagram-card__media img { display: block; width: 100%; height: auto; vertical-align: middle; }
@@ -168,6 +173,16 @@ h1, h2, h3, p { margin-top: 0; }
 .diagram-card__prompt { margin-top: 10px; font-size: 10px; color: var(--muted); }
 .diagram-card__prompt summary { cursor: pointer; color: var(--ink); font-weight: 600; }
 .diagram-card__prompt p { margin: 8px 0 0; line-height: 1.55; }
+.step-clip-trigger { display: flex; width: 100%; min-height: 40px; margin-top: 10px; align-items: center; justify-content: center; gap: 6px; color: var(--rose); border: 1px solid rgba(189,89,98,.28); border-radius: 11px; background: var(--rose-soft); font-size: 11px; font-weight: 600; cursor: pointer; }
+.step-clip-trigger:disabled { opacity: .42; cursor: not-allowed; }
+.step-clip-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 18px; background: rgba(28, 18, 16, .55); }
+.step-clip-panel { width: min(100%, 420px); overflow: hidden; border-radius: 16px; background: #1c1210; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+.step-clip-panel__header { display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 4px 14px; color: #f7efeb; }
+.step-clip-panel__header h2 { margin: 0; flex: 1; font-size: 12px; font-weight: 600; line-height: 1.35; }
+.step-clip-panel__header .icon-button { color: #f7efeb; }
+.step-clip-panel__header .icon-button:active { background: rgba(255,255,255,.1); }
+.step-clip-panel__video { display: block; width: 100%; max-height: min(70dvh, 520px); background: #000; vertical-align: middle; }
+.step-clip-panel__empty { margin: 0; padding: 28px 16px; color: #c9b8b2; font-size: 12px; text-align: center; }
 .preview-loading { display: grid; min-height: 60vh; place-items: center; align-content: center; gap: 12px; color: var(--rose); }.preview-loading p { color: var(--muted); font-size: 12px; }
 
 .placeholder-page { display: flex; flex-direction: column; }.placeholder-card { display: grid; margin: auto 0; place-items: center; text-align: center; }.placeholder-card > span { display: grid; width: 64px; height: 64px; margin-bottom: 15px; place-items: center; color: var(--rose); border-radius: 20px; background: var(--rose-soft); }.placeholder-card h2 { font-size: 15px; }.placeholder-card p { margin: 0; max-width: 260px; color: var(--muted); font-size: 11px; line-height: 1.7; }

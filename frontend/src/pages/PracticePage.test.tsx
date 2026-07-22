@@ -19,6 +19,7 @@ test('renders tutorial steps from mock service', async () => {
   expect(screen.getByText('少量轻拍晕染')).toBeInTheDocument();
   expect(screen.getByText('珂岸面部素颜霜')).toBeInTheDocument();
   expect(screen.getByText('全脸推开')).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: '看视频' })).toHaveLength(3);
 });
 
 test('shows empty state without task id', async () => {

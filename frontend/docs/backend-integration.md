@@ -302,9 +302,9 @@ GET /api/v1/makeup/tasks/{taskId}/preview
 GET /api/v1/makeup/tasks/{taskId}/tutorial
 ```
 
-任务 `status` 为 `completed` 且存在 `tutorial_path` 时，返回磁盘上的 `tutorial.v1` JSON（与 parse run 目录中 `tutorial.json` 一致）。未就绪时返回 `409`，`code` 为 `TUTORIAL_NOT_READY`。
+任务 `status` 为 `completed` 且存在 `tutorial_path` 时，返回磁盘上的 `tutorial.v1` JSON（与 parse run 目录中 `tutorial.json` 一致），并**追加**顶层字段 `videoUrl`（上传原片公开地址，形如 `{API_PUBLIC_BASE_URL}/media/{taskId}/video.mp4`；不写回磁盘）。各步仍含 `video_clip: { start, end }`（秒）。未就绪时返回 `409`，`code` 为 `TUTORIAL_NOT_READY`。
 
-对应类型：`Tutorial`（见 `src/types/makeup.ts`）。
+对应类型：`Tutorial`（见 `src/types/makeup.ts`）。跟练页 `/practice` 每步提供「看视频」，用原片 + `video_clip` 时间跳转播放。
 
 ### 6.7 步骤示例图（picture-makeup，按需）
 
@@ -322,11 +322,11 @@ POST /api/v1/makeup/tasks/{taskId}/step-diagrams
 GET /api/v1/makeup/tasks/{taskId}/step-diagrams
 ```
 
-响应：`StepDiagramsResponse`（`status`: `idle` | `processing` | `completed` | `failed`；`steps[].imageUrl` 为 `{API_PUBLIC_BASE_URL}/media/{taskId}/diagram_{stepId}.jpg`；失败步含 `steps[].error`，全部失败时顶层 `failureReason` 会汇总首条错误）。
+响应：`StepDiagramsResponse`（`status`: `idle` | `processing` | `completed` | `failed`；顶层 `videoUrl` 同上传原片；`steps[].imageUrl` 为 `{API_PUBLIC_BASE_URL}/media/{taskId}/diagram_{stepId}.jpg`；`steps[].videoClip` 来自 tutorial 对应步的 `video_clip`；失败步含 `steps[].error`，全部失败时顶层 `failureReason` 会汇总首条错误）。
 
 未就绪：`409`，`STEP_DIAGRAMS_NOT_READY` 或 `TUTORIAL_NOT_READY`。
 
-前端：`/practice` 底部「前往示例图」进入 `/practice/examples`，进入后 POST + 轮询 GET。
+前端：`/practice` 底部「前往示例图」进入 `/practice/examples`，进入后 POST + 轮询 GET；示例图每步同样有「看视频」按钮。
 
 ### 6.8 开发捷径：跳过照片与解析
 
@@ -334,7 +334,7 @@ GET /api/v1/makeup/tasks/{taskId}/step-diagrams
 POST /api/v1/makeup/dev/skip-to-preview
 ```
 
-响应：`{ "taskId": "...", "status": "completed", "parseRunDir": "...", "previewRunDir": "..." }`。需服务端开启 `ENABLE_DEV_SHORTCUTS`；固定路径来自仓库根目录 `configs/dev-pinned-runs.json`（由 `scripts/pin-latest-dev-runs.py` 生成）。首页在开发模式下展示「跳过前两步（开发）」按钮。
+响应：`{ "taskId": "...", "status": "completed", "parseRunDir": "...", "previewRunDir": "..." }`。需服务端开启 `ENABLE_DEV_SHORTCUTS`；固定路径来自仓库根目录 `configs/dev-pinned-runs.json`（由 `scripts/pin-latest-dev-runs.py` 生成）。首页在开发模式下展示「跳过前两步（开发）」按钮。开发捷径会将仓库根目录 `示例视频1.mp4` 复制到任务 `upload/video.mp4`，供 tutorial / step-diagrams 的 `videoUrl` 与「看视频」时间跳转使用。
 
 `beforeImage` 和 `afterImage` 必须满足：
 

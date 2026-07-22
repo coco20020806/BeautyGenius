@@ -1,9 +1,10 @@
-import { ArrowLeft, ListOrdered, Sparkles } from 'lucide-react';
+import { ArrowLeft, ListOrdered, Play, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
+import { canPlayStepClip, StepClipPlayer } from '../components/StepClipPlayer';
 import { makeupService } from '../services/makeupService';
-import type { Tutorial } from '../types/makeup';
+import type { Tutorial, TutorialStep } from '../types/makeup';
 import {
   formatProductLine,
   formatRangeText,
@@ -27,6 +28,7 @@ export function PracticePage() {
   const [tutorial, setTutorial] = useState<Tutorial | null>(null);
   const [loadState, setLoadState] = useState<LoadState>(taskId ? 'loading' : 'empty');
   const [errorMessage, setErrorMessage] = useState('');
+  const [activeStep, setActiveStep] = useState<{ step: TutorialStep; index: number } | null>(null);
 
   useEffect(() => {
     if (!taskId) {
@@ -115,25 +117,37 @@ export function PracticePage() {
           </section>
 
           <ol className="tutorial-step-list" aria-label="教程步骤">
-            {tutorial.steps.map((step, index) => (
-              <li key={step.step_id} className="tutorial-step-card">
-                <h3>{stepHeading(step, index)}</h3>
-                <dl className="tutorial-step-fields">
-                  <div>
-                    <dt>产品</dt>
-                    <dd>{formatProductLine(step)}</dd>
-                  </div>
-                  <div>
-                    <dt>范围</dt>
-                    <dd>{formatRangeText(step.visual_layer)}</dd>
-                  </div>
-                  <div>
-                    <dt>手法</dt>
-                    <dd>{formatTechnique(step)}</dd>
-                  </div>
-                </dl>
-              </li>
-            ))}
+            {tutorial.steps.map((step, index) => {
+              const playable = canPlayStepClip(tutorial.videoUrl, step.video_clip);
+              return (
+                <li key={step.step_id} className="tutorial-step-card">
+                  <h3>{stepHeading(step, index)}</h3>
+                  <dl className="tutorial-step-fields">
+                    <div>
+                      <dt>产品</dt>
+                      <dd>{formatProductLine(step)}</dd>
+                    </div>
+                    <div>
+                      <dt>范围</dt>
+                      <dd>{formatRangeText(step.visual_layer)}</dd>
+                    </div>
+                    <div>
+                      <dt>手法</dt>
+                      <dd>{formatTechnique(step)}</dd>
+                    </div>
+                  </dl>
+                  <button
+                    className="step-clip-trigger"
+                    type="button"
+                    disabled={!playable}
+                    onClick={() => setActiveStep({ step, index })}
+                  >
+                    <Play size={14} />
+                    看视频
+                  </button>
+                </li>
+              );
+            })}
           </ol>
 
           <section className="practice-footer" aria-label="跟练下一步">
@@ -145,6 +159,16 @@ export function PracticePage() {
               前往示例图
             </button>
           </section>
+
+          {activeStep && tutorial.videoUrl ? (
+            <StepClipPlayer
+              open
+              videoUrl={tutorial.videoUrl}
+              clip={activeStep.step.video_clip}
+              title={stepHeading(activeStep.step, activeStep.index)}
+              onClose={() => setActiveStep(null)}
+            />
+          ) : null}
         </>
       ) : null}
     </MobileShell>

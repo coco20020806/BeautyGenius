@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from picture_makeup.config import CONTRACT_VERSION, PictureMakeupConfig, PictureMakeupJobResult
 from picture_makeup.diagram import run_diagram
+from picture_makeup.diagram_requirement import format_diagram_requirement
 from picture_makeup.io_util import make_run_dir
 from picture_makeup.prompt_enrich import enrich_from_keyframes
 from picture_makeup.prompt_loader import load_diagram_prompt
@@ -87,10 +88,14 @@ def run_picture_makeup_job(
             if config.skip_diagram:
                 entry["status"] = "skipped"
             else:
+                requirement = format_diagram_requirement(step, final_prompt)
+                (step_dir / "diagram_requirement.txt").write_text(
+                    requirement, encoding="utf-8"
+                )
                 run_diagram(
                     config,
                     base_image=base_image,
-                    final_prompt=final_prompt,
+                    final_prompt=requirement,
                     step_dir=step_dir,
                 )
                 entry["status"] = "ok"

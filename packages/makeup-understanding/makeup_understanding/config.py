@@ -14,8 +14,8 @@ ProgressCallback = Callable[[int, str], None]
 class UnderstandingConfig:
     api_key: str = ""
     base_url: str = "https://dashscope.aliyuncs.com/api/v1"
-    text_model: str = "qwen3.5-flash"
-    repair_model: str = "qwen3.5-flash"
+    text_model: str = "qwen3.7-plus"
+    repair_model: str = "qwen3.7-plus"
     enabled: bool = True
     on_progress: ProgressCallback | None = field(default=None, repr=False)
 

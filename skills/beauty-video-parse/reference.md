@@ -8,7 +8,7 @@
 |------|-----------|------|
 | 步骤切分、字幕/OCR、关键帧时间建议 | `qwen3.7-plus` | DashScope `MultiModalConversation`，`response_format: json_object`，非 thinking |
 | 口播转写 | `fun-asr` | `Transcription.async_call`；音频先 `OssUtils.upload` 再 `file_urls` |
-| JSON 修复（可选） | `qwen3.5-flash` | 视觉返回非合法 JSON 时 |
+| JSON 修复（可选） | `qwen3.7-plus` | 视觉返回非合法 JSON 时 |
 
 **Base URL（大陆）**：`https://dashscope.aliyuncs.com/api/v1`  
 **OpenAI 兼容修复**：`https://dashscope.aliyuncs.com/compatible-mode/v1`

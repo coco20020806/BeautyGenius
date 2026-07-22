@@ -11,6 +11,7 @@ from typing import Any
 from picture_makeup import PictureMakeupConfig, run_picture_makeup_job
 
 from api_server.config import API_PUBLIC_BASE_URL, PICTURE_MAKEUP_OUTPUT_ROOT, PICTURE_MAKEUP_SKILL
+from api_server.media_urls import resolve_task_video_url
 from api_server.pipeline import load_api_key
 from api_server.store import store
 
@@ -162,6 +163,12 @@ def assemble_step_diagrams(task_id: str, task: dict[str, Any], tutorial: dict[st
             "imageUrl": image_url,
             "status": item_status,
         }
+        clip = step.get("video_clip")
+        if isinstance(clip, dict) and "start" in clip and "end" in clip:
+            try:
+                item["videoClip"] = {"start": float(clip["start"]), "end": float(clip["end"])}
+            except (TypeError, ValueError):
+                pass
         if final_prompt:
             item["finalPrompt"] = final_prompt
         err = mentry.get("error")
@@ -175,6 +182,9 @@ def assemble_step_diagrams(task_id: str, task: dict[str, Any], tutorial: dict[st
         "status": status,
         "steps": steps_out,
     }
+    video_url = resolve_task_video_url(task_id, task)
+    if video_url:
+        payload["videoUrl"] = video_url
     if progress:
         payload["progress"] = progress
 

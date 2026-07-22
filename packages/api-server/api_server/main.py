@@ -19,6 +19,7 @@ from api_server.config import (
 )
 from api_server.dev_bootstrap import bootstrap_from_pinned_file
 from api_server.errors import ApiError, api_error_handler, new_request_id
+from api_server.media_urls import resolve_task_video_url
 from api_server.pipeline import run_task_pipeline
 from api_server.preview_assembler import assemble_makeup_preview
 from api_server.step_diagrams import (
@@ -230,7 +231,11 @@ async def get_tutorial(task_id: str) -> dict:
     except FileNotFoundError:
         raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
 
-    return load_tutorial_document(task, request_id=req_id)
+    doc = load_tutorial_document(task, request_id=req_id)
+    video_url = resolve_task_video_url(task_id, task)
+    if video_url:
+        doc = {**doc, "videoUrl": video_url}
+    return doc
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/step-diagrams", status_code=202)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,9 @@ from api_server.config import DEV_PINNED_RUNS_PATH, REPO_ROOT
 from api_server.errors import ApiError
 from api_server.preview_assembler import publish_media_files
 from api_server.store import TaskStore, new_task_id
+
+# 开发捷径「跳过前两步」时，步骤视频切片使用的原片
+DEV_SKIP_SOURCE_VIDEO = REPO_ROOT / "示例视频1.mp4"
 
 
 class DevRunsNotPinnedError(ApiError):
@@ -62,25 +66,63 @@ def load_pinned_runs(
     return parse_run, preview_run
 
 
+def _install_dev_source_video(
+    store: TaskStore,
+    task_id: str,
+    *,
+    source_video: Path,
+    request_id: str | None = None,
+) -> Path:
+    """Copy the sample source video into the task upload dir as video.mp4."""
+    if not source_video.is_file():
+        raise DevRunsNotPinnedError(
+            f"缺少开发捷径源视频：{source_video}",
+            request_id=request_id,
+        )
+    upload_dir = store.task_dir(task_id) / "upload"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / "video.mp4"
+    shutil.copy2(source_video, dest)
+    return dest.resolve()
+
+
 def bootstrap_preview_task(
     store: TaskStore,
     *,
     parse_run: Path,
     preview_run: Path,
+    source_video: Path | None = None,
+    request_id: str | None = None,
 ) -> dict[str, Any]:
     task_id = new_task_id()
-    analysis_path = parse_run / "analysis.json"
     tutorial_path = parse_run / "tutorial.json"
     tutorial_str = str(tutorial_path.resolve()) if tutorial_path.is_file() else None
 
+    video_src = (source_video or DEV_SKIP_SOURCE_VIDEO).resolve()
+    if not video_src.is_file():
+        raise DevRunsNotPinnedError(
+            f"缺少开发捷径源视频：{video_src}",
+            request_id=request_id,
+        )
     task = store.create_uploaded(
-        file_name="dev-skip-placeholder.mp4",
-        file_size=0,
-        video_path=str(analysis_path.resolve()),
+        file_name=video_src.name,
+        file_size=video_src.stat().st_size,
+        video_path=str(video_src),
         task_id=task_id,
         parse_mode="fast",
         skip_transfer=False,
     )
+    installed = _install_dev_source_video(
+        store,
+        task_id,
+        source_video=video_src,
+        request_id=request_id,
+    )
+    task = store.load(task_id)
+    task["video_path"] = str(installed)
+    task["fileSize"] = installed.stat().st_size
+    store.save(task)
+
     store.set_photo_ready(task_id, photo_path=None, skipped=True, photo_id=None)
 
     task_dir = store.task_dir(task_id)
@@ -107,6 +149,13 @@ def bootstrap_from_pinned_file(
     *,
     pinned_path: Path = DEV_PINNED_RUNS_PATH,
     request_id: str | None = None,
+    source_video: Path | None = None,
 ) -> dict[str, Any]:
     parse_run, preview_run = load_pinned_runs(pinned_path, request_id=request_id)
-    return bootstrap_preview_task(store, parse_run=parse_run, preview_run=preview_run)
+    return bootstrap_preview_task(
+        store,
+        parse_run=parse_run,
+        preview_run=preview_run,
+        source_video=source_video,
+        request_id=request_id,
+    )

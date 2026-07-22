@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 CONTRACT_VERSION = "v1"
-PROMPT_TEXT_VERSION_DEFAULT = "diagram-1"
+PROMPT_TEXT_VERSION_DEFAULT = "diagram-2"
 
 SUPPORTED_IMAGE_SIZES: list[tuple[str, int, int]] = [
     ("1280*1280", 1.0, 1280),

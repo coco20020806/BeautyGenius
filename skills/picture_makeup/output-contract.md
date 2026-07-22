@@ -34,7 +34,7 @@ Schema 演进：`contract_version: "v1"`（将来 v2 另文）。
 | `text_model` | `qwen3.7-plus`（base prompt） |
 | `vision_model` | `qwen3.7-plus`（enrich） |
 | `image_model` | `wan2.7-image-pro` |
-| `diagram.prompt_text_version` | 如 `diagram-1`（来自 diagram-prompt-wan.md） |
+| `diagram.prompt_text_version` | 如 `diagram-2`（来自 diagram-prompt-wan.md） |
 | `steps` | 数组，见下表 |
 | `warnings` | run 级，如 `missing_base_image` |
 
