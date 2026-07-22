@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "makeup-preview"
+version = "0.1.0"
+description = "KOL makeup preview (wan2.7-image-pro + face QA) for Beauty Genius"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "dashscope>=1.24.6",
+  "mediapipe>=0.10.9",
+  "Pillow>=10.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["makeup_preview*"]

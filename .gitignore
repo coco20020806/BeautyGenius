@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+scripts/_qwen_local.py
 *.pem
 
 # Python

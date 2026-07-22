@@ -13,5 +13,11 @@
 
 ## 当前状态
 
-- 仓库已初始化，业务代码待建设
-- 视频解析能力依赖全局安装的 `watch` skill 及系统依赖（ffmpeg、yt-dlp）
+- 视频解析 MVP：`scripts/parse_beauty_video.py`（DashScope + ffmpeg）
+- **Tutorial 映射（Phase 2）**：`scripts/map_tutorial_from_parse.py` → `tutorial.json`（[`packages/tutorial-mapper/`](../packages/tutorial-mapper/)）
+- **可复用 Skill 文档（canonical：`skills/`）**：[`skills/README.md`](../skills/README.md)
+  - 视频解析：[`skills/beauty-video-parse/`](../skills/beauty-video-parse/)
+  - Tutorial 映射：[`skills/tutorial-mapper/`](../skills/tutorial-mapper/)
+  - KOL 整妆预览：[`skills/kol-makeup-preview/`](../skills/kol-makeup-preview/)
+- **串联路径**：[`docs/REPLICATE_PIPELINE.md`](REPLICATE_PIPELINE.md)（parse → replication after → preview → `outputs/jobs/` manifest）
+- 接入层 / Web / 沉淀层：待建设

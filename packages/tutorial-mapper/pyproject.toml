@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tutorial-mapper"
+version = "0.1.0"
+description = "Map beauty-video-parse analysis.json to Tutorial / Step / Asset product models"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "dashscope>=1.24.6",
+  "jsonschema>=4.23.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tutorial_mapper*"]
+
+[tool.setuptools.package-data]
+tutorial_mapper = ["schemas/*.json"]

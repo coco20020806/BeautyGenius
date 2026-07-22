@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-parse"
+version = "0.2.0"
+description = "Beauty tutorial video parsing (Qwen + ASR + ffmpeg)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "dashscope>=1.24.6",
+  "jsonschema>=4.23.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["video_parse*"]
+
+[tool.setuptools.package-data]
+video_parse = ["schemas/*.json"]

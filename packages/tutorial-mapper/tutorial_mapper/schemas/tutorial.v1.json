@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://beauty-genius.local/schemas/tutorial.v1.json",
+  "title": "BeautyGeniusTutorialV1",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "tutorial_id",
+    "title",
+    "source_video",
+    "duration",
+    "difficulty",
+    "estimated_time",
+    "style_tags",
+    "occasion_tags",
+    "steps",
+    "eye_detail",
+    "practice_checklist",
+    "assets"
+  ],
+  "properties": {
+    "contract_version": { "type": "string", "const": "tutorial.v1" },
+    "tutorial_id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
+    "source_video": { "type": "string" },
+    "source_path": { "type": "string" },
+    "duration": { "type": "integer", "minimum": 0 },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard", "unknown"]
+    },
+    "estimated_time": { "type": "integer", "minimum": 0 },
+    "style_tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "occasion_tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "steps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "eye_detail": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "practice_checklist": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/asset" }
+    },
+    "parse_run_id": { "type": "string" }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "video_clip": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "number" },
+        "end": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "product": {
+      "type": "object",
+      "required": ["name", "keywords"],
+      "properties": {
+        "name": { "type": "string" },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "visual_layer": {
+      "type": "object",
+      "properties": {
+        "shape": { "type": "string" },
+        "color": { "type": "string" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "position": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "step": {
+      "type": "object",
+      "required": [
+        "step_id",
+        "part",
+        "product",
+        "visual_layer",
+        "instruction",
+        "adaptation_note",
+        "video_clip"
+      ],
+      "properties": {
+        "step_id": { "type": "string", "minLength": 1 },
+        "part": {
+          "type": "string",
+          "enum": [
+            "prep",
+            "base",
+            "concealer",
+            "set",
+            "brow",
+            "eye",
+            "contour",
+            "highlight",
+            "cheek",
+            "lip",
+            "other"
+          ]
+        },
+        "taxonomy_primary": { "type": "string" },
+        "taxonomy_sub_steps": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "product": { "$ref": "#/$defs/product" },
+        "visual_layer": { "$ref": "#/$defs/visual_layer" },
+        "instruction": { "type": "string" },
+        "adaptation_note": { "type": "string" },
+        "video_clip": { "$ref": "#/$defs/video_clip" },
+        "keyframe_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string" },
+              "timestamp_sec": { "type": "number" },
+              "filename": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "asset": {
+      "type": "object",
+      "required": [
+        "asset_id",
+        "source_tutorial_id",
+        "part",
+        "style_tags",
+        "occasion_tags",
+        "suitable_features",
+        "avoid_features",
+        "difficulty",
+        "products",
+        "visual_layers",
+        "video_clips",
+        "practice_notes"
+      ],
+      "properties": {
+        "asset_id": { "type": "string", "minLength": 1 },
+        "source_tutorial_id": { "type": "string" },
+        "part": {
+          "type": "string",
+          "enum": [
+            "prep",
+            "base",
+            "concealer",
+            "set",
+            "brow",
+            "eye",
+            "contour",
+            "highlight",
+            "cheek",
+            "lip",
+            "other"
+          ]
+        },
+        "style_tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "occasion_tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "suitable_features": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "avoid_features": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard", "unknown"]
+        },
+        "products": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "visual_layers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/visual_layer" }
+        },
+        "video_clips": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/video_clip" }
+        },
+        "practice_notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "step_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
