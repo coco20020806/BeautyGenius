@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 CONTRACT_VERSION = "v1"
 PROMPT_VERSION = "v2"  # default when tutorial before is available; pipeline writes actual v1|v2
-PROMPT_TEXT_VERSION_DEFAULT = "wan-long-1"
+PROMPT_TEXT_VERSION_DEFAULT = "wan-long-2"
 
 BaselineGender = Literal["female", "male"]
 
@@ -45,7 +45,20 @@ TRANSFER_PROMPT_V2 = (
     "不要换脸，不要改变图3的五官结构。"
 )
 
-# wan2.7-image-pro size strings (fixed aspect presets + 2K fallback)
+SCOPE_APPENDIX_V2 = (
+    "【教程范围约束】本视频教程仅涉及以下化妆主类：{{PRIMARY_LIST_ZH}}。\n"
+    "仅允许在图3上修改与上述主类对应的妆效区域（{{REGION_LIST_ZH}}）。\n"
+    "图3上未列出的区域须保持与图3原图一致，不得新增或加深任何妆效。\n"
+    "参考图1相对图2的差分，只用于理解上述允许区域内的妆效；不得将图1中其他区域的妆迁移到图3。"
+)
+
+SCOPE_APPENDIX_V1 = (
+    "【教程范围约束】本视频教程仅涉及以下化妆主类：{{PRIMARY_LIST_ZH}}。\n"
+    "仅允许在图2上修改与上述主类对应的妆效区域（{{REGION_LIST_ZH}}）。\n"
+    "图2上未列出的区域须保持与图2原图一致，不得新增或加深任何妆效。"
+)
+
+# wan2.7-image-pro size strings
 SUPPORTED_IMAGE_SIZES: list[tuple[str, int, int]] = [
     ("1280*1280", 1.0, 1280),
     ("1280*720", 16 / 9, 1280),
@@ -85,6 +98,7 @@ class PreviewConfig:
     image_watermark: bool = False
     landmarker_model_path: Path | None = None
     max_user_photo_bytes: int = MAX_USER_PHOTO_BYTES
+    transfer_scope_override: str | None = None
 
 
 @dataclass

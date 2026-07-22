@@ -77,3 +77,7 @@ python scripts/run_beauty_replicate.py --parse-run outputs/runs/20260721_225221 
 ```
 
 产物：`outputs/jobs/<timestamp>/manifest.json` 链接 parse 与 preview run。见 [docs/REPLICATE_PIPELINE.md](../../docs/REPLICATE_PIPELINE.md)。
+
+## 9. 局部教程（scoped transfer）
+
+当 parse run 的 `taxonomy-coverage.json` 中 `present_primaries` 仅含少量主类（如 `["唇妆"]`）时，preview 应写入 `transfer.prompt_mode: scoped`，并在 `transfer_prompt.txt` 末尾追加「教程范围约束」段落（见 [transfer-scope.md](transfer-scope.md)）。全脸对比仍使用 `target_display.jpg` / `preview_display.jpg`。

@@ -4,7 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
 import { MobileShell } from '../components/MobileShell';
 import { makeupService } from '../services/makeupService';
-import type { MakeupPreview } from '../types/makeup';
+import type { MakeupIntensityLevel, MakeupPreview } from '../types/makeup';
+
+const DEFAULT_INTENSITY_LEVELS: MakeupIntensityLevel[] = [
+  { id: 'L1', color: '#ead6cf', opacity: 0.2 },
+  { id: 'L2', color: '#d8aaa0', opacity: 0.4 },
+  { id: 'L3', color: '#b87870', opacity: 0.6 },
+  { id: 'L4', color: '#8e554f', opacity: 0.8 },
+  { id: 'L5', color: '#5c3a36', opacity: 1.0 },
+];
+
+const DEFAULT_INTENSITY_ID = 'L4';
 
 function taskId() {
   try { return JSON.parse(sessionStorage.getItem('makeupTask') ?? '{}').taskId ?? 'demo-task'; }
@@ -14,9 +24,17 @@ function taskId() {
 export function PreviewPage() {
   const navigate = useNavigate();
   const [preview, setPreview] = useState<MakeupPreview | null>(null);
-  const [decision, setDecision] = useState('');
+  const [intensityId, setIntensityId] = useState(DEFAULT_INTENSITY_ID);
 
   useEffect(() => { void makeupService.getPreview(taskId()).then(setPreview); }, []);
+
+  const intensityLevels = preview?.intensityLevels?.length
+    ? preview.intensityLevels
+    : DEFAULT_INTENSITY_LEVELS;
+  const activeLevel =
+    intensityLevels.find((level) => level.id === intensityId) ??
+    intensityLevels.find((level) => level.id === DEFAULT_INTENSITY_ID) ??
+    intensityLevels[intensityLevels.length - 1];
 
   return (
     <MobileShell className="preview-page">
@@ -37,12 +55,24 @@ export function PreviewPage() {
                 : undefined
             }
             objectPosition={preview.comparison?.objectPosition}
+            afterOpacity={activeLevel?.opacity ?? 0.8}
           />
 
           <section className="makeup-summary" aria-labelledby="summary-title">
             <div className="summary-heading"><div><span className="section-eyebrow">解析妆容</span><h2 id="summary-title">{preview.title}</h2></div><span className="difficulty-pill">{preview.difficulty}</span></div>
-            <div className="palette" aria-label="妆容配色">
-              {preview.palette.map((color, index) => <span key={color} style={{ backgroundColor: color }} title={`妆容色 ${index + 1}`} />)}
+            <div className="palette" role="group" aria-label="妆容浓淡">
+              {intensityLevels.map((level) => (
+                <button
+                  key={level.id}
+                  type="button"
+                  className={level.id === activeLevel?.id ? 'is-active' : undefined}
+                  style={{ backgroundColor: level.color }}
+                  aria-label={`妆容浓淡 ${level.id}`}
+                  aria-pressed={level.id === activeLevel?.id}
+                  title={`妆容浓淡 ${Math.round(level.opacity * 100)}%`}
+                  onClick={() => setIntensityId(level.id)}
+                />
+              ))}
             </div>
             <div className="summary-meta"><span><Sparkles size={14} />{preview.style}</span><span><Clock3 size={14} />{preview.duration}</span><span>{preview.occasion}</span></div>
           </section>
@@ -83,12 +113,26 @@ export function PreviewPage() {
                 <Check size={17} />
                 适合我
               </button>
-              <button type="button" onClick={() => setDecision('已记录：后续可继续微调妆容')}>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const raw = sessionStorage.getItem('makeupTask');
+                    const parsed = raw ? JSON.parse(raw) as { taskId?: string } : {};
+                    sessionStorage.setItem(
+                      'makeupTask',
+                      JSON.stringify({ ...parsed, suitability: 'adjust' }),
+                    );
+                  } catch {
+                    /* ignore */
+                  }
+                  navigate('/adjust');
+                }}
+              >
                 <SlidersHorizontal size={17} />
                 需要微调
               </button>
             </div>
-            {decision && <p className="decision-feedback" role="status">{decision}</p>}
           </section>
         </>
       ) : <div className="preview-loading"><Sparkles className="spin" size={26} /><p>正在生成你的适配效果…</p></div>}

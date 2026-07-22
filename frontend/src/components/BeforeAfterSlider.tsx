@@ -6,6 +6,8 @@ interface BeforeAfterSliderProps {
   afterSrc: string;
   frameAspectRatio?: number;
   objectPosition?: string;
+  /** 妆后层透明度（浓淡色块控制）；默认 1 */
+  afterOpacity?: number;
 }
 
 export function BeforeAfterSlider({
@@ -13,6 +15,7 @@ export function BeforeAfterSlider({
   afterSrc,
   frameAspectRatio,
   objectPosition = '50% 50%',
+  afterOpacity = 1,
 }: BeforeAfterSliderProps) {
   const [position, setPosition] = useState(50);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -28,6 +31,7 @@ export function BeforeAfterSlider({
     frameAspectRatio && frameAspectRatio > 0
       ? ({ aspectRatio: frameAspectRatio, height: 'auto' } as const)
       : undefined;
+  const clampedOpacity = Math.min(1, Math.max(0, afterOpacity));
 
   return (
     <section className="comparison" aria-label="妆前妆后效果对比">
@@ -47,8 +51,17 @@ export function BeforeAfterSlider({
           if (event.currentTarget.hasPointerCapture?.(event.pointerId)) updateFromClientX(event.clientX);
         }}
       >
-        <img className="comparison__image" src={beforeSrc} alt="原始状态" draggable={false} style={imageStyle} />
-        <div className="comparison__after" style={{ clipPath: `inset(0 0 0 ${position}%)` }}>
+        <img
+          className="comparison__image comparison__image--before"
+          src={beforeSrc}
+          alt="原始状态"
+          draggable={false}
+          style={imageStyle}
+        />
+        <div
+          className="comparison__after"
+          style={{ clipPath: `inset(0 0 0 ${position}%)`, opacity: clampedOpacity }}
+        >
           <img className="comparison__image" src={afterSrc} alt="化妆后效果" draggable={false} style={imageStyle} />
         </div>
         <span className="comparison__label comparison__label--before">原始状态</span>

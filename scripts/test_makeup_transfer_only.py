@@ -93,6 +93,8 @@ def main() -> None:
             requested_size,
             prompt_text_version,
             prompt_fallback,
+            _prompt_mode,
+            _scope,
         ) = run_transfer(
             reference_path=reference,
             target_path=target,

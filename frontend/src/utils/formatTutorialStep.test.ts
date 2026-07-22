@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { TutorialStep } from '../types/makeup';
-import { formatProductLine, formatRangeText, formatTechnique } from './formatTutorialStep';
+import type { Tutorial, TutorialStep } from '../types/makeup';
+import {
+  formatProductLine,
+  formatRangeText,
+  formatTechnique,
+  groupHeading,
+  resolveTutorialGroups,
+  stepHeading,
+} from './formatTutorialStep';
 
 const baseStep: TutorialStep = {
   step_id: 'blush_01',
@@ -69,5 +76,58 @@ describe('formatTechnique', () => {
   it('returns instruction or 无', () => {
     expect(formatTechnique(baseStep)).toBe('少量多次轻拍晕染');
     expect(formatTechnique({ ...baseStep, instruction: '' })).toBe('无');
+  });
+});
+
+describe('stepHeading', () => {
+  it('prefers display_title', () => {
+    expect(
+      stepHeading({ ...baseStep, taxonomy_primary: '修容', display_title: '修容 · 鼻头两侧' }, 0),
+    ).toBe('步骤 1 · 修容 · 鼻头两侧');
+  });
+});
+
+describe('resolveTutorialGroups', () => {
+  it('uses step_groups when present', () => {
+    const tutorial: Tutorial = {
+      contract_version: 'tutorial.v1',
+      tutorial_id: 't1',
+      title: 'demo',
+      step_groups: [
+        { group_id: 'group_01', title: '修容', index: 1, step_ids: ['contour_01', 'contour_02'] },
+      ],
+      steps: [
+        {
+          ...baseStep,
+          step_id: 'contour_01',
+          part: 'contour',
+          taxonomy_primary: '修容',
+          display_title: '修容 · 鼻头两侧',
+        },
+        {
+          ...baseStep,
+          step_id: 'contour_02',
+          part: 'contour',
+          taxonomy_primary: '修容',
+          display_title: '修容 · 颧骨下方',
+        },
+      ],
+    };
+    const resolved = resolveTutorialGroups(tutorial);
+    expect(resolved).toHaveLength(1);
+    expect(groupHeading(resolved[0].group)).toBe('步骤 1 · 修容');
+    expect(resolved[0].steps).toHaveLength(2);
+  });
+
+  it('falls back to one group per step', () => {
+    const tutorial: Tutorial = {
+      contract_version: 'tutorial.v1',
+      tutorial_id: 't1',
+      title: 'demo',
+      steps: [{ ...baseStep, taxonomy_primary: '腮红' }],
+    };
+    const resolved = resolveTutorialGroups(tutorial);
+    expect(resolved).toHaveLength(1);
+    expect(groupHeading(resolved[0].group)).toBe('步骤 1 · 腮红');
   });
 });

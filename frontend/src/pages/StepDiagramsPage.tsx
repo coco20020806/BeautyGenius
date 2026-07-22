@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronUp, ImageIcon, Play, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, ChevronUp, ImageIcon, Play, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
@@ -49,6 +49,8 @@ export function StepDiagramsPage() {
   const [error, setError] = useState('');
   const [activeItem, setActiveItem] = useState<StepDiagramItem | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
+  const [collectMode, setCollectMode] = useState(false);
+  const [selectedStepIds, setSelectedStepIds] = useState<string[]>([]);
 
   const sortedSteps = data?.steps?.length ? sortDiagramSteps(data.steps) : [];
 
@@ -136,13 +138,43 @@ export function StepDiagramsPage() {
     const node = document.getElementById(diagramStepDomId(stepId));
     if (!node) return;
     setActiveStepId(stepId);
-    node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    node.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  };
+
+  const toggleStep = (stepId: string) => {
+    setSelectedStepIds((current) =>
+      current.includes(stepId) ? current.filter((id) => id !== stepId) : [...current, stepId],
+    );
+    jumpToStep(stepId);
+  };
+
+  const selectAllSteps = () => {
+    setSelectedStepIds(sortedSteps.map((step) => step.stepId));
+  };
+
+  const exitCollectMode = () => {
+    setCollectMode(false);
+    setSelectedStepIds([]);
+  };
+
+  const confirmCollect = () => {
+    navigate('/practice/examples/saved', {
+      state: { stepIds: selectedStepIds, taskId },
+    });
+  };
+
+  const handleBack = () => {
+    if (collectMode) {
+      exitCollectMode();
+      return;
+    }
+    navigate('/practice');
   };
 
   const scrollToTop = () => {
     const top = document.getElementById('diagram-gallery-top');
     if (top) {
-      top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      top.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       return;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -152,13 +184,13 @@ export function StepDiagramsPage() {
   const progress = data?.progress;
 
   return (
-    <MobileShell className="practice-page diagram-gallery-page">
+    <MobileShell className={`practice-page diagram-gallery-page${collectMode ? ' is-collecting' : ''}`}>
       <header className="detail-header" id="diagram-gallery-top">
         <button
           className="icon-button"
           type="button"
-          aria-label="返回跟练"
-          onClick={() => navigate('/practice')}
+          aria-label={collectMode ? '退出勾选' : '返回跟练'}
+          onClick={handleBack}
         >
           <ArrowLeft size={21} />
         </button>
@@ -256,38 +288,79 @@ export function StepDiagramsPage() {
               })}
             </ul>
 
-            <nav className="diagram-step-index" aria-label="步骤索引">
+            <nav
+              className={`diagram-step-index${collectMode ? ' is-collecting' : ''}`}
+              aria-label="步骤索引"
+            >
               <div className="diagram-step-index__list">
                 {sortedSteps.map((item) => {
                   const label = String(item.index + 1);
                   const name = stepDisplayName(item.heading);
                   const isActive = activeStepId === item.stepId;
+                  const isSelected = selectedStepIds.includes(item.stepId);
                   return (
                     <button
                       key={item.stepId}
                       type="button"
-                      className={`diagram-step-index__btn${isActive ? ' is-active' : ''}`}
-                      aria-label={`跳转到步骤 ${label} ${name}`}
-                      aria-current={isActive ? 'true' : undefined}
-                      onClick={() => jumpToStep(item.stepId)}
+                      className={`diagram-step-index__btn${isActive ? ' is-active' : ''}${isSelected ? ' is-selected' : ''}`}
+                      aria-label={
+                        collectMode ? `勾选步骤 ${label} ${name}` : `跳转到步骤 ${label} ${name}`
+                      }
+                      aria-current={!collectMode && isActive ? 'true' : undefined}
+                      aria-pressed={collectMode ? isSelected : undefined}
+                      onClick={() => (collectMode ? toggleStep(item.stepId) : jumpToStep(item.stepId))}
                     >
-                      <span className="diagram-step-index__num">{label}</span>
+                      <span className="diagram-step-index__num">
+                        {collectMode && isSelected ? <Check size={12} /> : label}
+                      </span>
                       <span className="diagram-step-index__name">{name}</span>
                     </button>
                   );
                 })}
               </div>
-              <button
-                type="button"
-                className="diagram-step-index__top"
-                aria-label="回到顶部"
-                onClick={scrollToTop}
-              >
-                <ChevronUp size={14} />
-                顶部
-              </button>
+              {collectMode ? (
+                <button
+                  type="button"
+                  className="diagram-step-index__top"
+                  aria-label="勾选全部"
+                  onClick={selectAllSteps}
+                >
+                  勾选全部
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="diagram-step-index__top"
+                  aria-label="回到顶部"
+                  onClick={scrollToTop}
+                >
+                  <ChevronUp size={14} />
+                  顶部
+                </button>
+              )}
             </nav>
           </div>
+
+          <section className="practice-footer diagram-collect-footer" aria-label="收藏操作">
+            {collectMode ? (
+              <button
+                className="primary-button practice-footer__cta"
+                type="button"
+                disabled={selectedStepIds.length === 0}
+                onClick={confirmCollect}
+              >
+                勾选完成
+              </button>
+            ) : (
+              <button
+                className="primary-button practice-footer__cta"
+                type="button"
+                onClick={() => setCollectMode(true)}
+              >
+                收藏到知识库
+              </button>
+            )}
+          </section>
 
           {activeItem && data?.videoUrl && activeItem.videoClip ? (
             <StepClipPlayer

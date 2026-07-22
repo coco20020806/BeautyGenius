@@ -33,6 +33,9 @@
 | `duplicate_step_id` | `step_id` 重复 | error |
 | `invalid_video_clip` | `start >= end`，或 clip 超出 `[0, duration]` | error |
 | `unknown_taxonomy_primary` | `taxonomy_primary` 为空或不在 [taxonomy-enums.json](../beauty-video-parse/taxonomy-enums.json) 主类列表 | warning |
+| `duplicate_display_title` | 非空 `display_title` 在 `steps[]` 中出现两次及以上（展示分组消解失败的兜底） | warning |
+
+`duplicate_display_title` **不是**「同主类多 step」本身；连续同主类合法分组见 [display-grouping.md](display-grouping.md)。
 
 ## 重复步检测
 
@@ -90,5 +93,6 @@
 
 1. 本文件  
 2. [output-contract.md](output-contract.md)  
-3. [SKILL.md](SKILL.md) 流水线 5b  
-4. `packages/tutorial-mapper/tutorial_mapper/step_validation.py`
+3. [SKILL.md](SKILL.md) 流水线步骤语义校验  
+4. `packages/tutorial-mapper/tutorial_mapper/step_validation.py`  
+5. 展示字段相关见 [display-grouping.md](display-grouping.md)

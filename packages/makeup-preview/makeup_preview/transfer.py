@@ -18,7 +18,8 @@ from PIL import Image
 
 from makeup_preview.config import PreviewConfig, resolve_image_size
 from makeup_preview.io_util import to_file_uri
-from makeup_preview.prompt_loader import load_transfer_prompt
+from makeup_preview.prompt_compose import compose_transfer_prompt
+from makeup_preview.scope_loader import TransferScope
 
 
 def _serialize_response(response: Any) -> Any:
@@ -113,17 +114,26 @@ def run_transfer(
     run_dir: Path,
     *,
     tutorial_before_path: Path | None = None,
+    transfer_scope: TransferScope | None = None,
     n: int = 1,
     image_size: str | None = None,
     output_canvas_path: Path | None = None,
-) -> tuple[list[str], str, str, str, bool]:
+) -> tuple[list[str], str, str, str, bool, str, dict[str, object] | None]:
     dashscope.api_key = config.api_key
     dashscope.base_http_api_url = config.base_url
 
     use_v2 = tutorial_before_path is not None and tutorial_before_path.is_file()
     layout: str = "v2" if use_v2 else "v1"
-    loaded = load_transfer_prompt(config.skill_dir, layout=layout)  # type: ignore[arg-type]
-    prompt_text = loaded.text
+    if transfer_scope is None:
+        from makeup_preview.scope_loader import resolve_transfer_scope
+
+        transfer_scope = resolve_transfer_scope(None)
+    composed = compose_transfer_prompt(
+        config.skill_dir,
+        layout=layout,  # type: ignore[arg-type]
+        transfer_scope=transfer_scope,
+    )
+    prompt_text = composed.text
     (run_dir / "transfer_prompt.txt").write_text(prompt_text, encoding="utf-8")
 
     if use_v2:
@@ -187,6 +197,8 @@ def run_transfer(
         ),
         prompt_version,
         image_size,
-        loaded.prompt_text_version,
-        loaded.used_fallback,
+        composed.prompt_text_version,
+        composed.used_fallback,
+        composed.prompt_mode,
+        composed.scope,
     )

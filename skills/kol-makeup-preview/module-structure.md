@@ -21,6 +21,8 @@ Beauty Genius/
 │       ├── reference_pick.py
 │       ├── face_gate.py
 │       ├── face_qa.py
+│       ├── scope_loader.py
+│       ├── prompt_compose.py
 │       └── transfer.py
 ├── scripts/run_makeup_preview.py
 └── outputs/makeup-preview/runs/
@@ -34,6 +36,8 @@ Beauty Genius/
 | `face_gate` | L0/L1 MediaPipe | 妆容生成 |
 | `face_qa` | L2 Qwen JSON | 改参考帧逻辑 |
 | `transfer` | wan2.7-image-pro | 视频解析 |
+| `scope_loader` | 读 coverage / tutorial → `TransferScope` | 调生成模型 |
+| `prompt_compose` | base + scoped 附录 | 改参考帧逻辑 |
 | `pipeline` | run 目录、preview.json | UI |
 
 ## 公开 API（计划）
@@ -56,8 +60,8 @@ def run_preview_job(
 
 | 项 | 状态 |
 |----|------|
-| Skill 文档 | 已建立；**transfer 三图 v2** **已实现** [transfer-prompt.md](transfer-prompt.md) |
-| `packages/makeup-preview` | 已实现：`run_preview_job`、L0–L2 质检、**三图 transfer**（缺妆前回退二图 v1） |
+| Skill 文档 | 已建立；**transfer 三图 v2** + **transfer-scope v1** [transfer-scope.md](transfer-scope.md) |
+| `packages/makeup-preview` | 已实现：`run_preview_job`、L0–L2 质检、三图 transfer、**scoped prompt compose** |
 | `scripts/run_makeup_preview.py` | 预览 CLI |
 | `scripts/run_beauty_replicate.py` | 解析 + 预览 + manifest |
 | `scripts/run-beauty-replicate.ps1` | PowerShell 串联入口 |

@@ -17,6 +17,70 @@ Schema：`packages/tutorial-mapper/tutorial_mapper/schemas/tutorial.v1.json`（`
 
 - `steps[]`：每步含 `step_id`、`part`、`taxonomy_primary`、`video_clip`、`instruction` 等。
 - **同一 `taxonomy_primary` 可出现多次**（多 step）；不以全局 unique 为契约要求。
+- 跟练页编号读 `step_groups[].index`，**不是**扁平 `steps[]` 下标。
+
+### 展示字段（确定性，mapper 写盘前填充）
+
+详见 [display-grouping.md](display-grouping.md)。
+
+#### 每步追加
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `display_title` | string | 卡内子段标题；单步组等于主类，多步组为「主类 · 细分」等去重名 |
+| `display_group_id` | string | 所属 `step_groups[].group_id` |
+
+#### 顶层 `step_groups[]`
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `group_id` | string | 如 `group_01` |
+| `title` | string | 卡片主标题（通常为 `taxonomy_primary`） |
+| `index` | integer | 展示编号，从 1 起 |
+| `step_ids` | string[] | 组内步骤，顺序同 `steps[]` |
+
+卡片标题格式：`步骤 {index} · {title}`。
+
+示例（修容拆两步 + 眼睛 + 唇妆）：
+
+```json
+{
+  "step_groups": [
+    {
+      "group_id": "group_01",
+      "title": "修容",
+      "index": 1,
+      "step_ids": ["contour_01", "contour_02"]
+    },
+    {
+      "group_id": "group_02",
+      "title": "眼睛",
+      "index": 2,
+      "step_ids": ["eye_01"]
+    },
+    {
+      "group_id": "group_03",
+      "title": "唇妆",
+      "index": 3,
+      "step_ids": ["lip_01"]
+    }
+  ],
+  "steps": [
+    {
+      "step_id": "contour_01",
+      "taxonomy_primary": "修容",
+      "display_title": "修容 · 鼻头两侧",
+      "display_group_id": "group_01"
+    },
+    {
+      "step_id": "contour_02",
+      "taxonomy_primary": "修容",
+      "display_title": "修容 · 颧骨下方",
+      "display_group_id": "group_01"
+    }
+  ]
+}
+```
 
 ## enrichment_meta.json 扩展
 

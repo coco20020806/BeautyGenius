@@ -7,7 +7,16 @@ from typing import Any
 
 from api_server.config import API_PUBLIC_BASE_URL
 
-DEFAULT_PALETTE = ["#ead6cf", "#d8aaa0", "#b87870", "#8e554f", "#f2e5dd"]
+# 妆浓淡色块：浅→深 / opacity 低→高（见 skills/kol-makeup-preview/display-contract.md）
+INTENSITY_LEVELS: list[dict[str, Any]] = [
+    {"id": "L1", "color": "#ead6cf", "opacity": 0.2},
+    {"id": "L2", "color": "#d8aaa0", "opacity": 0.4},
+    {"id": "L3", "color": "#b87870", "opacity": 0.6},
+    {"id": "L4", "color": "#8e554f", "opacity": 0.8},
+    {"id": "L5", "color": "#5c3a36", "opacity": 1.0},
+]
+
+DEFAULT_PALETTE = [level["color"] for level in INTENSITY_LEVELS]
 
 DIFFICULTY_LABELS = {
     "easy": "新手友好",
@@ -17,30 +26,31 @@ DIFFICULTY_LABELS = {
 }
 
 
+def format_video_duration_label(duration_sec: Any) -> str:
+    """上传视频真实时长标签；禁止用 estimated_time。"""
+    try:
+        sec = int(duration_sec)
+    except (TypeError, ValueError):
+        return "约 15 分钟"
+    if sec <= 0:
+        return "约 15 分钟"
+    if sec < 60:
+        return f"约 {sec} 秒"
+    return f"约 {max(1, round(sec / 60))} 分钟"
+
+
+def intensity_levels() -> list[dict[str, Any]]:
+    return [dict(level) for level in INTENSITY_LEVELS]
+
+
 def _load_json(path: Path | None) -> dict[str, Any] | None:
     if not path or not path.is_file():
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _extract_palette(tutorial: dict[str, Any] | None) -> list[str]:
-    if not tutorial:
-        return list(DEFAULT_PALETTE)
-    found: list[str] = []
-    for step in tutorial.get("steps") or []:
-        for key in ("hex", "color", "shade"):
-            val = step.get(key)
-            if isinstance(val, str) and val.startswith("#"):
-                found.append(val)
-        product = step.get("product") or {}
-        for kw in product.get("keywords") or []:
-            if isinstance(kw, str) and kw.startswith("#"):
-                found.append(kw)
-    if len(found) >= 3:
-        return found[:5]
-    tags = (tutorial.get("style_tags") or []) + (tutorial.get("occasion_tags") or [])
-    if tags:
-        return list(DEFAULT_PALETTE)
+def _extract_palette(_tutorial: dict[str, Any] | None) -> list[str]:
+    """兼容字段：与 intensityLevels 同序颜色（浓淡控件，非配色摘要）。"""
     return list(DEFAULT_PALETTE)
 
 
@@ -137,15 +147,8 @@ def assemble_makeup_preview(
     occasion = " · ".join(occasion_tags) if occasion_tags else "日常"
     difficulty_key = (tutorial or {}).get("difficulty") or "unknown"
     difficulty = DIFFICULTY_LABELS.get(difficulty_key, "—")
-    est = (tutorial or {}).get("estimated_time")
-    if isinstance(est, int) and est > 0:
-        duration = f"约 {est} 分钟"
-    else:
-        dur_sec = (tutorial or {}).get("duration")
-        if isinstance(dur_sec, int) and dur_sec > 0:
-            duration = f"约 {max(1, round(dur_sec / 60))} 分钟"
-        else:
-            duration = "约 15 分钟"
+    duration = format_video_duration_label((tutorial or {}).get("duration"))
+    levels = intensity_levels()
 
     target = (preview_doc or {}).get("target") or {}
     average_baseline = target.get("type") == "average_baseline"
@@ -171,6 +174,7 @@ def assemble_makeup_preview(
         "beforeImage": before_image,
         "afterImage": after_image,
         "palette": _extract_palette(tutorial),
+        "intensityLevels": levels,
         "hints": _hints_from_tutorial(
             tutorial,
             average_baseline=average_baseline,

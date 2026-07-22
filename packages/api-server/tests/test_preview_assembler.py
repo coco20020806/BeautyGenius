@@ -3,10 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from api_server.preview_assembler import (
+    INTENSITY_LEVELS,
     _hints_from_tutorial,
     after_image_filename,
+    assemble_makeup_preview,
     before_image_filename,
     comparison_from_alignment,
+    format_video_duration_label,
+    intensity_levels,
 )
 
 
@@ -43,3 +47,35 @@ def test_comparison_from_alignment_falls_back_to_target_size():
 def test_hints_when_transfer_skipped():
     hints = _hints_from_tutorial(None, average_baseline=False, transfer_skipped=True)
     assert hints[0]["title"] == "已跳过妆容生成"
+
+
+def test_format_video_duration_label_uses_real_seconds():
+    assert format_video_duration_label(45) == "约 45 秒"
+    assert format_video_duration_label(89) == "约 1 分钟"
+    assert format_video_duration_label(90) == "约 2 分钟"
+    assert format_video_duration_label(0) == "约 15 分钟"
+    assert format_video_duration_label(None) == "约 15 分钟"
+
+
+def test_assemble_duration_ignores_estimated_time(tmp_path: Path):
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "target.jpg").write_bytes(b"x")
+    (run / "preview_01.jpg").write_bytes(b"y")
+    tutorial_path = tmp_path / "tutorial.json"
+    tutorial_path.write_text(
+        '{"duration": 89, "estimated_time": 9, "style_tags": [], "occasion_tags": []}',
+        encoding="utf-8",
+    )
+    payload = assemble_makeup_preview(
+        "task-1",
+        tutorial_path=tutorial_path,
+        preview_run_dir=run,
+        preview_doc={"target": {"type": "average_baseline"}},
+    )
+    assert payload["duration"] == "约 1 分钟"
+    assert payload["intensityLevels"] == intensity_levels()
+    assert payload["palette"] == [level["color"] for level in INTENSITY_LEVELS]
+    assert len(payload["intensityLevels"]) == 5
+    assert payload["intensityLevels"][0]["opacity"] == 0.2
+    assert payload["intensityLevels"][-1]["opacity"] == 1.0

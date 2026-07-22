@@ -11,6 +11,7 @@
 | 文件 | 用途 |
 |------|------|
 | [SKILL.md](SKILL.md) | Agent 主指令 |
+| [display-grouping.md](display-grouping.md) | 展示分组 + `display_title` |
 | [step-validation.md](step-validation.md) | tutorial 生成后步骤语义校验 |
 | [output-contract.md](output-contract.md) | tutorial + enrichment_meta 契约 |
 | 上游 | [beauty-video-parse](../beauty-video-parse/) |

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from tutorial_mapper.config import MapperConfig, MapperJobResult
+from tutorial_mapper.display_grouping import apply_display_grouping
 from tutorial_mapper.from_analysis import from_analysis
 from tutorial_mapper.merge import apply_text_patch, apply_vision_patch, refresh_assets_from_steps
 from tutorial_mapper.schema import validate_tutorial
@@ -83,8 +84,9 @@ def run_mapper_job(parse_run_dir: Path, config: MapperConfig) -> MapperJobResult
         _progress(config, 4, "跳过视觉 enrichment")
         enrichment_meta["stages"]["vision"] = {"ok": True, "skipped": True}
 
-    _progress(config, 5, "刷新 assets + tutorial.v1 schema 校验…")
+    _progress(config, 5, "刷新 assets + 展示分组 + schema 校验…")
     refresh_assets_from_steps(tutorial)
+    apply_display_grouping(tutorial)
     validate_tutorial(tutorial)
     _progress(config, 6, "步骤语义校验…")
     step_validation = validate_tutorial_steps(tutorial)

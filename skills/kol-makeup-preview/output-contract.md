@@ -33,11 +33,13 @@ Schema 演进：`contract_version: "v1"`（将来 v2 另文）。
 | `validation` | 用户图：`pass`, `failed_layer`, `codes`, `reason`；底图分支可省略或 `pass: null` |
 | `transfer.model` | `wan2.7-image-pro` |
 | `transfer.prompt_version` | **`v2`**（三图）或降级 **`v1`**（二图）；仅表示图拓扑 |
-| `transfer.prompt_text_version` | 长正文版本，如 **`wan-long-1`**（来自 [transfer-prompt.md](transfer-prompt.md)） |
+| `transfer.prompt_text_version` | 长正文版本，如 **`wan-long-2`**（来自 [transfer-prompt.md](transfer-prompt.md)） |
+| `transfer.prompt_mode` | **`full`** 或 **`scoped`**（见 [transfer-scope.md](transfer-scope.md)） |
+| `transfer.scope` | scoped/full 元数据：`source`（`taxonomy-coverage` \| `tutorial.json` \| `default_full`）、`present_primaries`、`application_primaries`、`allowed_region_labels`；full 且无 parse 时仍可有 `source: default_full` |
 | `transfer.requested_size` | 本次 API `size`（由 `target.jpg` 宽高比解析，如 `720*1280` 或 `2K`） |
 | `alignment` | 妆前妆后几何对齐元数据（`method`、`target_size`、`display_size`、`object_position`、`display_fill_scale` 等） |
 | `outputs` | `[{ "filename": "preview_01.jpg", "selected": true }]` |
-| `warnings` | 如 `partial_reference`、`transfer_without_tutorial_before`、`transfer_prompt_fallback_static`、`preview_align_fallback_resize_only`、`preview_align_no_face` |
+| `warnings` | 如 `partial_reference`、`transfer_without_tutorial_before`、`transfer_prompt_fallback_static`、`transfer_scope_fallback_full`、`transfer_scope_from_tutorial`、`preview_align_fallback_resize_only`、`preview_align_no_face` |
 
 ## meta.json
 
@@ -49,4 +51,6 @@ Schema 演进：`contract_version: "v1"`（将来 v2 另文）。
 
 ## 下游
 
-UI / API 只读契约字段，不依赖 Skill markdown。
+UI / API 只读本文件的 run 契约字段，不依赖 Skill markdown 解析。
+
+Preview 摘要区时长标签、妆浓淡色块与对比区正片叠底语义见 [display-contract.md](display-contract.md)（由 API 组装层与前端实现，不写入 `preview.json`）。

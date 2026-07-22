@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { CollectSuccessPage } from './CollectSuccessPage';
 import { StepDiagramsPage } from './StepDiagramsPage';
 
 beforeEach(() => {
@@ -74,4 +75,39 @@ test('renders ordered step index with names, jump, and back-to-top', async () =>
   });
   await user.click(screen.getByRole('button', { name: '回到顶部' }));
   expect(scrollTop).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+});
+
+test('collect mode selects steps and navigates to success page', async () => {
+  const user = userEvent.setup();
+  sessionStorage.setItem('makeupTask', JSON.stringify({ taskId: 'task-diagrams' }));
+  render(
+    <MemoryRouter initialEntries={['/practice/examples']}>
+      <Routes>
+        <Route path="/practice/examples" element={<StepDiagramsPage />} />
+        <Route path="/practice/examples/saved" element={<CollectSuccessPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(await screen.findByRole('button', { name: '收藏到知识库' })).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '收藏到知识库' }));
+
+  expect(screen.getByRole('button', { name: '勾选全部' })).toBeInTheDocument();
+  const confirmButton = screen.getByRole('button', { name: '勾选完成' });
+  expect(confirmButton).toBeDisabled();
+
+  const firstStep = screen.getByRole('button', { name: /勾选步骤 1/ });
+  await user.click(firstStep);
+  expect(firstStep).toHaveAttribute('aria-pressed', 'true');
+  expect(confirmButton).toBeEnabled();
+
+  await user.click(screen.getByRole('button', { name: '勾选全部' }));
+  const selectedButtons = screen.getAllByRole('button', { name: /勾选步骤/ });
+  for (const button of selectedButtons) {
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+  }
+
+  await user.click(confirmButton);
+  expect(await screen.findByRole('heading', { name: '收藏成功！' })).toBeInTheDocument();
 });

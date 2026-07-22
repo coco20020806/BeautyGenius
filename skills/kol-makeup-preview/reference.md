@@ -18,7 +18,7 @@
 ## wan2.7-image-pro
 
 - SDK：`dashscope.aigc.image_generation.ImageGeneration.call`（同步 `multimodal-generation`）
-- 多图 + text：见 [transfer-prompt.md](transfer-prompt.md)（**v2 三图**；缺教程妆前回退 v1 二图）
+- 多图 + text：见 [transfer-prompt.md](transfer-prompt.md)（**v2 三图**；缺教程妆前回退 v1 二图）；范围见 [transfer-scope.md](transfer-scope.md)，落盘 `preview.json.transfer.prompt_mode` / `transfer.scope`
 - `size`：默认配置 `2K`；管线按 `target.jpg` 宽高比在 `1280*1280`、`1280*720`、`720*1280`、`1024*1024` 中选最接近比例，否则仍用 `2K`（`makeup_preview.config.resolve_image_size`）
 - 生成后：`harmonize_preview_pair` 将 `preview_01.jpg` 对齐到 `target.jpg`（**保持与 target 相同宽高**）；人脸裁切展示写入 `target_display.jpg` / `preview_display.jpg`（见 `preview_align.py`）
 - 默认 `n=1`；实现见 `packages/makeup-preview/makeup_preview/transfer.py`

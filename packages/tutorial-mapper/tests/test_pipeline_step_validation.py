@@ -92,3 +92,12 @@ def test_mapper_job_writes_step_validation_meta():
         stage = meta.get("stages", {}).get("step_validation", {})
         assert stage.get("ok") is True
         assert (run / "enrichment_meta.json").is_file()
+
+        tutorial = result.tutorial
+        groups = tutorial.get("step_groups") or []
+        assert len(groups) == 1
+        assert groups[0]["title"] == "唇妆"
+        assert groups[0]["step_ids"] == ["lip_01", "lip_02"]
+        titles = [s["display_title"] for s in tutorial["steps"]]
+        assert titles[0] != titles[1]
+        assert all(s.get("display_group_id") == "group_01" for s in tutorial["steps"])

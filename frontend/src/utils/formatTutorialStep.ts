@@ -1,4 +1,4 @@
-import type { TutorialPart, TutorialStep, TutorialVisualLayer } from '../types/makeup';
+import type { Tutorial, TutorialStep, TutorialStepGroup, TutorialPart, TutorialVisualLayer } from '../types/makeup';
 
 const PART_LABELS: Record<TutorialPart, string> = {
   prep: '妆前',
@@ -62,8 +62,48 @@ export function formatTechnique(step: TutorialStep): string {
   return segmentOrNone(step.instruction);
 }
 
+/** Flat-step heading (diagrams / legacy). Prefer display_title. */
 export function stepHeading(step: TutorialStep, index: number): string {
+  const display = (step.display_title ?? '').trim();
+  if (display) return `步骤 ${index + 1} · ${display}`;
   const primary = (step.taxonomy_primary ?? '').trim();
   if (primary) return `步骤 ${index + 1} · ${primary}`;
   return `步骤 ${index + 1} · ${step.step_id}`;
+}
+
+export function groupHeading(group: TutorialStepGroup): string {
+  const title = (group.title ?? '').trim() || '步骤';
+  return `步骤 ${group.index} · ${title}`;
+}
+
+export function stepSegmentTitle(step: TutorialStep): string {
+  const display = (step.display_title ?? '').trim();
+  if (display) return display;
+  return (step.taxonomy_primary ?? '').trim() || step.step_id;
+}
+
+export interface ResolvedTutorialGroup {
+  group: TutorialStepGroup;
+  steps: TutorialStep[];
+}
+
+/** Prefer tutorial.step_groups; fall back to one group per flat step. */
+export function resolveTutorialGroups(tutorial: Tutorial): ResolvedTutorialGroup[] {
+  const byId = new Map(tutorial.steps.map((s) => [s.step_id, s]));
+  const groups = tutorial.step_groups;
+  if (groups?.length) {
+    return groups.map((group) => ({
+      group,
+      steps: group.step_ids.map((id) => byId.get(id)).filter((s): s is TutorialStep => Boolean(s)),
+    }));
+  }
+  return tutorial.steps.map((step, index) => ({
+    group: {
+      group_id: `group_${String(index + 1).padStart(2, '0')}`,
+      title: (step.taxonomy_primary ?? '').trim() || step.step_id,
+      index: index + 1,
+      step_ids: [step.step_id],
+    },
+    steps: [step],
+  }));
 }

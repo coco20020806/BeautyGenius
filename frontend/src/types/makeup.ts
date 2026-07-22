@@ -42,6 +42,12 @@ export interface MakeupPreviewComparison {
   objectPosition?: string;
 }
 
+export interface MakeupIntensityLevel {
+  id: string;
+  color: string;
+  opacity: number;
+}
+
 export interface MakeupPreview {
   taskId: string;
   title: string;
@@ -52,6 +58,8 @@ export interface MakeupPreview {
   beforeImage: string;
   afterImage: string;
   palette: string[];
+  /** 妆浓淡色块；缺省时前端用固定 5 档 */
+  intensityLevels?: MakeupIntensityLevel[];
   hints: Array<{ title: string; description: string; tone: 'positive' | 'adjust' | 'neutral' }>;
   comparison?: MakeupPreviewComparison;
 }
@@ -86,14 +94,24 @@ export interface TutorialStep {
   step_id: string;
   part: TutorialPart;
   taxonomy_primary?: string;
+  taxonomy_sub_steps?: string[];
   product: TutorialProduct;
   visual_layer: TutorialVisualLayer;
   instruction: string;
   adaptation_note: string;
   video_clip: { start: number; end: number };
+  display_title?: string;
+  display_group_id?: string;
   display_product?: string;
   display_product_tier?: 'specific' | 'characteristic' | 'category' | 'none';
   technique?: string;
+}
+
+export interface TutorialStepGroup {
+  group_id: string;
+  title: string;
+  index: number;
+  step_ids: string[];
 }
 
 export interface Tutorial {
@@ -101,6 +119,7 @@ export interface Tutorial {
   tutorial_id: string;
   title: string;
   steps: TutorialStep[];
+  step_groups?: TutorialStepGroup[];
   /** 上传原片的公开播放地址（API 追加，不在磁盘 tutorial.json 内） */
   videoUrl?: string;
 }

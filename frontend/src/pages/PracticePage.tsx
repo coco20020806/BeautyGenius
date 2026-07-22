@@ -1,5 +1,5 @@
 import { ArrowLeft, ListOrdered, Play, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
 import { canPlayStepClip, StepClipPlayer } from '../components/StepClipPlayer';
@@ -9,7 +9,9 @@ import {
   formatProductLine,
   formatRangeText,
   formatTechnique,
-  stepHeading,
+  groupHeading,
+  resolveTutorialGroups,
+  stepSegmentTitle,
 } from '../utils/formatTutorialStep';
 
 type LoadState = 'loading' | 'ready' | 'empty' | 'error';
@@ -28,7 +30,15 @@ export function PracticePage() {
   const [tutorial, setTutorial] = useState<Tutorial | null>(null);
   const [loadState, setLoadState] = useState<LoadState>(taskId ? 'loading' : 'empty');
   const [errorMessage, setErrorMessage] = useState('');
-  const [activeStep, setActiveStep] = useState<{ step: TutorialStep; index: number } | null>(null);
+  const [activeStep, setActiveStep] = useState<{
+    step: TutorialStep;
+    title: string;
+  } | null>(null);
+
+  const resolvedGroups = useMemo(
+    () => (tutorial ? resolveTutorialGroups(tutorial) : []),
+    [tutorial],
+  );
 
   useEffect(() => {
     if (!taskId) {
@@ -117,37 +127,54 @@ export function PracticePage() {
           </section>
 
           <ol className="tutorial-step-list" aria-label="教程步骤">
-            {tutorial.steps.map((step, index) => {
-              const playable = canPlayStepClip(tutorial.videoUrl, step.video_clip);
-              return (
-                <li key={step.step_id} className="tutorial-step-card">
-                  <h3>{stepHeading(step, index)}</h3>
-                  <dl className="tutorial-step-fields">
-                    <div>
-                      <dt>产品</dt>
-                      <dd>{formatProductLine(step)}</dd>
-                    </div>
-                    <div>
-                      <dt>范围</dt>
-                      <dd>{formatRangeText(step.visual_layer)}</dd>
-                    </div>
-                    <div>
-                      <dt>手法</dt>
-                      <dd>{formatTechnique(step)}</dd>
-                    </div>
-                  </dl>
-                  <button
-                    className="step-clip-trigger"
-                    type="button"
-                    disabled={!playable}
-                    onClick={() => setActiveStep({ step, index })}
-                  >
-                    <Play size={14} />
-                    看视频
-                  </button>
-                </li>
-              );
-            })}
+            {resolvedGroups.map(({ group, steps }) => (
+              <li key={group.group_id} className="tutorial-step-card">
+                <h3>{groupHeading(group)}</h3>
+                <div className="tutorial-step-segments">
+                  {steps.map((step) => {
+                    const playable = canPlayStepClip(tutorial.videoUrl, step.video_clip);
+                    const multi = steps.length > 1;
+                    return (
+                      <div key={step.step_id} className="tutorial-step-segment">
+                        {multi ? (
+                          <h4 className="tutorial-step-segment__title">{stepSegmentTitle(step)}</h4>
+                        ) : null}
+                        <dl className="tutorial-step-fields">
+                          <div>
+                            <dt>产品</dt>
+                            <dd>{formatProductLine(step)}</dd>
+                          </div>
+                          <div>
+                            <dt>范围</dt>
+                            <dd>{formatRangeText(step.visual_layer)}</dd>
+                          </div>
+                          <div>
+                            <dt>手法</dt>
+                            <dd>{formatTechnique(step)}</dd>
+                          </div>
+                        </dl>
+                        <button
+                          className="step-clip-trigger"
+                          type="button"
+                          disabled={!playable}
+                          onClick={() =>
+                            setActiveStep({
+                              step,
+                              title: multi
+                                ? `${groupHeading(group)} · ${stepSegmentTitle(step)}`
+                                : groupHeading(group),
+                            })
+                          }
+                        >
+                          <Play size={14} />
+                          看视频
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            ))}
           </ol>
 
           <section className="practice-footer" aria-label="跟练下一步">
@@ -165,7 +192,7 @@ export function PracticePage() {
               open
               videoUrl={tutorial.videoUrl}
               clip={activeStep.step.video_clip}
-              title={stepHeading(activeStep.step, activeStep.index)}
+              title={activeStep.title}
               onClose={() => setActiveStep(null)}
             />
           ) : null}

@@ -22,6 +22,9 @@ def _safe_diagram_filename(step_id: str) -> str:
 
 
 def step_heading(step: dict[str, Any], index: int) -> str:
+    display = (step.get("display_title") or "").strip()
+    if display:
+        return f"步骤 {index + 1} · {display}"
     primary = (step.get("taxonomy_primary") or "").strip()
     if primary:
         return f"步骤 {index + 1} · {primary}"

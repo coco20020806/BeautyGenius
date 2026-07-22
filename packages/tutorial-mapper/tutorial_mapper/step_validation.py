@@ -164,6 +164,23 @@ def validate_tutorial_steps(tutorial: dict[str, Any]) -> dict[str, Any]:
                 )
             )
 
+    title_owners: dict[str, list[str]] = defaultdict(list)
+    for step in steps:
+        sid = (step.get("step_id") or "").strip()
+        title = (step.get("display_title") or "").strip()
+        if title and sid:
+            title_owners[title].append(sid)
+    for title, ids in title_owners.items():
+        if len(ids) >= 2:
+            issues.append(
+                _issue(
+                    "duplicate_display_title",
+                    "warning",
+                    f"display_title 重复: {title}",
+                    step_ids=ids,
+                )
+            )
+
     by_primary_out: dict[str, Any] = {
         p: {"step_count": len(ids), "step_ids": ids} for p, ids in by_primary.items()
     }

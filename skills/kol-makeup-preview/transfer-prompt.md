@@ -3,8 +3,10 @@
 Attribution：长 prompt 约束结构参考 [JoyelleZ/makeup — wan-makeup-transfer](https://github.com/JoyelleZ/makeup/tree/main/wan-makeup-transfer)（静态化，无逐 KOL 填槽）。
 
 图拓扑版本：`prompt_version` 为 **v2**（三图）或 **v1**（二图降级）。  
-正文版本：`prompt_text_version: wan-long-1`（与图拓扑分离；改长正文时递增）。  
-实现：`packages/makeup-preview/makeup_preview/prompt_loader.py` 读取本文 `prompt-v1` / `prompt-v2` 代码块 → `transfer.py`。
+正文版本：`prompt_text_version: wan-long-2`（与图拓扑分离；引入 [transfer-scope.md](transfer-scope.md) 附录后自 `wan-long-1` 递增）。  
+实现：`prompt_loader.py` 读 base 块；`prompt_compose.py` 在 scoped 模式下追加 scope 附录 → `transfer.py`。
+
+局部教程（scoped）规则见 [transfer-scope.md](transfer-scope.md)；full 模式仅使用下文 `prompt-v2` / `prompt-v1` base。
 
 ## 图像顺序（v2，固定，勿调换）
 
@@ -115,6 +117,26 @@ response = ImageGeneration.call(
 禁止：不得换脸或像博主；不得改骨相、比例、眼鼻嘴下颌、年龄、发型、表情；不得过度美白磨皮饱和、加重修容眼线睫毛腮红、臆造配饰或烟熏浓妆，除非图1中明确存在。
 ```
 
+## 机器可读正文（scoped 附录，追加在 base 之后）
+
+v2 三图：`prompt_compose` 在 `prompt_mode=scoped` 时将下列块拼接到 `prompt-v2` 末尾。占位符由实现替换。
+
+```prompt-v2-scope-appendix
+【教程范围约束】本视频教程仅涉及以下化妆主类：{{PRIMARY_LIST_ZH}}。
+仅允许在图3上修改与上述主类对应的妆效区域（{{REGION_LIST_ZH}}）。
+图3上未列出的区域（肤色、眉形、眼妆、腮红、修容、高光、唇形比例、发型等）须保持与图3原图一致，不得新增或加深任何妆效。
+参考图1相对图2的差分，只用于理解上述允许区域内的妆效；不得将图1中其他区域的妆迁移到图3。
+```
+
+v1 二图降级：逻辑相同，图号改为图2。
+
+```prompt-v1-scope-appendix
+【教程范围约束】本视频教程仅涉及以下化妆主类：{{PRIMARY_LIST_ZH}}。
+仅允许在图2上修改与上述主类对应的妆效区域（{{REGION_LIST_ZH}}）。
+图2上未列出的区域（肤色、眉形、眼妆、腮红、修容、高光、唇形比例、发型等）须保持与图2原图一致，不得新增或加深任何妆效。
+参考图1的可见妆效与差分理解，只用于上述允许区域内的妆效；不得将图1中其他区域的妆迁移到图2。
+```
+
 ## 参数约定
 
 | 参数 | 预览默认 |
@@ -135,5 +157,7 @@ response = ImageGeneration.call(
 ## 维护
 
 - 改 **图数量/顺序**：更新 `prompt_version`（v1/v2）与 `preview.json.transfer.prompt_version`。
-- 改 **长正文**：递增 `prompt_text_version`（如 `wan-long-2`）并更新 `preview.json.transfer.prompt_text_version`。
+- 改 **长正文 base**：递增 `prompt_text_version` 并更新 `preview.json.transfer.prompt_text_version`。
+- 改 **scoped 附录或主类→区域映射**：同步 [transfer-scope.md](transfer-scope.md) 与 `scope_loader` / `prompt_compose` 常量。
+- **scoped 拼接**：`transfer_prompt.txt` = base + `\n\n` + 替换占位符后的 appendix；见 [transfer-scope.md](transfer-scope.md)。
 - 若 md 缺失或代码块损坏，实现回退 `config.py` 短 prompt，并写 `warnings: transfer_prompt_fallback_static`。

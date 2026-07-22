@@ -72,3 +72,22 @@ def test_duplicate_step_id():
     result = validate_tutorial_steps(tutorial)
     assert result["pass"] is False
     assert any(i["code"] == "duplicate_step_id" for i in result["issues"])
+
+
+def test_duplicate_display_title_warning():
+    tutorial = {
+        "duration": 60,
+        "steps": [
+            {
+                **_lip_step("lip_01", 0.0, 30.0, "a"),
+                "display_title": "唇妆 · 唇线",
+            },
+            {
+                **_lip_step("lip_02", 30.0, 60.0, "b"),
+                "display_title": "唇妆 · 唇线",
+            },
+        ],
+    }
+    result = validate_tutorial_steps(tutorial)
+    assert result["pass"] is True
+    assert any(i["code"] == "duplicate_display_title" for i in result["issues"])

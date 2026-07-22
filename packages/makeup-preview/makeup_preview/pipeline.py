@@ -15,6 +15,7 @@ from makeup_preview.face_qa import run_face_qa
 from makeup_preview.io_util import make_run_dir, maybe_copy, prepare_for_api, ensure_preview_matches_target
 from makeup_preview.preview_align import harmonize_preview_pair
 from makeup_preview.reference_pick import pick_reference_from_parse_run
+from makeup_preview.scope_loader import resolve_transfer_scope
 from makeup_preview.transfer import run_transfer
 
 BaselineGender = Literal["female", "male"]
@@ -162,6 +163,14 @@ def run_preview_job(
     prompt_version = "v2" if before_run.is_file() else "v1"
     prompt_text_version: str | None = None
     target_pixel_size: list[int] | None = None
+    transfer_scope = resolve_transfer_scope(
+        parse_run_dir,
+        transfer_scope_override=config.transfer_scope_override,
+    )
+    warnings.extend(transfer_scope.warnings)
+    prompt_mode: str = transfer_scope.prompt_mode
+    transfer_scope_doc: dict[str, Any] | None = None
+
     if not skip_transfer and ref_api and ref_api.is_file():
         from PIL import Image
 
@@ -170,12 +179,13 @@ def run_preview_job(
         target_pixel_size = [tw, th]
         requested_size = resolve_image_size(tw, th, default=config.image_size)
         t1 = time.perf_counter()
-        names, prompt_version, requested_size, prompt_text_version, prompt_fallback = run_transfer(
+        names, prompt_version, requested_size, prompt_text_version, prompt_fallback, prompt_mode, transfer_scope_doc = run_transfer(
             ref_api,
             tgt_api,
             config,
             run_dir,
             tutorial_before_path=before_api,
+            transfer_scope=transfer_scope,
             image_size=requested_size,
             output_canvas_path=tgt_run,
         )
@@ -199,6 +209,7 @@ def run_preview_job(
             "model": config.image_model,
             "prompt_version": prompt_version,
             "prompt_text_version": prompt_text_version,
+            "prompt_mode": prompt_mode,
         },
         "outputs": outputs,
         "warnings": warnings,
@@ -207,6 +218,12 @@ def run_preview_job(
         preview["transfer"]["requested_size"] = requested_size
     if target_pixel_size is not None:
         preview["transfer"]["target_pixel_size"] = target_pixel_size
+    if transfer_scope_doc is not None:
+        preview["transfer"]["scope"] = transfer_scope_doc
+    elif transfer_scope.source != "default_full" or transfer_scope.present_primaries:
+        from makeup_preview.scope_loader import scope_to_preview_dict
+
+        preview["transfer"]["scope"] = scope_to_preview_dict(transfer_scope)
     if preview_alignment is not None:
         preview["alignment"] = preview_alignment
         align_warnings = preview_alignment.get("warnings") or []

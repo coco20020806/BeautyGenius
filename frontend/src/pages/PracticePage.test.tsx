@@ -14,6 +14,9 @@ test('renders tutorial steps from mock service', async () => {
   await waitFor(() => {
     expect(screen.getByText('橘朵腮红01')).toBeInTheDocument();
   });
+  expect(screen.getByRole('heading', { name: '步骤 1 · 底妆' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '步骤 2 · 腮红' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '步骤 3 · 唇妆' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '前往示例图' })).toBeInTheDocument();
   expect(screen.getByText('全脸均匀铺开')).toBeInTheDocument();
   expect(screen.getByText('少量轻拍晕染')).toBeInTheDocument();

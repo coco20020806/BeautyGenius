@@ -42,6 +42,10 @@
       "type": "array",
       "items": { "$ref": "#/$defs/step" }
     },
+    "step_groups": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/step_group" }
+    },
     "eye_detail": {
       "type": "object",
       "additionalProperties": true
@@ -123,6 +127,8 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "display_title": { "type": "string" },
+        "display_group_id": { "type": "string" },
         "product": { "$ref": "#/$defs/product" },
         "visual_layer": { "$ref": "#/$defs/visual_layer" },
         "instruction": { "type": "string" },
@@ -139,6 +145,20 @@
               "label": { "type": "string" }
             }
           }
+        }
+      },
+      "additionalProperties": true
+    },
+    "step_group": {
+      "type": "object",
+      "required": ["group_id", "title", "index", "step_ids"],
+      "properties": {
+        "group_id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "index": { "type": "integer", "minimum": 1 },
+        "step_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
         }
       },
       "additionalProperties": true
