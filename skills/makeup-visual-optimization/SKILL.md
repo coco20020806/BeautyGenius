@@ -53,7 +53,7 @@ Process tutorial steps in source order.
 
 - [ ] Output states the primary goal and retained original modules.
 - [ ] Each changed step has `original`, `adapted`, `actions`, `visual_layer_patch`, and `adaptation_note`.
-- [ ] Layer opacity stays inside project ranges from `memory-bank/architecture.md`.
+- [ ] Layer opacity stays inside project ranges from [references/output-contract.md](references/output-contract.md) **Opacity Ranges** (e.g. Base 0.18–0.28, Blush 0.30–0.48).
 - [ ] Shortening-midface cases flatten blush placement and lower contour start where relevant.
 - [ ] Execution limits change tools or complexity, not only copy.
 - [ ] Practice checklist patches are directly followable.

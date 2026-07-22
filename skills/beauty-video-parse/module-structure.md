@@ -124,7 +124,7 @@ flowchart TB
 
 | `replication_refs` | 首步 start / 末化妆步 end 选帧、写 `makeup_replication_refs`、单帧+Pair L2；片尾仅回退 | 修改 12 类 taxonomy |
 
-| `keyframes` | 步级抽帧、L1/L2、**L2 窗内重抽**（v2.2） | 改 vision 步骤 prompt |
+| `keyframes` | 步级抽帧、L1/L2（L1 ±1.5s 重试已落地；**L2 窗内重抽 v2.2 未实现**） | 改 vision 步骤 prompt |
 
 | `pipeline` | 编排；**一次** schema validate；**阶段进度**回调/打印 | UI / HTTP |
 
@@ -154,7 +154,7 @@ CLI：`--mode full|fast`（`fast` ⇒ 跳过 L2 关键帧 QA）；`--skip-keyfra
 
 | Skill 文档 v2.1 + 复刻参考 | **refs v1.2** 步骤边界主策略 [makeup-replication-refs.md](makeup-replication-refs.md)；**代码已实现** `replication_refs.py` |
 
-| Skill 步级 L2 失败重抽（v2.2） | **文档已定** [keyframe-validation.md](keyframe-validation.md)；**代码待做** `keyframes.py` |
+| Skill 步级 L2 失败重抽（v2.2） | **设计稿**见 [keyframe-validation.md](keyframe-validation.md)；**运行时未启用**（`keyframes.py` 待做） |
 
 | Skill CLI 阶段进度 `[n/10]` | **已实现**：`ParseConfig.on_progress` + CLI stderr；`--quiet` / `BEAUTY_PARSE_QUIET=1` |
 

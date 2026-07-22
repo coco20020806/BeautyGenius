@@ -30,4 +30,4 @@ C:\Users\fei.kong\Desktop\Beauty Genius\skills\
 
 实现代码在 `packages/` 与 `scripts/`，Skill 只描述「怎么做」与契约，不含密钥。
 
-**串联 job**（parse → Tutorial 映射 → preview）：[`docs/REPLICATE_PIPELINE.md`](../docs/REPLICATE_PIPELINE.md) · `scripts/run_beauty_replicate.py`
+**串联 job**（parse → Tutorial 映射 → understanding → preview）：[`docs/REPLICATE_PIPELINE.md`](../docs/REPLICATE_PIPELINE.md) · `scripts/run_beauty_replicate.py`

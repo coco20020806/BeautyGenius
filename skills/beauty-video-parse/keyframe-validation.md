@@ -1,6 +1,6 @@
 # 关键帧验收规则（Keyframe QA）
 
-版本：v2.2（含复刻参考对 + 步级 L2 失败重抽）
+版本：v2.1 运行时（复刻参考对 + 步级 L1/L2）；**v2.2 步级 L2 失败重抽为设计稿，代码未实现**
 
 适用：每次 run 在 `ffmpeg` 抽帧后自动执行；结果写入 `keyframe-qa.json`，并回写 `analysis.json` 中各 keyframe 的 `validation` 字段。
 
@@ -21,7 +21,7 @@
 
 **分屏 crop**：从单帧裁出的半幅图仍须满足 **宽、高均 ≥ 320 px**；不足则放弃 split 策略，改 sequence 或 `tutorial_baseline` 回退。
 
-**L1 重抽策略**：在原时间戳 **±1.5 s** 内最多尝试 **3** 个候选（原时刻、+1.5s、−1.5s），仍失败则保留最后一帧但标记 `validation.pass: false`。该层**仅**服务文件存在性 / 体积 / 分辨率，与下文 L2 重抽是**另层**循环，不混用同一 offset 表。
+**L1 重抽策略（已实现）**：在原时间戳 **±1.5 s** 内最多尝试 **3** 个候选（原时刻、+1.5s、−1.5s），仍失败则保留最后一帧但标记 L1 未通过。该层**仅**服务文件存在性 / 体积 / 分辨率。下文「L2 失败重抽」为规划能力，**当前运行时不会执行**。
 
 ### L2 语义验收 — 步级（Qwen 视觉，单步批量）
 
@@ -49,11 +49,13 @@
 | `step_end_face` | 同 `step_start_face`，对应该步骤结束时刻 |
 | `makeup_detail` | `has_face` 且 `region_match` 为 true；`label` 应优先为 [step-taxonomy.md](step-taxonomy.md) 中的 **sub_step 名** |
 
-首轮仍用**整步多图一次**批量 L2；仅 `validation.pass == false` 的帧进入下方重抽循环（控成本）。
+首轮用**整步多图一次**批量 L2。L2 失败后**当前实现**：保留帧、`validation.pass: false`，**不**进入窗内重抽。
 
-### L2 失败重抽（步级，v2.2）
+### L2 失败重抽（步级，v2.2 设计 — 代码未实现）
 
-范围：**仅**步级角色 `step_start_face` / `step_end_face` / `makeup_detail`。`replication_*` 与 Pair **本版不**因 L2 失败自动重抽（见下文复刻节）。
+> **状态**：规范已定，[`keyframes.py`](../../packages/video-parse/video_parse/keyframes.py) **尚未**写入 `l2_retry` / `l2_rescued`。Agent 与验收以「L2 失败即标失败」为准；下列规则供后续实现对照。
+
+范围（实现后）：**仅**步级角色 `step_start_face` / `step_end_face` / `makeup_detail`。`replication_*` 与 Pair **不**因 L2 失败自动重抽（见下文复刻节）。
 
 ```mermaid
 flowchart TD
@@ -96,7 +98,7 @@ flowchart TD
   - `l2_rescued`：重抽后变为 `pass: true` 的帧数
 - `retried_extracts`：继续表示**抽帧次数合计**（含 L1 与 L2 重抽产生的每一次 extract）
 
-实现须同步 [keyframes.py](../../packages/video-parse/video_parse/keyframes.py) 与 [output-contract.md](output-contract.md)（文档已定 / 代码待做）。
+实现时须同步 [keyframes.py](../../packages/video-parse/video_parse/keyframes.py) 与 [output-contract.md](output-contract.md)。**当前产物不含**上述 `l2_retry` / `l2_rescued` 字段。
 
 ### L2 语义验收 — 复刻参考（v2.1 / refs v1.2）
 
@@ -132,13 +134,13 @@ flowchart TD
 
 **分屏单帧**（仅片尾回退路径）：先 L2 判定妆前/妆后各占哪一侧，再 crop；crop 后各自走单帧 L2。
 
-复刻侧 L2 **不通过**：不删除文件；**不**自动窗内重抽（步级 L2 重抽不含 replication）；after 单帧或 Pair 失败时下游须拒用或人工复核。
+复刻侧 L2 **不通过**：不删除文件；**不**自动窗内重抽；after 单帧或 Pair 失败时下游须拒用或人工复核。
 
 
 ### L3 汇总（写入 run）
 
-- `keyframe-qa.json`：步级每帧（含可选 `l2_retry`）+ **`replication_pair`**（v2.1）
-- `meta.json`：`keyframe_qa` 步级汇总（含 `l2_retried_frames` / `l2_rescued`）；**`replication_refs`** 复刻对汇总
+- `keyframe-qa.json`：步级每帧（L1 + validation；**当前无** `l2_retry`）+ **`replication_pair`**（v2.1）
+- `meta.json`：`keyframe_qa` 步级汇总（`total` / `passed` / `failed` / `retried_extracts` / 可选 `l2_skipped`；**当前无** `l2_retried_frames` / `l2_rescued`）；**`replication_refs`** 复刻对汇总
 - `analysis.json`：步级 keyframe `validation` + **`makeup_replication_refs`**
 
 ## 与 taxonomy 的关系

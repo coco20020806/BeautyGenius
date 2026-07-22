@@ -77,7 +77,7 @@ $env:BEAUTY_PARSE_QUIET = "1"
 [10/10] 写盘完成 (251s)
 ```
 
-启用步级 L2 窗内重抽后，`keyframe-qa.json` 的 `summary.failed` 应相对「仅标失败不重抽」更少；可用 `l2_rescued` 查看挽回帧数。
+L2 失败帧会留在 `keyframes/` 且 `validation.pass: false`；`summary.failed` 反映最终未通过数。步级 L2 窗内重抽（`l2_rescued`）为 v2.2 设计，**当前未写入产物**。
 
 ## 成功输出示例（结构摘要）
 

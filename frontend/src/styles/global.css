@@ -57,6 +57,7 @@ h1, h2, h3, p { margin-top: 0; }
 .upload-card__icon { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 14px; border-radius: 50%; color: var(--rose); background: var(--rose-soft); }
 .upload-card__title { max-width: 92%; overflow: hidden; color: var(--ink); font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .upload-card__meta { margin-top: 7px; color: var(--muted); font-size: 11px; }
+.upload-card__hint { margin: 8px 4px 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
 .upload-card__check { position: absolute; top: 14px; right: 14px; padding: 3px; color: white; border-radius: 50%; background: var(--rose); }
 .inline-error { margin: 8px 4px 0; color: #a63d47; font-size: 12px; }
 
@@ -137,6 +138,14 @@ h1, h2, h3, p { margin-top: 0; }
 .portrait-placeholder__halo { position: absolute; width: 155px; height: 155px; border-radius: 50%; background: #ead9d2; box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
 .portrait-placeholder svg { position: relative; z-index: 1; }
 .photo-preview__badge { position: absolute; bottom: 12px; left: 50%; display: flex; padding: 7px 10px; align-items: center; gap: 5px; color: #5d504c; border: 1px solid rgba(255,255,255,.7); border-radius: 20px; background: rgba(255,255,255,.84); font-size: 10px; transform: translateX(-50%); backdrop-filter: blur(10px); pointer-events: none; }
+.portrait-example-trigger { display: flex; width: 100%; min-height: 38px; margin-top: 10px; align-items: center; justify-content: center; color: var(--rose); border: 0; background: transparent; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.portrait-example-trigger:active { opacity: .78; }
+.portrait-example-panel { background: #fffaf8; }
+.portrait-example-panel .step-clip-panel__header { color: var(--ink); }
+.portrait-example-panel .step-clip-panel__header .icon-button { color: var(--ink); }
+.portrait-example-panel .step-clip-panel__header .icon-button:active { background: rgba(0,0,0,.06); }
+.portrait-example-panel__image { display: block; width: 100%; max-height: min(62dvh, 480px); object-fit: contain; background: #efe6e1; }
+.portrait-example-panel__caption { margin: 0; padding: 12px 14px 16px; color: var(--muted); font-size: 11px; line-height: 1.55; text-align: center; }
 .photo-value-card > p { margin: 13px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .photo-tips { margin: 13px 0 0; padding: 0; list-style: none; }
 .photo-tips li { display: grid; grid-template-columns: 34px 1fr 20px; padding: 10px 0; align-items: center; gap: 8px; border-top: 1px solid #eee7e3; }

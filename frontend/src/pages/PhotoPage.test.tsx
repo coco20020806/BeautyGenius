@@ -61,6 +61,24 @@ test('previews a selected image before confirmation', async () => {
   expect(screen.getByRole('img', { name: '待确认的本人照片' })).toHaveAttribute('src', 'blob:photo-preview');
 });
 
+test('opens and closes the standard portrait example dialog', async () => {
+  const user = userEvent.setup();
+  renderPhotoPage();
+
+  expect(screen.queryByRole('dialog', { name: '标准人像照片示例' })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '查看标准人像照片示例' }));
+
+  const dialog = screen.getByRole('dialog', { name: '标准人像照片示例' });
+  expect(dialog).toBeInTheDocument();
+  expect(screen.getByRole('img', { name: '标准人像平均脸示例' })).toBeInTheDocument();
+  expect(screen.getByText('跳过上传时将使用此平均脸底图生成预览')).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '关闭示例' }));
+
+  expect(screen.queryByRole('dialog', { name: '标准人像照片示例' })).not.toBeInTheDocument();
+});
+
 test('stays on photo page when upload validation rejects', async () => {
   const user = userEvent.setup();
   uploadPhoto.mockRejectedValue(

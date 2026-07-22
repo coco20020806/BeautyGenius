@@ -56,7 +56,7 @@ python scripts/parse_beauty_video.py --video /path/to/video.mp4 --mode fast
 4. **Parallel** — `fun-asr` 与 `qwen3.7-plus`（structured JSON，含 `steps` + `replication_hints`）。
 5. **Merge** — ASR 归入 `text.voiceover`；normalize taxonomy；步级 keyframe 元数据与文件名。
 6. **Taxonomy coverage** — 写入 `taxonomy-coverage.json`。
-7. **Step keyframes + QA** — ffmpeg 抽步级帧 → L1 → 步级批量 L2 → **失败帧在步骤时间窗内固定步长重抽** → 写 `keyframe-qa.json`（步级部分）。见 [keyframe-validation.md](keyframe-validation.md)。
+7. **Step keyframes + QA** — ffmpeg 抽步级帧 → L1（失败时 ±1.5s 最多 3 候选）→ 步级批量 L2（失败**不**自动重抽）→ 写 `keyframe-qa.json`（步级部分）。见 [keyframe-validation.md](keyframe-validation.md)。L2 窗内重抽为 v2.2 设计稿，**当前未实现**。
 8. **Replication refs** — before：时间序第一步 `step_start_face`；after：时间序最后非 skipped 化妆主类步骤结束全脸（失败再片尾回退）。见 [makeup-replication-refs.md](makeup-replication-refs.md)（refs v1.2）。可 `--skip-replication-refs` 跳过，契约保持 v2。
 9. **Validate** — **一次** `jsonschema`（v2 或 v2.1 schema）。
 10. **Write** — `analysis.json`、`meta.json`（含 `replication_refs` 汇总）。
@@ -73,7 +73,7 @@ python scripts/parse_beauty_video.py --video /path/to/video.mp4 --mode fast
 | 4 | Vision | `[4/10] Vision 分析中…` |
 | 5 | ASR | `[5/10] ASR 转写中…`；与 4 并行时双方可标「并行中」 |
 | 6 | Merge | `[6/10] Merge + taxonomy…` |
-| 7 | 步级关键帧 + QA | `[7/10] 关键帧 QA（步骤 2/7）…`；L2 重抽时 `[7/10] L2 重抽 定妆 step_end_face…` |
+| 7 | 步级关键帧 + QA | `[7/10] 关键帧 QA（步骤 2/7）…` |
 | 8 | 复刻参考 | `[8/10] 复刻参考对…`；`--skip-replication-refs` 时打印 `跳过复刻参考` 仍占序号 8 |
 | 9 | Schema | `[9/10] Schema 校验…` |
 | 10 | 写盘 | `[10/10] 写盘完成` |
@@ -98,7 +98,7 @@ python scripts/parse_beauty_video.py --video /path/to/video.mp4 --mode fast
 - [ ] `复刻-妆后-*` 对应时间序最后非 skipped 化妆主类步骤结束处（`last_step_end` / `last_step_scan`）；非对比卡素颜
 - [ ] `replication_after` 单帧 L2 含 **`makeup_complete`**；Pair 不能代替单帧判定
 - [ ] `pair_validation.pass` 为 false 或 after 单帧失败时下游不得静默用于自动复刻
-- [ ] 步级 QA：L2 失败优先**窗内自动重抽**；`summary.l2_rescued` 可解释挽回数；仍 `failed` 的项再人工复核
+- [ ] 步级 QA：L1 失败可 ±1.5s 重试；L2 失败保留帧并 `pass: false`，人工复核（**无**窗内 L2 自动重抽 / `l2_rescued`）
 - [x] CLI 默认有 `[n/10]` 阶段进度；`--quiet` / `BEAUTY_PARSE_QUIET=1` 可关闭
 
 ## 延伸阅读
@@ -109,7 +109,7 @@ python scripts/parse_beauty_video.py --video /path/to/video.mp4 --mode fast
 | [output-contract.md](output-contract.md) | JSON 与 run 目录契约（v2 / v2.1） |
 | [makeup-replication-refs.md](makeup-replication-refs.md) | 片尾 before/after 复刻参考 |
 | [step-taxonomy.md](step-taxonomy.md) | 化妆步骤 taxonomy |
-| [keyframe-validation.md](keyframe-validation.md) | 关键帧 L1/L2 / L2 重抽 / Pair QA |
+| [keyframe-validation.md](keyframe-validation.md) | 关键帧 L1/L2 / Pair QA（含 v2.2 L2 重抽设计稿） |
 | [taxonomy-enums.json](taxonomy-enums.json) | 机器可读枚举 |
 | [examples.md](examples.md) | 命令与样例 |
 | [module-structure.md](module-structure.md) | 可复用包与演进 |

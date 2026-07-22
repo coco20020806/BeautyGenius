@@ -150,9 +150,9 @@ Schema 源文件（按版本）：
 
 | `validation` | QA 完成后写入（见 [keyframe-validation.md](keyframe-validation.md)） |
 
-| `validation.pass` | L1 + L2 均满足时为 true（含 L2 窗内重抽后的最终结果；skip L2 时见该文档） |
+| `validation.pass` | L1 + L2 均满足时为 true（`--mode fast` / skip L2 时见 [keyframe-validation.md](keyframe-validation.md)） |
 
-| `timestamp_sec` | 最终采用时刻；L2 重抽成功后可能与视觉初值不同 |
+| `timestamp_sec` | 最终采用时刻；L1 重试成功后可能相对视觉初值偏移 ±1.5s（**当前无** L2 窗内重抽改写） |
 
 | 其余 | `index_in_step`、`role`、`filename` |
 
@@ -168,7 +168,7 @@ Schema 源文件（按版本）：
 
 | `summary` | 步级帧汇总，见下表 |
 
-| `items[]` | 每步每帧 l1、validation、pass；可选 `l2_retry`（v2.2） |
+| `items[]` | 每步每帧 l1、validation、pass；**规划**可选 `l2_retry`（v2.2，当前不写） |
 
 | `vision_by_step` | 步级 L2 原始结果（首轮批量） |
 
@@ -186,21 +186,21 @@ Schema 源文件（按版本）：
 
 | `total` / `passed` / `failed` | 帧计数（`failed` 为最终仍未通过数） |
 
-| `retried_extracts` | **抽帧次数合计**（含 L1 与步级 L2 重抽产生的每一次 extract） |
+| `retried_extracts` | **抽帧次数合计**（当前仅为 L1 重试产生的 extract 次数之和） |
 
 | `l2_skipped` | 是否跳过步级 L2 |
 
-| `l2_retried_frames` | **v2.2**：进入过 L2 窗内重抽的帧数 |
+| `l2_retried_frames` | **v2.2 规划**：进入过 L2 窗内重抽的帧数（**当前不写**） |
 
-| `l2_rescued` | **v2.2**：重抽后变为 pass 的帧数 |
-
-
-
-### items[].l2_retry（可选，v2.2）
+| `l2_rescued` | **v2.2 规划**：重抽后变为 pass 的帧数（**当前不写**） |
 
 
 
-仅当该帧触发过步级 L2 失败重抽时出现。规则见 [keyframe-validation.md](keyframe-validation.md)。
+### items[].l2_retry（可选，v2.2 规划 — 当前不写）
+
+
+
+仅当实现步级 L2 失败重抽且该帧触发过重抽时出现。规则见 [keyframe-validation.md](keyframe-validation.md)。**现行 `keyframes.py` 不产出本块。**
 
 
 
@@ -240,7 +240,7 @@ Schema 源文件（按版本）：
 
 - **v2**：taxonomy + coverage + 步级 keyframe validation；无 `makeup_replication_refs`。
 
-- **keyframe-qa v2.2 字段**（`l2_retry` / `l2_retried_frames` / `l2_rescued`）：写在 `keyframe-qa.json` / `meta.keyframe_qa`，**不** bump `analysis.json` 的 `contract_version`。
+- **keyframe-qa v2.2 规划字段**（`l2_retry` / `l2_retried_frames` / `l2_rescued`）：设计写在 `keyframe-qa.json` / `meta.keyframe_qa`，**不** bump `analysis.json` 的 `contract_version`；**当前运行时不写入**。
 
 - v1 仅作历史 run 参考。
 

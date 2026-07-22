@@ -44,10 +44,10 @@
 | 文件 | 说明 |
 |------|------|
 | `analysis.json` | 主输出（v2 或 v2.1） |
-| `meta.json` | probe、API 耗时、`replication_refs`（v2.1）、`keyframe_qa`（含 `l2_retried_frames` / `l2_rescued`，v2.2） |
+| `meta.json` | probe、API 耗时、`replication_refs`（v2.1）、`keyframe_qa`（步级汇总；**无** `l2_rescued` 直至 v2.2 落地） |
 | `transcript.json` | ASR segments + raw |
 | `keyframes/*.jpg` | 步级 + `复刻-妆前/妆后-*` |
-| `keyframe-qa.json` | 步级 L1/L2 + 可选 `l2_retry`（v2.2）+ `replication_pair` |
+| `keyframe-qa.json` | 步级 L1/L2 + `replication_pair`（v2.1；**无** `l2_retry` 直至 v2.2 落地） |
 | `replication_hints.json` | vision hints 快照（可选） |
 | `upload_proxy.mp4` | 可选 |
 | `audio.wav` | ASR 输入 |
@@ -80,7 +80,7 @@
 | 4 | Vision API |
 | 5 | ASR（可与 4 并行，文案可标「并行中」） |
 | 6 | Merge + taxonomy |
-| 7 | 步级关键帧 + QA（含子进度：步骤 i/N；L2 重抽文案待重抽实现） |
+| 7 | 步级关键帧 + QA（含子进度：步骤 i/N） |
 | 8 | 复刻参考（可跳过） |
 | 9 | Schema 校验 |
 | 10 | 写盘完成 |
@@ -97,7 +97,7 @@
 | ASR 失败 | OSS 上传、音频过长、配额 |
 | schema 失败 | 补全 step/keyframe；或走 JSON 修复 |
 | 压缩后仍 &gt;100MB | 提高 CRF/降分辨率或缩短源视频 |
-| 步级关键帧 L2 仍 failed | 查 `keyframe-qa.json` 的 `l2_retry` / `reason`；确认实现已按 v2.2 窗内重抽 |
+| 步级关键帧 L2 仍 failed | 查 `keyframe-qa.json` 的 `validation.reason` / `items[].pass`；现行**无**窗内 L2 重抽，需人工换源或改时间轴 |
 
 ## 与下游产品模型映射（Phase 2）
 

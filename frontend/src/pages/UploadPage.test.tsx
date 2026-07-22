@@ -10,6 +10,18 @@ afterEach(() => {
 });
 
 describe('UploadPage', () => {
+  it('shows video size and duration recommendation hint', () => {
+    render(
+      <MemoryRouter>
+        <UploadPage />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByText('建议视频不应过长、过大，否则无法正常解析，建议<5min、大小<50MB'),
+    ).toBeInTheDocument();
+  });
+
   it('shows selected video and enables continue', async () => {
     const user = userEvent.setup();
     render(

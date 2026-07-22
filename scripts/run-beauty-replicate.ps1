@@ -14,6 +14,7 @@ param(
   [switch]$SkipTutorialMap,
   [switch]$SkipTextEnrich,
   [switch]$SkipVisionEnrich,
+  [switch]$SkipUnderstanding,
   [switch]$SkipPreview,
   [switch]$SkipTransfer,
   [switch]$StrictReplication,
@@ -48,6 +49,7 @@ if ($SkipReplicationRefs) { $argsList += '--skip-replication-refs' }
 if ($SkipTutorialMap) { $argsList += '--skip-tutorial-map' }
 if ($SkipTextEnrich) { $argsList += '--skip-text-enrich' }
 if ($SkipVisionEnrich) { $argsList += '--skip-vision-enrich' }
+if ($SkipUnderstanding) { $argsList += '--skip-understanding' }
 if ($SkipPreview) { $argsList += '--skip-preview' }
 if ($SkipTransfer) { $argsList += '--skip-transfer' }
 if ($StrictReplication) { $argsList += '--strict-replication' }

@@ -100,6 +100,7 @@ export function UploadPage() {
         </label>
         {file && <Check className="upload-card__check" aria-hidden="true" size={19} />}
       </section>
+      <p className="upload-card__hint">建议视频不应过长、过大，否则无法正常解析，建议&lt;5min、大小&lt;50MB</p>
       {error && <p className="inline-error" role="alert">{error}</p>}
 
       <label className="option-row" htmlFor="fast-parse">

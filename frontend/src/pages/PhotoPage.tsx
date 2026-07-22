@@ -1,7 +1,8 @@
-import { ArrowLeft, Camera, Check, ImagePlus, LockKeyhole, ShieldCheck, SunMedium, UserRound } from 'lucide-react';
+import { ArrowLeft, Camera, Check, ImagePlus, LockKeyhole, ShieldCheck, SunMedium, UserRound, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
+import femaleAverageFace from '../assets/female-average-face.png';
 import { HttpError } from '../services/httpClient';
 import { makeupService } from '../services/makeupService';
 
@@ -11,11 +12,21 @@ export function PhotoPage() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [loadingAction, setLoadingAction] = useState<'skip' | 'upload' | null>(null);
   const [error, setError] = useState('');
+  const [exampleOpen, setExampleOpen] = useState(false);
   const previousUrl = useRef('');
 
   useEffect(() => () => {
     if (previousUrl.current) URL.revokeObjectURL(previousUrl.current);
   }, []);
+
+  useEffect(() => {
+    if (!exampleOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setExampleOpen(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [exampleOpen]);
 
   function choosePhoto(nextFile: File | null) {
     if (previousUrl.current) URL.revokeObjectURL(previousUrl.current);
@@ -80,6 +91,14 @@ export function PhotoPage() {
         <span className="photo-preview__badge"><Camera size={15} />{file ? '照片已就绪' : '上传正面照片'}</span>
       </label>
 
+      <button
+        className="portrait-example-trigger"
+        type="button"
+        onClick={() => setExampleOpen(true)}
+      >
+        查看标准人像照片示例
+      </button>
+
       {error ? <p className="upload-error" role="alert">{error}</p> : null}
 
       <div className="photo-skip">
@@ -112,6 +131,33 @@ export function PhotoPage() {
       </section>
 
       <div className="privacy-note"><LockKeyhole size={15} /><p>照片仅用于生成个人化预览和适配建议，你可以随时删除。</p></div>
+
+      {exampleOpen ? (
+        <div
+          className="step-clip-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="标准人像照片示例"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setExampleOpen(false);
+          }}
+        >
+          <div className="step-clip-panel portrait-example-panel">
+            <header className="step-clip-panel__header">
+              <h2>标准人像照片示例</h2>
+              <button className="icon-button" type="button" aria-label="关闭示例" onClick={() => setExampleOpen(false)}>
+                <X size={20} />
+              </button>
+            </header>
+            <img
+              className="portrait-example-panel__image"
+              src={femaleAverageFace}
+              alt="标准人像平均脸示例"
+            />
+            <p className="portrait-example-panel__caption">跳过上传时将使用此平均脸底图生成预览</p>
+          </div>
+        </div>
+      ) : null}
     </MobileShell>
   );
 }
