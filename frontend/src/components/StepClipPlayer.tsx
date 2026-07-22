@@ -9,7 +9,8 @@ export interface VideoClipRange {
 interface StepClipPlayerProps {
   open: boolean;
   videoUrl: string;
-  clip: VideoClipRange;
+  /** When omitted or invalid, the full original video plays. */
+  clip?: VideoClipRange | null;
   title?: string;
   onClose: () => void;
 }
@@ -25,6 +26,7 @@ function isValidClip(clip: VideoClipRange): boolean {
 
 export function StepClipPlayer({ open, videoUrl, clip, title, onClose }: StepClipPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const limitedClip = clip && isValidClip(clip) ? clip : null;
 
   useEffect(() => {
     if (!open) return;
@@ -38,16 +40,18 @@ export function StepClipPlayer({ open, videoUrl, clip, title, onClose }: StepCli
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!open || !video || !isValidClip(clip)) return;
+    if (!open || !video) return;
 
     let cancelled = false;
 
     const seekAndPlay = () => {
       if (cancelled) return;
-      try {
-        video.currentTime = clip.start;
-      } catch {
-        /* ignore seek errors before ready */
+      if (limitedClip) {
+        try {
+          video.currentTime = limitedClip.start;
+        } catch {
+          /* ignore seek errors before ready */
+        }
       }
       void video.play().catch(() => {
         /* autoplay may be blocked; controls remain available */
@@ -55,10 +59,11 @@ export function StepClipPlayer({ open, videoUrl, clip, title, onClose }: StepCli
     };
 
     const onTimeUpdate = () => {
-      if (video.currentTime >= clip.end) {
+      if (!limitedClip) return;
+      if (video.currentTime >= limitedClip.end) {
         video.pause();
         try {
-          video.currentTime = clip.end;
+          video.currentTime = limitedClip.end;
         } catch {
           /* ignore */
         }
@@ -82,7 +87,7 @@ export function StepClipPlayer({ open, videoUrl, clip, title, onClose }: StepCli
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.pause();
     };
-  }, [open, videoUrl, clip.start, clip.end]);
+  }, [open, videoUrl, limitedClip?.start, limitedClip?.end]);
 
   if (!open) return null;
 
@@ -103,18 +108,14 @@ export function StepClipPlayer({ open, videoUrl, clip, title, onClose }: StepCli
             <X size={20} />
           </button>
         </header>
-        {isValidClip(clip) ? (
-          <video
-            ref={videoRef}
-            className="step-clip-panel__video"
-            src={videoUrl}
-            controls
-            playsInline
-            preload="metadata"
-          />
-        ) : (
-          <p className="step-clip-panel__empty">该步骤暂无有效时间轴</p>
-        )}
+        <video
+          ref={videoRef}
+          className="step-clip-panel__video"
+          src={videoUrl}
+          controls
+          playsInline
+          preload="metadata"
+        />
       </div>
     </div>
   );
@@ -125,4 +126,9 @@ export function canPlayStepClip(
   clip: VideoClipRange | null | undefined,
 ): boolean {
   return Boolean(videoUrl && clip && isValidClip(clip));
+}
+
+/** Full original video is playable whenever a source URL exists. */
+export function canPlaySourceVideo(videoUrl: string | null | undefined): boolean {
+  return Boolean(videoUrl);
 }

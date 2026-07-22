@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { CollectedTutorialPage } from './CollectedTutorialPage';
 import { LibraryPage } from './LibraryPage';
 
-test('renders preview json and illustrated placeholder sections', async () => {
+test('renders preview practice steps and illustrated sections for sample 1', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/library/collected/collected-sample-1']}>
@@ -17,12 +17,25 @@ test('renders preview json and illustrated placeholder sections', async () => {
 
   expect(await screen.findByRole('heading', { name: '示例视频1' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '妆容预览' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: '解析 JSON' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '跟练步骤' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '图示教程' })).toBeInTheDocument();
-  expect(screen.getByLabelText('tutorial.json 占位')).toHaveTextContent('placeholder_sample_1');
-  expect(screen.getByLabelText('tutorial.json 占位')).toHaveTextContent('示例结构 · 待接入真实解析');
-  expect(screen.getByRole('button', { name: /查看原视频切片/ })).toBeDisabled();
-  expect(screen.getByRole('button', { name: /查看眼部精讲/ })).toBeDisabled();
+  expect(screen.queryByRole('heading', { name: '解析 JSON' })).not.toBeInTheDocument();
+  expect(screen.getByLabelText('教程步骤')).toBeInTheDocument();
+  expect(screen.getAllByText('产品').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('手法').length).toBeGreaterThan(0);
+  expect(screen.getByText('珂岸面部素颜霜')).toBeInTheDocument();
+  expect(screen.getByAltText('妆前 示例图')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /查看原视频切片/ })).toBeEnabled();
+  const playButtons = screen.getAllByRole('button', { name: '看视频' });
+  expect(playButtons.length).toBeGreaterThan(0);
+  expect(playButtons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true);
+  expect(screen.queryByRole('button', { name: /查看眼部精讲/ })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: /查看原视频切片/ }));
+  expect(screen.getByRole('dialog', { name: /步骤视频/ })).toBeInTheDocument();
+  expect(document.querySelector('video')?.getAttribute('src')).toBe('/fixtures/collected/sample-1.mp4');
+  await user.click(screen.getByRole('button', { name: '关闭视频' }));
+  expect(screen.queryByRole('dialog', { name: /步骤视频/ })).not.toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: '返回' }));
   expect(await screen.findByRole('tab', { name: '收藏教程' })).toBeInTheDocument();

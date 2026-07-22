@@ -28,27 +28,61 @@ test('filters part assets by makeup part', async () => {
   expect(assets.every((asset) => asset.category === 'part' && asset.part === 'eyes')).toBe(true);
 });
 
-test('exposes blank collected-tutorial placeholders without cover images', async () => {
+test('exposes collected-tutorial cards with sample-1 cover from fixture', async () => {
   const assets = await learningService.listAssets({ category: 'tutorial' });
 
   expect(assets).toHaveLength(2);
   expect(assets.map(({ title }) => title)).toEqual(['示例视频1', '示例视频2']);
-  expect(assets.every((asset) => asset.coverImage === '' && asset.source === '待解析')).toBe(true);
+  expect(assets[0]?.coverImage).toBeTruthy();
+  expect(assets[0]?.source).toBe('本地解析');
+  expect(assets[1]?.coverImage).toBe('');
+  expect(assets[1]?.source).toBe('待解析');
 });
 
 test('loads collected sample detail placeholders by asset id', async () => {
   const sample = await learningService.getCollectedSample('collected-sample-2');
 
   expect(sample?.title).toBe('示例视频2');
-  expect(sample?.tutorialJson).toContain('placeholder_sample_2');
+  expect(sample?.practiceTutorial.tutorial_id).toContain('placeholder_sample_2');
+  expect(sample?.practiceTutorial.steps.length).toBeGreaterThan(0);
   expect(sample?.illustratedSteps.length).toBeGreaterThan(0);
   expect(await learningService.getCollectedSample('missing')).toBeNull();
+});
+
+test('loads collected sample 1 from packaged pipeline fixture', async () => {
+  const sample = await learningService.getCollectedSample('collected-sample-1');
+
+  expect(sample?.title).toBe('示例视频1');
+  expect(sample?.beforeImage).toBeTruthy();
+  expect(sample?.afterImage).toBeTruthy();
+  expect(sample?.practiceTutorial.tutorial_id).toBe('tutorial_20260723_011751');
+  expect(sample?.practiceTutorial.videoUrl).toBe('/fixtures/collected/sample-1.mp4');
+  expect(sample?.practiceTutorial.steps.length).toBe(9);
+  expect(sample?.illustratedSteps).toHaveLength(9);
+  expect(sample?.illustratedSteps.every((step) => Boolean(step.diagramImage))).toBe(true);
 });
 
 test('exposes only one eye contour and lip asset to the part library', async () => {
   const assets = await learningService.listAssets({ category: 'part', placement: 'library' });
 
   expect(assets.map(({ part }) => part)).toEqual(['eyes', 'contour', 'lips']);
+  expect(assets.every((asset) => asset.coverImage && !asset.coverImage.includes('photo-collage'))).toBe(true);
+  expect(assets.every((asset) => asset.source === '知识库部位素材')).toBe(true);
+});
+
+test('loads part preset tutorials with packaged diagram images and source videos', async () => {
+  const expectedVideos: Record<string, RegExp> = {
+    'preset-eyes-rose': /eyes\/media\/source\.mp4/,
+    'preset-contour-soft': /contour\/media\/source\.mp4/,
+    'preset-lips-rose': /lips\/media\/source\.mp4/,
+  };
+  for (const [tutorialId, videoPattern] of Object.entries(expectedVideos)) {
+    const tutorial = await learningService.getTutorial(tutorialId);
+    expect(tutorial.id).toBe(tutorialId);
+    expect(tutorial.steps).toHaveLength(1);
+    expect(tutorial.steps[0]?.diagramImage).toBeTruthy();
+    expect(tutorial.videoUrl).toMatch(videoPattern);
+  }
 });
 
 test('returns no assets for the full-face part filter', async () => {

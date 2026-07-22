@@ -1,0 +1,64 @@
+{
+  "sample_id": "collected-sample-1",
+  "title": "示例视频1",
+  "source_video": "示例视频1.mp4",
+  "task_id": "task_6c29bddb02b74831",
+  "packaged_at": "2026-07-22T17:57:18.871027+00:00",
+  "sources": {
+    "parse_run_dir": "outputs/runs/20260723_011751",
+    "preview_run_dir": "outputs/makeup-preview/runs/20260723_012246",
+    "picture_makeup_run_dir": "outputs/picture-makeup/runs/20260723_012622",
+    "task_dir": "outputs/tasks/task_6c29bddb02b74831",
+    "tutorial_json": "outputs/runs/20260723_011751/tutorial.json"
+  },
+  "materials": {
+    "before_image": "media/target_display.jpg",
+    "after_image": "media/preview_display.jpg",
+    "cover_image": "media/preview_display.jpg",
+    "tutorial_json": "tutorial.json",
+    "diagrams": [
+      "media/diagram_prep_01.jpg",
+      "media/diagram_base_01.jpg",
+      "media/diagram_set_01.jpg",
+      "media/diagram_eye_01.jpg",
+      "media/diagram_contour_01.jpg",
+      "media/diagram_eye_02.jpg",
+      "media/diagram_brow_01.jpg",
+      "media/diagram_blush_01.jpg",
+      "media/diagram_lip_01.jpg"
+    ],
+    "preview_json": "preview.json",
+    "picture_makeup_manifest": "picture_makeup_manifest.json"
+  },
+  "detail": {
+    "id": "collected-sample-1",
+    "title": "示例视频1",
+    "previewTitle": "教程妆容预览",
+    "style": "自然妆感",
+    "occasion": "日常",
+    "difficulty": "—",
+    "duration": "约 6 分钟",
+    "hints": [
+      {
+        "title": "平均脸预览",
+        "description": "此为平均脸底图预览，不代表你的脸型；上传照片可获得更贴近个人的效果。",
+        "tone": "adjust"
+      },
+      {
+        "title": "适配说明",
+        "description": "根据教程步骤生成的妆效预览，实际上妆时请按步骤循序渐进。",
+        "tone": "neutral"
+      }
+    ],
+    "beforeImage": "media/target_display.jpg",
+    "afterImage": "media/preview_display.jpg",
+    "coverImage": "media/preview_display.jpg",
+    "comparison": {
+      "width": 765,
+      "height": 765,
+      "objectPosition": "49.7% 49.9%"
+    },
+    "tutorialJsonPath": "tutorial.json"
+  },
+  "step_count": 9
+}

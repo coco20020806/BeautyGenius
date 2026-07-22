@@ -11,6 +11,7 @@ from api_server.preview_assembler import (
     comparison_from_alignment,
     format_video_duration_label,
     intensity_levels,
+    publish_media_files,
 )
 
 
@@ -25,6 +26,14 @@ def test_before_after_filenames_prefer_display_pair(tmp_path: Path):
     (run / "preview_display.jpg").write_bytes(b"display-after")
     assert before_image_filename(run) == "target_display.jpg"
     assert after_image_filename(run) == "preview_display.jpg"
+
+
+def test_after_image_filename_none_without_preview(tmp_path: Path):
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "target.jpg").write_bytes(b"x")
+    (run / "reference.jpg").write_bytes(b"ref")
+    assert after_image_filename(run) is None
 
 
 def test_comparison_from_alignment_prefers_display_size():
@@ -44,9 +53,16 @@ def test_comparison_from_alignment_falls_back_to_target_size():
     assert out == {"width": 1024, "height": 1536}
 
 
-def test_hints_when_transfer_skipped():
-    hints = _hints_from_tutorial(None, average_baseline=False, transfer_skipped=True)
-    assert hints[0]["title"] == "已跳过妆容生成"
+def test_hints_when_generation_failed():
+    hints = _hints_from_tutorial(
+        None,
+        average_baseline=False,
+        transfer_skipped=True,
+        generation_failed=True,
+    )
+    assert hints[0]["title"] == "妆容生成失败"
+    assert "已跳过" in hints[0]["description"]
+    assert "教程参考妆面" not in hints[0]["description"]
 
 
 def test_format_video_duration_label_uses_real_seconds():
@@ -79,3 +95,36 @@ def test_assemble_duration_ignores_estimated_time(tmp_path: Path):
     assert len(payload["intensityLevels"]) == 5
     assert payload["intensityLevels"][0]["opacity"] == 0.2
     assert payload["intensityLevels"][-1]["opacity"] == 1.0
+    assert payload["generationFailed"] is False
+    assert payload["afterImage"] is not None
+    assert "generationFailureReason" not in payload
+
+
+def test_assemble_without_preview_reports_generation_failed(tmp_path: Path):
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "target.jpg").write_bytes(b"x")
+    (run / "reference.jpg").write_bytes(b"ref")
+    payload = assemble_makeup_preview(
+        "task-1",
+        tutorial_path=None,
+        preview_run_dir=run,
+        preview_doc={"transfer": {"skipped": True}},
+    )
+    assert payload["afterImage"] is None
+    assert payload["generationFailed"] is True
+    assert payload["generationFailureReason"] == "妆容预览已跳过，未生成适配图"
+    assert payload["hints"][0]["title"] == "妆容生成失败"
+
+
+def test_publish_media_does_not_copy_reference_as_preview(tmp_path: Path):
+    run = tmp_path / "run"
+    task = tmp_path / "task"
+    run.mkdir()
+    task.mkdir()
+    (run / "target.jpg").write_bytes(b"target")
+    (run / "reference.jpg").write_bytes(b"ref-only")
+    media = publish_media_files("task-1", run, task)
+    assert (media / "target.jpg").is_file()
+    assert not (media / "preview_01.jpg").is_file()
+    assert not (media / "preview_display.jpg").is_file()

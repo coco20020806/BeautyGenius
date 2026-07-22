@@ -4,11 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '../components/BottomNav';
 import { MobileShell } from '../components/MobileShell';
 import { makeupService } from '../services/makeupService';
+import recentDate from '../assets/recent-date.png';
+import recentNaturalDaily from '../assets/recent-natural-daily.png';
+import recentSheer from '../assets/recent-sheer.png';
 
 const recentTasks = [
-  { name: '自然日常妆', date: '2026-07-20', status: '适配完成' },
-  { name: '清透妆容', date: '2026-07-18', status: '可继续' },
-  { name: '约会妆容', date: '2026-07-15', status: '解析完成' },
+  { name: '自然日常妆', date: '2026-07-20', status: '适配完成', cover: recentNaturalDaily },
+  { name: '清透妆容', date: '2026-07-18', status: '可继续', cover: recentSheer },
+  { name: '约会妆容', date: '2026-07-15', status: '解析完成', cover: recentDate },
 ];
 
 function formatSize(bytes: number) {
@@ -76,7 +79,6 @@ export function UploadPage() {
       <header className="page-heading">
         <span className="page-kicker">MAKEUP PRACTICE</span>
         <h1>上传教程</h1>
-        <p>把喜欢的美妆视频，变成适合你的跟练步骤</p>
       </header>
 
       <section className={`upload-card${file ? ' has-file' : ''}`} aria-labelledby="upload-title">
@@ -110,7 +112,7 @@ export function UploadPage() {
         <span className="option-row__icon" aria-hidden="true"><Zap size={17} /></span>
         <span className="option-row__body">
           <strong>快速解析</strong>
-          <small>跳过 L2 关键帧 QA，Tutorial 仅确定性映射，更快更省 API</small>
+          <small>少做一些精细检查，更快出教程</small>
         </span>
       </label>
 
@@ -125,7 +127,7 @@ export function UploadPage() {
         <span className="option-row__icon" aria-hidden="true"><EyeOff size={17} /></span>
         <span className="option-row__body">
           <strong>跳过妆容预览</strong>
-          <small>不调 wan 妆容生成，节省 API；预览页展示参考妆面或目标脸对照</small>
+          <small>不生成试妆效果图，直接进下一步</small>
         </span>
       </label>
 
@@ -150,9 +152,11 @@ export function UploadPage() {
       <section className="recent-section" aria-labelledby="recent-title">
         <div className="section-heading"><h2 id="recent-title">最近任务</h2><button type="button">查看全部</button></div>
         <div className="task-list">
-          {recentTasks.map((task, index) => (
+          {recentTasks.map((task) => (
             <button className="task-card" type="button" key={task.name}>
-              <span className={`task-card__thumb tone-${index + 1}`}><span /></span>
+              <span className="task-card__thumb">
+                <img src={task.cover} alt="" />
+              </span>
               <span className="task-card__body"><strong>{task.name}</strong><small>{task.date} · {task.status}</small></span>
               <ChevronRight size={17} aria-hidden="true" />
             </button>

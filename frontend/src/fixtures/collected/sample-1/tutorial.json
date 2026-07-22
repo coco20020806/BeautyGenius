@@ -1,0 +1,761 @@
+{
+  "contract_version": "tutorial.v1",
+  "tutorial_id": "tutorial_20260723_011751",
+  "title": "",
+  "source_video": "local_upload",
+  "source_path": "C:\\Users\\fei.kong\\Desktop\\Beauty Genius\\outputs\\tasks\\task_6c29bddb02b74831\\upload\\video.mp4",
+  "duration": 349,
+  "difficulty": "unknown",
+  "estimated_time": 35,
+  "style_tags": [],
+  "occasion_tags": [],
+  "steps": [
+    {
+      "step_id": "prep_01",
+      "part": "prep",
+      "taxonomy_primary": "妆前",
+      "taxonomy_sub_steps": [
+        "局部打底",
+        "使用区域"
+      ],
+      "product": {
+        "name": "unknown",
+        "keywords": []
+      },
+      "visual_layer": {},
+      "instruction": "戴美瞳",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 28.0,
+        "end": 38.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 28.0,
+          "filename": "妆前-01-000028.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 33.0,
+          "filename": "妆前-02-000033.jpg",
+          "label": "局部打底"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 38.0,
+          "filename": "妆前-03-000038.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "妆前",
+      "display_group_id": "group_01",
+      "display_product": "",
+      "display_product_tier": "none",
+      "technique": "戴美瞳"
+    },
+    {
+      "step_id": "base_01",
+      "part": "base",
+      "taxonomy_primary": "底妆",
+      "taxonomy_sub_steps": [
+        "内轮廓",
+        "外轮廓"
+      ],
+      "product": {
+        "name": "珂岸面部素颜霜",
+        "keywords": [
+          "霜"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "珂岸面部素颜霜 没有手法 全脸推开即可",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 38.0,
+        "end": 93.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 38.0,
+          "filename": "底妆-01-000038.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 50.0,
+          "filename": "底妆-02-000050.jpg",
+          "label": "内轮廓"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 65.0,
+          "filename": "底妆-03-000105.jpg",
+          "label": "外轮廓"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 93.0,
+          "filename": "底妆-04-000133.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "底妆",
+      "display_group_id": "group_02",
+      "display_product": "珂岸面部素颜霜",
+      "display_product_tier": "specific",
+      "technique": "全脸推开"
+    },
+    {
+      "step_id": "set_01",
+      "part": "set",
+      "taxonomy_primary": "定妆",
+      "taxonomy_sub_steps": [
+        "额头",
+        "鼻部",
+        "眼下",
+        "鼻翼",
+        "嘴角",
+        "下巴"
+      ],
+      "product": {
+        "name": "kato恰好合拍蜜粉饼03潜水滤镜",
+        "keywords": [
+          "粉饼"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "有色粉饼 全脸定妆 kato恰好合拍蜜粉饼 (03潜水滤镜)",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 93.0,
+        "end": 118.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 93.0,
+          "filename": "定妆-01-000133.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 105.0,
+          "filename": "定妆-02-000145.jpg",
+          "label": "额头"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 108.0,
+          "filename": "定妆-03-000148.jpg",
+          "label": "鼻部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 110.0,
+          "filename": "定妆-04-000150.jpg",
+          "label": "眼下"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 118.0,
+          "filename": "定妆-05-000158.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "定妆",
+      "display_group_id": "group_03",
+      "display_product": "kato恰好合拍蜜粉饼03潜水滤镜",
+      "display_product_tier": "specific",
+      "technique": "全脸定妆"
+    },
+    {
+      "step_id": "eye_01",
+      "part": "eye",
+      "taxonomy_primary": "眼睛",
+      "taxonomy_sub_steps": [
+        "下眼前段",
+        "下眼后段",
+        "卧蚕-中段"
+      ],
+      "product": {
+        "name": "peripera腮红02奶茶棕红色",
+        "keywords": [
+          "眼影",
+          "腮红"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "peripera (02 奶茶棕红色) 陈圆圆联名套刷 大号眼影刷蘸取腮红 打在眼下",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 118.0,
+        "end": 148.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 118.0,
+          "filename": "眼睛-01-000158.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 123.0,
+          "filename": "眼睛-02-000203.jpg",
+          "label": "下眼前段"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 125.0,
+          "filename": "眼睛-03-000205.jpg",
+          "label": "下眼后段"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 148.0,
+          "filename": "眼睛-04-000228.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "眼睛",
+      "display_group_id": "group_04",
+      "display_product": "peripera腮红02奶茶棕红色",
+      "display_product_tier": "specific",
+      "technique": "大号眼影刷蘸取打在眼下"
+    },
+    {
+      "step_id": "contour_01",
+      "part": "contour",
+      "taxonomy_primary": "修容",
+      "taxonomy_sub_steps": [
+        "鼻头下方",
+        "山根两侧",
+        "鼻梁两侧",
+        "鼻头两侧"
+      ],
+      "product": {
+        "name": "橘朵四色修容02",
+        "keywords": [
+          "修容",
+          "眼影"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "橘朵四色修容 (02) 鼻影刷蘸取浅色修容 鼻头画小U 山根画大C 细节眼影刷蘸取浅色修容 加深人中 加深卧蚕线",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 148.0,
+        "end": 184.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 148.0,
+          "filename": "修容-01-000228.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 151.0,
+          "filename": "修容-02-000231.jpg",
+          "label": "鼻头下方"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 157.0,
+          "filename": "修容-03-000237.jpg",
+          "label": "山根两侧"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 172.0,
+          "filename": "修容-04-000252.jpg",
+          "label": "卧蚕-中段"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 184.0,
+          "filename": "修容-05-000304.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "修容",
+      "display_group_id": "group_05",
+      "display_product": "橘朵四色修容02",
+      "display_product_tier": "specific",
+      "technique": "鼻头画小U山根画大C"
+    },
+    {
+      "step_id": "eye_02",
+      "part": "eye",
+      "taxonomy_primary": "眼线",
+      "taxonomy_sub_steps": [
+        "小狗"
+      ],
+      "product": {
+        "name": "UNNY眼线胶笔黑色",
+        "keywords": [
+          "眼线",
+          "笔"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "UNNY眼线胶笔 (黑色) 黑色眼线胶笔 填充内眼线 画一条加粗版下垂的外眼线",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 184.0,
+        "end": 210.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 184.0,
+          "filename": "眼线-01-000304.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 195.0,
+          "filename": "眼线-02-000315.jpg",
+          "label": "小狗"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 210.0,
+          "filename": "眼线-03-000330.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "眼线",
+      "display_group_id": "group_06",
+      "display_product": "UNNY眼线胶笔黑色",
+      "display_product_tier": "specific",
+      "technique": "填充内眼线画加粗下垂外眼线"
+    },
+    {
+      "step_id": "brow_01",
+      "part": "brow",
+      "taxonomy_primary": "眉毛",
+      "taxonomy_sub_steps": [
+        "眉尾",
+        "毛流"
+      ],
+      "product": {
+        "name": "橘朵三色眉粉03",
+        "keywords": []
+      },
+      "visual_layer": {},
+      "instruction": "橘朵三色眉粉 (03) 刀锋刷蘸取棕色眉粉 加深下至",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 210.0,
+        "end": 222.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 210.0,
+          "filename": "眉毛-01-000330.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 214.0,
+          "filename": "眉毛-02-000334.jpg",
+          "label": "毛流"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 222.0,
+          "filename": "眉毛-03-000342.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "眉毛",
+      "display_group_id": "group_07",
+      "display_product": "橘朵三色眉粉03",
+      "display_product_tier": "specific",
+      "technique": "刀锋刷蘸取加深下至"
+    },
+    {
+      "step_id": "blush_01",
+      "part": "cheek",
+      "taxonomy_primary": "腮红",
+      "taxonomy_sub_steps": [
+        "眼下",
+        "鼻尖少量点缀"
+      ],
+      "product": {
+        "name": "peripera腮红02奶茶棕红色",
+        "keywords": [
+          "眼影",
+          "腮红"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "peripera (02 奶茶棕红色) 陈圆圆联名套刷 大号眼影刷蘸取腮红 打在眼下 鼻尖 人中上方 唇峰 腮红刷蘸取腮红 打在面中、下巴",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 118.0,
+        "end": 148.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 118.0,
+          "filename": "腮红-01-000158.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 123.0,
+          "filename": "腮红-02-000203.jpg",
+          "label": "眼下"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 127.0,
+          "filename": "腮红-03-000207.jpg",
+          "label": "鼻尖少量点缀"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 148.0,
+          "filename": "腮红-04-000228.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "腮红",
+      "display_group_id": "group_08",
+      "display_product": "peripera腮红02奶茶棕红色",
+      "display_product_tier": "specific",
+      "technique": "眼下鼻尖面中下巴轻扫"
+    },
+    {
+      "step_id": "lip_01",
+      "part": "lip",
+      "taxonomy_primary": "唇妆",
+      "taxonomy_sub_steps": [
+        "唇线"
+      ],
+      "product": {
+        "name": "橘朵小羊皮细管固体唇釉01+02",
+        "keywords": [
+          "唇釉"
+        ]
+      },
+      "visual_layer": {},
+      "instruction": "橘朵小羊皮细管 (01+02) 固体唇釉 涂在嘴唇中间 手指过渡边缘",
+      "adaptation_note": "",
+      "video_clip": {
+        "start": 228.0,
+        "end": 247.0
+      },
+      "keyframe_refs": [
+        {
+          "role": "step_start_face",
+          "timestamp_sec": 228.0,
+          "filename": "唇妆-01-000348.jpg",
+          "label": "步骤开始脸部"
+        },
+        {
+          "role": "makeup_detail",
+          "timestamp_sec": 232.0,
+          "filename": "唇妆-02-000352.jpg",
+          "label": "唇线"
+        },
+        {
+          "role": "step_end_face",
+          "timestamp_sec": 247.0,
+          "filename": "唇妆-03-000407.jpg",
+          "label": "步骤结束脸部"
+        }
+      ],
+      "display_title": "唇妆",
+      "display_group_id": "group_09",
+      "display_product": "橘朵小羊皮细管固体唇釉01+02",
+      "display_product_tier": "specific",
+      "technique": "涂嘴唇中间手指过渡边缘"
+    }
+  ],
+  "eye_detail": {},
+  "practice_checklist": [],
+  "assets": [
+    {
+      "asset_id": "prep_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "prep",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 28.0,
+          "end": 38.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "prep_01"
+      ]
+    },
+    {
+      "asset_id": "base_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "base",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [
+        "霜"
+      ],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 38.0,
+          "end": 93.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "base_01"
+      ]
+    },
+    {
+      "asset_id": "set_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "set",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [
+        "粉饼"
+      ],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 93.0,
+          "end": 118.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "set_01"
+      ]
+    },
+    {
+      "asset_id": "eye_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "eye",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [
+        "眼影",
+        "腮红",
+        "眼线",
+        "笔"
+      ],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 118.0,
+          "end": 148.0
+        },
+        {
+          "start": 184.0,
+          "end": 210.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "eye_01",
+        "eye_02"
+      ]
+    },
+    {
+      "asset_id": "contour_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "contour",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [
+        "修容",
+        "眼影"
+      ],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 148.0,
+          "end": 184.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "contour_01"
+      ]
+    },
+    {
+      "asset_id": "brow_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "brow",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 210.0,
+          "end": 222.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "brow_01"
+      ]
+    },
+    {
+      "asset_id": "cheek_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "cheek",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [
+        "眼影",
+        "腮红"
+      ],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 118.0,
+          "end": 148.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "blush_01"
+      ]
+    },
+    {
+      "asset_id": "lip_001",
+      "source_tutorial_id": "tutorial_20260723_011751",
+      "part": "lip",
+      "style_tags": [],
+      "occasion_tags": [],
+      "suitable_features": [],
+      "avoid_features": [],
+      "difficulty": "unknown",
+      "products": [
+        "唇釉"
+      ],
+      "visual_layers": [],
+      "video_clips": [
+        {
+          "start": 228.0,
+          "end": 247.0
+        }
+      ],
+      "practice_notes": [],
+      "step_ids": [
+        "lip_01"
+      ]
+    }
+  ],
+  "parse_run_id": "20260723_011751",
+  "step_groups": [
+    {
+      "group_id": "group_01",
+      "title": "妆前",
+      "index": 1,
+      "step_ids": [
+        "prep_01"
+      ]
+    },
+    {
+      "group_id": "group_02",
+      "title": "底妆",
+      "index": 2,
+      "step_ids": [
+        "base_01"
+      ]
+    },
+    {
+      "group_id": "group_03",
+      "title": "定妆",
+      "index": 3,
+      "step_ids": [
+        "set_01"
+      ]
+    },
+    {
+      "group_id": "group_04",
+      "title": "眼睛",
+      "index": 4,
+      "step_ids": [
+        "eye_01"
+      ]
+    },
+    {
+      "group_id": "group_05",
+      "title": "修容",
+      "index": 5,
+      "step_ids": [
+        "contour_01"
+      ]
+    },
+    {
+      "group_id": "group_06",
+      "title": "眼线",
+      "index": 6,
+      "step_ids": [
+        "eye_02"
+      ]
+    },
+    {
+      "group_id": "group_07",
+      "title": "眉毛",
+      "index": 7,
+      "step_ids": [
+        "brow_01"
+      ]
+    },
+    {
+      "group_id": "group_08",
+      "title": "腮红",
+      "index": 8,
+      "step_ids": [
+        "blush_01"
+      ]
+    },
+    {
+      "group_id": "group_09",
+      "title": "唇妆",
+      "index": 9,
+      "step_ids": [
+        "lip_01"
+      ]
+    }
+  ]
+}

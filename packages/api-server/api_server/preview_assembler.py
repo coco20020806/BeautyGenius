@@ -54,18 +54,25 @@ def _extract_palette(_tutorial: dict[str, Any] | None) -> list[str]:
     return list(DEFAULT_PALETTE)
 
 
+def _generation_failure_reason(*, transfer_skipped: bool) -> str:
+    if transfer_skipped:
+        return "妆容预览已跳过，未生成适配图"
+    return "妆容生成失败，暂无适配预览"
+
+
 def _hints_from_tutorial(
     tutorial: dict[str, Any] | None,
     *,
     average_baseline: bool,
     transfer_skipped: bool = False,
+    generation_failed: bool = False,
 ) -> list[dict[str, str]]:
     hints: list[dict[str, str]] = []
-    if transfer_skipped:
+    if generation_failed:
         hints.append(
             {
-                "title": "已跳过妆容生成",
-                "description": "未调用 AI 适配；对比图右侧为教程参考妆面，非个人妆效预览。",
+                "title": "妆容生成失败",
+                "description": _generation_failure_reason(transfer_skipped=transfer_skipped),
                 "tone": "adjust",
             }
         )
@@ -79,7 +86,7 @@ def _hints_from_tutorial(
                         "tone": "neutral",
                     }
                 )
-    if average_baseline:
+    if average_baseline and not generation_failed:
         hints.insert(
             0,
             {
@@ -106,11 +113,13 @@ def before_image_filename(preview_run_dir: Path) -> str:
     return "target.jpg"
 
 
-def after_image_filename(preview_run_dir: Path) -> str:
-    """妆后对比图：优先与妆前同裁切的 preview_display.jpg。"""
+def after_image_filename(preview_run_dir: Path) -> str | None:
+    """妆后对比图：优先 preview_display.jpg；否则 preview_01.jpg；皆无则 None（禁止用 reference 占位）。"""
     if (preview_run_dir / "preview_display.jpg").is_file():
         return "preview_display.jpg"
-    return "preview_01.jpg"
+    if (preview_run_dir / "preview_01.jpg").is_file():
+        return "preview_01.jpg"
+    return None
 
 
 def comparison_from_alignment(alignment: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -159,7 +168,11 @@ def assemble_makeup_preview(
     before_name = before_image_filename(preview_run_dir)
     after_name = after_image_filename(preview_run_dir)
     before_image = f"{base}/media/{task_id}/{before_name}"
-    after_image = f"{base}/media/{task_id}/{after_name}"
+    generation_failed = after_name is None
+    after_image = f"{base}/media/{task_id}/{after_name}" if after_name else None
+    failure_reason = (
+        _generation_failure_reason(transfer_skipped=transfer_skipped) if generation_failed else None
+    )
 
     alignment = (preview_doc or {}).get("alignment")
     comparison = comparison_from_alignment(alignment if isinstance(alignment, dict) else None)
@@ -173,15 +186,19 @@ def assemble_makeup_preview(
         "duration": duration,
         "beforeImage": before_image,
         "afterImage": after_image,
+        "generationFailed": generation_failed,
         "palette": _extract_palette(tutorial),
         "intensityLevels": levels,
         "hints": _hints_from_tutorial(
             tutorial,
             average_baseline=average_baseline,
             transfer_skipped=transfer_skipped,
+            generation_failed=generation_failed,
         ),
     }
-    if comparison:
+    if failure_reason:
+        payload["generationFailureReason"] = failure_reason
+    if comparison and not generation_failed:
         payload["comparison"] = comparison
     return payload
 
@@ -198,6 +215,4 @@ def publish_media_files(task_id: str, preview_run_dir: Path, task_dir: Path) -> 
     for name, src in mapping.items():
         if src.is_file():
             shutil.copy2(src, media_dir / name)
-        elif name == "preview_01.jpg" and (preview_run_dir / "reference.jpg").is_file():
-            shutil.copy2(preview_run_dir / "reference.jpg", media_dir / name)
     return media_dir

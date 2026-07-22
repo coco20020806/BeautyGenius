@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { canPlayStepClip, StepClipPlayer } from './StepClipPlayer';
+import { canPlaySourceVideo, canPlayStepClip, StepClipPlayer } from './StepClipPlayer';
 
 describe('canPlayStepClip', () => {
   it('accepts valid url and range', () => {
@@ -10,6 +10,14 @@ describe('canPlayStepClip', () => {
   it('rejects missing url or inverted range', () => {
     expect(canPlayStepClip(undefined, { start: 0, end: 3 })).toBe(false);
     expect(canPlayStepClip('https://example.com/v.mp4', { start: 5, end: 1 })).toBe(false);
+  });
+});
+
+describe('canPlaySourceVideo', () => {
+  it('accepts any non-empty video url', () => {
+    expect(canPlaySourceVideo('https://example.com/v.mp4')).toBe(true);
+    expect(canPlaySourceVideo('')).toBe(false);
+    expect(canPlaySourceVideo(undefined)).toBe(false);
   });
 });
 
@@ -40,6 +48,14 @@ describe('StepClipPlayer', () => {
     expect(screen.getByRole('dialog', { name: '步骤视频：步骤 1 · 腮红' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '关闭视频' }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('plays the full original video when clip is omitted', () => {
+    render(
+      <StepClipPlayer open videoUrl="https://example.com/v.mp4" title="完整原视频" onClose={() => undefined} />,
+    );
+    expect(screen.getByRole('dialog', { name: '步骤视频：完整原视频' })).toBeInTheDocument();
+    expect(document.querySelector('video')?.getAttribute('src')).toBe('https://example.com/v.mp4');
   });
 
   it('pauses when playback reaches clip end', () => {

@@ -64,21 +64,20 @@ npm run lint
 ```text
 上传视频 / → 照片确认 /photo → 解析进度 /parsing → 适配预览 /preview
   ├─ 适合我 → 跟练 /practice → 示例图 /practice/examples（按需生成）
-  └─ 需要微调 → /adjust → 图示教程 /tutorial → /eyes
+  └─ 需要微调 → /adjust（问卷 → POST …/adjustment 优化 tutorial）→ 跟练 /practice → 示例图
 ```
 
 适配预览页的返回按钮会直接进入 `/`，不会重新进入解析页。
 
 示例图页在生成完成后可点击「收藏到知识库」，进入勾选模式后经「勾选完成」进入 `/practice/examples/saved` 占位成功页（前端交互闭环，暂无真实收藏 API）。
 
-学习与混搭流程（前端 mock，待 HttpLearningService）：
+学习与混搭流程（前端 mock，待 HttpLearningService；无 taskId 时微调仍走本地）：
 
 ```text
-需要微调：/preview → /adjust → /tutorial → /eyes
+需要微调（无 task）：/adjust → /tutorial → /eyes
 素材混搭：/library?tab=mix → /mix/generating → /mix/preview → /tutorial
 素材混搭微调：/mix/preview → /adjust → /tutorial
 ```
-
 底部导航固定为「首页 / 知识库 / 我的」。`/practice` 仍保留，可通过预览「适合我」进入，但不在底栏展示。混搭编辑已迁入知识库第三个 TAB，旧 `/mix` 地址会保留查询参数后转发。
 
 ## 4. 前端代码边界
@@ -315,6 +314,7 @@ GET /api/v1/makeup/tasks/{taskId}/preview
   "duration": "约 1 分钟",
   "beforeImage": "https://cdn.example.com/tasks/task_01JXYZ/before.webp",
   "afterImage": "https://cdn.example.com/tasks/task_01JXYZ/after.webp",
+  "generationFailed": false,
   "palette": ["#ead6cf", "#d8aaa0", "#b87870", "#8e554f", "#5c3a36"],
   "intensityLevels": [
     { "id": "L1", "color": "#ead6cf", "opacity": 0.2 },
@@ -335,6 +335,7 @@ GET /api/v1/makeup/tasks/{taskId}/preview
 
 对应类型：`MakeupPreview`。
 
+- `afterImage`：仅真实生成妆后图（`preview_display.jpg` 优先，否则 `preview_01.jpg`）。**禁止**用教程 `reference.jpg` 冒充。若未生成，返回 `null`，并设 `generationFailed: true` 与 `generationFailureReason`（跳过时说明已跳过，否则说明生成失败）。
 - `duration`：上传视频**真实时长**标签（`<60s` → `约 N 秒`；否则 `约 N 分钟`），**不用** `estimated_time`。契约见 `skills/kol-makeup-preview/display-contract.md`。
 - `intensityLevels`：妆浓淡 5 档；色块越深，妆后对比图 opacity 越高。兼容字段 `palette` 为同序颜色。
 
@@ -378,22 +379,32 @@ POST /api/v1/makeup/dev/skip-to-preview
 
 响应：`{ "taskId": "...", "status": "completed", "parseRunDir": "...", "previewRunDir": "..." }`。需服务端开启 `ENABLE_DEV_SHORTCUTS`；固定路径来自仓库根目录 `configs/dev-pinned-runs.json`（由 `scripts/pin-latest-dev-runs.py` 生成）。首页在开发模式下展示「跳过前两步（开发）」按钮。开发捷径会将仓库根目录 `示例视频1.mp4` 复制到任务 `upload/video.mp4`，供 tutorial / step-diagrams 的 `videoUrl` 与「看视频」时间跳转使用。
 
-### 6.9 保存微调条件并生成图示教程（学习流，待接入）
+### 6.9 保存微调条件并优化教程（已接入真实管线）
 
 ```http
-POST /api/v1/makeup/tasks/{taskId}/tutorials
+POST /api/v1/makeup/tasks/{taskId}/adjustment
 Content-Type: application/json
 ```
 
-请求体对应 `AdjustmentRequest`（`styles` / `occasions` / `retainedParts` / `concerns` / `constraints` 为多选数组，`skinType` 为单选，可选 `baseTutorialId`）。成功响应对应 `IllustratedTutorial`。
+请求体对应 `AdjustmentRequest`（`styles` / `occasions` / `retainedParts` / `concerns` / `constraints` 为多选数组，`skinType` 为单选，可选 `baseTutorialId`）。
 
-### 6.10 获取图示教程与眼部精讲（待接入）
+行为：
+
+1. 调用 `makeup-visual-optimization`，按问卷改写 `tutorial.json` 的 `instruction` / `visual_layer` / `adaptation_note`。
+2. 写入 `optimized_tutorial_path`；后续 `GET …/tutorial` 与 `step-diagrams` **优先**读取优化版。
+3. 重置 `step_diagrams_status` 为 `idle`，避免沿用旧示例图。
+4. **不**重跑妆容预览 transfer。
+
+成功响应示例：`{ "taskId", "status": "completed", "summary", "optimizedTutorialPath" }`。
+
+前端：`/preview` → `/adjust` 有 `sessionStorage.makeupTask.taskId` 时调用本接口，成功后进入 `/practice`；用户再点「前往示例图」触发 `POST …/step-diagrams`，图示 prompt 会基于优化后的 tutorial 生成。混搭学习流（无 taskId）仍走本地 `LearningService` → `/tutorial`。
+
+### 6.10 获取图示教程与眼部精讲（学习流 mock，待接入）
 
 ```http
 GET /api/v1/makeup/tutorials/{tutorialId}
 GET /api/v1/makeup/tutorials/{tutorialId}/eye-guides
 ```
-
 ### 6.11 查询知识库素材（待接入）
 
 ```http
@@ -418,6 +429,7 @@ POST /api/v1/makeup/mixes
 - 浏览器允许前端域名访问图片；若跨域，CDN 需正确设置 CORS。
 - 推荐 WebP 或 AVIF，并返回稳定的宽高，避免滑动对比时错位。
 - 当 run 中存在展示裁切对时，后端应优先返回同尺寸的 `target_display.jpg`（妆前）与 `preview_display.jpg`（妆后）；否则回退 `target.jpg` / `preview_01.jpg`。
+- 若无真实妆后生成文件，`afterImage` 必须为 `null`（`generationFailed: true`），**不得**用 `reference.jpg` 冒充 preview。
 
 可选字段 `comparison`（对齐 run 由后端填充；有 display 裁切时用 `display_size`）：
 
@@ -525,7 +537,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 1. 通用 HTTP 客户端与 `HttpMakeupService`（已完成）。
 2. 将视频上传、照片、解析轮询、适配预览接到真实任务结果（已完成）。
 3. 跟练 `getTutorial` 与步骤示例图 `step-diagrams`（已完成）。
-4. 新建 `HttpLearningService` 并实现 `LearningService`，切换微调、图示教程、眼部精讲、知识库和混搭数据。
+4. 真实管线微调 `POST …/adjustment` → `/practice`（已完成）；混搭学习流仍可后续接 `HttpLearningService`。
 5. 刷新页面时根据 `taskId` 和 `tutorialId` 恢复服务端状态。
 6. 添加接口错误、超时、鉴权失败和任务不存在的自动化测试。
 7. 在联调环境验证大文件上传、慢网络和解析失败恢复。
@@ -542,7 +554,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 - [ ] 滑动对比可以看到两张完整图片。
 - [ ] 适配页返回后直接进入视频上传页。
 - [ ] 「适合我」进入跟练 `/practice`，并可打开步骤示例图。
-- [ ] 「需要微调」进入问卷后可进入图示教程与眼部精讲。
+- [ ] 「需要微调」提交问卷后进入 `/practice`；示例图使用优化后的 tutorial。
 - [ ] 知识库分类、筛选与混搭预制流程可走通。
 - [ ] 底部导航为首页 / 知识库 / 我的（不含跟练入口，但 `/practice` 路由仍可用）。
 - [ ] 用户不能访问他人的任务、照片和预览结果。

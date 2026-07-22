@@ -49,11 +49,12 @@ def publish_step_diagram(task_id: str, step_id: str, step_dir: Path) -> None:
 def run_step_diagrams_job(task_id: str) -> None:
     task = store.load(task_id)
     parse_run = task.get("parse_run_dir")
-    tutorial_path = task.get("tutorial_path")
-    if not parse_run or not tutorial_path:
+    from api_server.tutorial_loader import effective_tutorial_path
+
+    tutorial_file = effective_tutorial_path(task)
+    if not parse_run or tutorial_file is None:
         raise RuntimeError("缺少 parse_run_dir 或 tutorial_path")
     parse_run_dir = Path(parse_run)
-    tutorial_file = Path(tutorial_path)
     if not tutorial_file.is_file():
         raise FileNotFoundError(f"tutorial 不存在: {tutorial_file}")
 

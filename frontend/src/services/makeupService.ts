@@ -1,4 +1,6 @@
 import type {
+  AdjustmentRequest,
+  AdjustmentResult,
   AnalysisProgress,
   AnalysisStage,
   MakeupPreview,
@@ -150,6 +152,18 @@ class LocalMakeupService implements MakeupService {
     };
   }
 
+  async saveAdjustment(taskId: string, request: AdjustmentRequest): Promise<AdjustmentResult> {
+    return {
+      taskId,
+      status: 'completed',
+      summary: {
+        primary_goal: request.concerns[0] || request.styles[0] || '个性化微调',
+        retained_modules: request.retainedParts,
+        confidence: 'high',
+      },
+    };
+  }
+
   async skipToDevPreview() {
     return { taskId: 'demo-task', status: 'completed' as const };
   }
@@ -193,6 +207,7 @@ class LocalMakeupService implements MakeupService {
       duration: '约 1 分钟',
       beforeImage: faceBefore,
       afterImage: faceAfter,
+      generationFailed: false,
       palette: ['#ead6cf', '#d8aaa0', '#b87870', '#8e554f', '#5c3a36'],
       intensityLevels: [
         { id: 'L1', color: '#ead6cf', opacity: 0.2 },

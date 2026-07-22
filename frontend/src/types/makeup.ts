@@ -56,7 +56,11 @@ export interface MakeupPreview {
   difficulty: string;
   duration: string;
   beforeImage: string;
-  afterImage: string;
+  /** 真实妆后生成图；缺失时为 null，勿用教程 reference 冒充 */
+  afterImage: string | null;
+  /** 无真实妆后图时为 true */
+  generationFailed?: boolean;
+  generationFailureReason?: string;
   palette: string[];
   /** 妆浓淡色块；缺省时前端用固定 5 档 */
   intensityLevels?: MakeupIntensityLevel[];
@@ -131,12 +135,35 @@ export interface DevSkipPreviewResult {
   previewRunDir?: string;
 }
 
+export interface AdjustmentRequest {
+  styles: string[];
+  occasions: string[];
+  retainedParts: string[];
+  skinType: string;
+  concerns: string[];
+  constraints: string[];
+  baseTutorialId?: string;
+}
+
+export interface AdjustmentResult {
+  taskId: string;
+  status: 'completed';
+  summary?: {
+    primary_goal?: string;
+    secondary_goals?: string[];
+    retained_modules?: string[];
+    retention_strategy?: string;
+    confidence?: string;
+  } | null;
+}
+
 export interface MakeupService {
   uploadVideo(file: File, options?: { fastParse?: boolean; skipMakeupPreview?: boolean }): Promise<UploadVideoResult>;
   uploadPhoto(file: File | null): Promise<UploadPhotoResult>;
   analyze(taskId: string): AsyncGenerator<AnalysisProgress>;
   getPreview(taskId: string): Promise<MakeupPreview>;
   getTutorial(taskId: string): Promise<Tutorial>;
+  saveAdjustment(taskId: string, request: AdjustmentRequest): Promise<AdjustmentResult>;
   startStepDiagrams(taskId: string): Promise<StepDiagramsStartResult>;
   getStepDiagrams(taskId: string): Promise<StepDiagramsResponse>;
   skipToDevPreview(): Promise<DevSkipPreviewResult>;

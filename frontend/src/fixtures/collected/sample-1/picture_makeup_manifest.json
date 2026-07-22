@@ -1,0 +1,90 @@
+{
+  "contract_version": "v1",
+  "generated_at": "2026-07-22T17:44:17.181699+00:00",
+  "skill_dir": "C:\\Users\\fei.kong\\Desktop\\Beauty Genius\\skills\\picture_makeup",
+  "base_image": "C:\\Users\\fei.kong\\Desktop\\Beauty Genius\\skills\\picture_makeup\\image_format.png",
+  "parse_run_dir": "C:\\Users\\fei.kong\\Desktop\\Beauty Genius\\outputs\\runs\\20260723_011751",
+  "tutorial_id": "tutorial_20260723_011751",
+  "tutorial_path": "C:\\Users\\fei.kong\\Desktop\\Beauty Genius\\outputs\\runs\\20260723_011751\\tutorial.json",
+  "text_model": "qwen3.7-plus",
+  "vision_model": "qwen3.7-plus",
+  "image_model": "wan2.7-image-pro",
+  "diagram": {
+    "prompt_text_version": "diagram-2"
+  },
+  "steps": [
+    {
+      "step_id": "prep_01",
+      "part": "prep",
+      "index": 0,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/prep_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "base_01",
+      "part": "base",
+      "index": 1,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/base_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "set_01",
+      "part": "set",
+      "index": 2,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/set_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "eye_01",
+      "part": "eye",
+      "index": 3,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/eye_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "contour_01",
+      "part": "contour",
+      "index": 4,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/contour_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "eye_02",
+      "part": "eye",
+      "index": 5,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/eye_02/diagram_01.jpg"
+    },
+    {
+      "step_id": "brow_01",
+      "part": "brow",
+      "index": 6,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/brow_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "blush_01",
+      "part": "cheek",
+      "index": 7,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/blush_01/diagram_01.jpg"
+    },
+    {
+      "step_id": "lip_01",
+      "part": "lip",
+      "index": 8,
+      "status": "ok",
+      "warnings": [],
+      "diagram_path": "steps/lip_01/diagram_01.jpg"
+    }
+  ],
+  "warnings": []
+}

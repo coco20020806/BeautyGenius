@@ -3,22 +3,32 @@ import {
   Check,
   ChevronRight,
   Clock3,
-  Eye,
   Film,
   Layers3,
   PackageOpen,
+  Play,
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import faceAfter from '../assets/face-after.svg';
 import faceBefore from '../assets/face-before.svg';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
 import { FaceLayers } from '../components/FaceLayers';
 import { MobileShell } from '../components/MobileShell';
+import { canPlayStepClip, StepClipPlayer } from '../components/StepClipPlayer';
 import { learningService } from '../services/learningService';
 import type { CollectedSampleDetail } from '../types/learning';
+import type { TutorialStep as PracticeTutorialStep } from '../types/makeup';
+import {
+  formatProductLine,
+  formatRangeText,
+  formatTechnique,
+  groupHeading,
+  resolveTutorialGroups,
+  stepSegmentTitle,
+} from '../utils/formatTutorialStep';
 
 const INTENSITY_LEVELS = [
   { id: 'L1', color: '#ead6cf', opacity: 0.2 },
@@ -34,6 +44,10 @@ export function CollectedTutorialPage() {
   const [sample, setSample] = useState<CollectedSampleDetail | null | undefined>(undefined);
   const [intensityId, setIntensityId] = useState('L4');
   const [stepIndex, setStepIndex] = useState(0);
+  const [activeClip, setActiveClip] = useState<{
+    step: PracticeTutorialStep;
+    title: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +64,16 @@ export function CollectedTutorialPage() {
     };
   }, [assetId, navigate]);
 
+  const practiceGroups = useMemo(
+    () => (sample ? resolveTutorialGroups(sample.practiceTutorial) : []),
+    [sample],
+  );
+
+  const practiceStepById = useMemo(() => {
+    if (!sample) return new Map<string, PracticeTutorialStep>();
+    return new Map(sample.practiceTutorial.steps.map((item) => [item.step_id, item]));
+  }, [sample]);
+
   if (sample === undefined) {
     return (
       <MobileShell className="learning-page collected-detail-page">
@@ -63,8 +87,16 @@ export function CollectedTutorialPage() {
 
   if (!sample) return null;
 
+  const hasRealPreview = Boolean(sample.beforeImage && sample.afterImage);
   const activeLevel = INTENSITY_LEVELS.find((level) => level.id === intensityId) ?? INTENSITY_LEVELS[3];
   const step = sample.illustratedSteps[stepIndex];
+  const hasDiagram = Boolean(step.diagramImage);
+  const hasRealPractice = sample.practiceTutorial.tutorial_id.startsWith('tutorial_');
+  const illustratedPracticeStep = practiceStepById.get(step.id);
+  const illustratedClipPlayable = canPlayStepClip(
+    sample.practiceTutorial.videoUrl,
+    illustratedPracticeStep?.video_clip,
+  );
 
   return (
     <MobileShell className="learning-page collected-detail-page">
@@ -82,11 +114,21 @@ export function CollectedTutorialPage() {
       <section className="collected-section" aria-labelledby="collected-preview-title">
         <div className="section-heading">
           <h2 id="collected-preview-title">妆容预览</h2>
-          <span>占位</span>
+          <span>{hasRealPreview ? '真实解析' : '占位'}</span>
         </div>
         <div className="collected-preview-frame">
-          <BeforeAfterSlider beforeSrc={faceBefore} afterSrc={faceAfter} afterOpacity={activeLevel.opacity} />
-          <p className="collected-placeholder-note">对比图为结构占位，待接入真实解析妆前/妆后</p>
+          <BeforeAfterSlider
+            beforeSrc={sample.beforeImage ?? faceBefore}
+            afterSrc={sample.afterImage ?? faceAfter}
+            afterOpacity={activeLevel.opacity}
+            frameAspectRatio={
+              sample.comparison ? sample.comparison.width / sample.comparison.height : undefined
+            }
+            objectPosition={sample.comparison?.objectPosition}
+          />
+          {!hasRealPreview ? (
+            <p className="collected-placeholder-note">对比图为结构占位，待接入真实解析妆前/妆后</p>
+          ) : null}
         </div>
         <section className="makeup-summary" aria-labelledby="collected-summary-title">
           <div className="summary-heading">
@@ -124,7 +166,7 @@ export function CollectedTutorialPage() {
         <section className="adaptation-section" aria-labelledby="collected-adapt-title">
           <div className="section-heading">
             <h2 id="collected-adapt-title">关键适配提示</h2>
-            <span>占位</span>
+            <span>{hasRealPreview ? '为你调整' : '占位'}</span>
           </div>
           <div className="hint-list">
             {sample.hints.map((hint) => (
@@ -148,34 +190,82 @@ export function CollectedTutorialPage() {
         </section>
       </section>
 
-      <section className="collected-section" aria-labelledby="collected-json-title">
+      <section className="collected-section" aria-labelledby="collected-practice-title">
         <div className="section-heading">
-          <h2 id="collected-json-title">解析 JSON</h2>
-          <span>tutorial.json</span>
+          <h2 id="collected-practice-title">跟练步骤</h2>
+          <span>{hasRealPractice ? '产品 · 范围 · 手法' : '占位'}</span>
         </div>
-        <p className="collected-placeholder-note">示例结构 · 待接入真实解析</p>
-        <pre className="collected-json" aria-label="tutorial.json 占位">{sample.tutorialJson}</pre>
+        {!hasRealPractice ? (
+          <p className="collected-placeholder-note">示例结构 · 待接入真实解析</p>
+        ) : null}
+        <p className="tutorial-intro collected-practice-intro">按视频步骤使用对应产品、范围与手法跟练。</p>
+        <ol className="tutorial-step-list" aria-label="教程步骤">
+          {practiceGroups.map(({ group, steps }) => (
+            <li key={group.group_id} className="tutorial-step-card">
+              <h3>{groupHeading(group)}</h3>
+              <div className="tutorial-step-segments">
+                {steps.map((practiceStep) => {
+                  const multi = steps.length > 1;
+                  const playable = canPlayStepClip(sample.practiceTutorial.videoUrl, practiceStep.video_clip);
+                  return (
+                    <div key={practiceStep.step_id} className="tutorial-step-segment">
+                      {multi ? (
+                        <h4 className="tutorial-step-segment__title">{stepSegmentTitle(practiceStep)}</h4>
+                      ) : null}
+                      <dl className="tutorial-step-fields">
+                        <div>
+                          <dt>产品</dt>
+                          <dd>{formatProductLine(practiceStep)}</dd>
+                        </div>
+                        <div>
+                          <dt>范围</dt>
+                          <dd>{formatRangeText(practiceStep.visual_layer)}</dd>
+                        </div>
+                        <div>
+                          <dt>手法</dt>
+                          <dd>{formatTechnique(practiceStep)}</dd>
+                        </div>
+                      </dl>
+                      <button
+                        className="step-clip-trigger"
+                        type="button"
+                        disabled={!playable}
+                        onClick={() =>
+                          setActiveClip({
+                            step: practiceStep,
+                            title: multi
+                              ? `${groupHeading(group)} · ${stepSegmentTitle(practiceStep)}`
+                              : groupHeading(group),
+                          })
+                        }
+                      >
+                        <Play size={14} />
+                        看视频
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="collected-section" aria-labelledby="collected-guide-title">
         <div className="section-heading">
           <h2 id="collected-guide-title">图示教程</h2>
-          <span>占位</span>
+          <span>{hasDiagram ? '步骤示例图' : '占位'}</span>
         </div>
         <section className="face-guide-card">
-          <FaceLayers activePart={step.part} color={step.color} />
-          <div className="layer-palette" aria-label="步骤色卡">
-            {sample.illustratedSteps.map((item, index) => (
-              <button
-                type="button"
-                key={item.id}
-                aria-label={`切换到${item.title}`}
-                className={index === stepIndex ? 'is-active' : ''}
-                style={{ backgroundColor: item.color }}
-                onClick={() => setStepIndex(index)}
-              />
-            ))}
-          </div>
+          {hasDiagram ? (
+            <img
+              className="collected-diagram-image"
+              src={step.diagramImage}
+              alt={`${step.title} 示例图`}
+            />
+          ) : (
+            <FaceLayers activePart={step.part} color={step.color} />
+          )}
           <div className="current-layer">
             <Layers3 size={15} />
             <span>当前图层</span>
@@ -222,19 +312,32 @@ export function CollectedTutorialPage() {
             <Sparkles size={14} />
             <span>{step.expertTip}</span>
           </div>
-          <button className="slice-button" type="button" disabled>
+          <button
+            className="slice-button"
+            type="button"
+            disabled={!illustratedClipPlayable || !illustratedPracticeStep}
+            onClick={() => {
+              if (!illustratedPracticeStep) return;
+              setActiveClip({ step: illustratedPracticeStep, title: step.title });
+            }}
+          >
             <Film size={16} />
             <span>查看原视频切片</span>
             <small>{step.videoSlice}</small>
             <ChevronRight size={15} />
           </button>
-          <button className="eye-guide-link" type="button" disabled>
-            <Eye size={17} />
-            查看眼部精讲
-            <ChevronRight size={16} />
-          </button>
         </section>
       </section>
+
+      {activeClip && sample.practiceTutorial.videoUrl ? (
+        <StepClipPlayer
+          open
+          videoUrl={sample.practiceTutorial.videoUrl}
+          clip={activeClip.step.video_clip}
+          title={activeClip.title}
+          onClose={() => setActiveClip(null)}
+        />
+      ) : null}
     </MobileShell>
   );
 }

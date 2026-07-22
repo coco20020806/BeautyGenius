@@ -8,7 +8,7 @@ export function PhotoPage() {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<'skip' | 'upload' | null>(null);
   const [error, setError] = useState('');
   const previousUrl = useRef('');
 
@@ -26,9 +26,9 @@ export function PhotoPage() {
   }
 
   async function continueFlow(skipped: boolean) {
-    if (loading) return;
+    if (loadingAction) return;
     if (!skipped && !file) return;
-    setLoading(true);
+    setLoadingAction(skipped ? 'skip' : 'upload');
     setError('');
     try {
       const result = await makeupService.uploadPhoto(skipped ? null : file);
@@ -40,9 +40,11 @@ export function PhotoPage() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '照片上传失败，请重试');
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   }
+
+  const loading = loadingAction !== null;
 
   return (
     <MobileShell className="photo-page">
@@ -64,6 +66,33 @@ export function PhotoPage() {
         <span className="photo-preview__badge"><Camera size={15} />{file ? '照片已就绪' : '正面照片'}</span>
       </section>
 
+      {error ? <p className="upload-error" role="alert">{error}</p> : null}
+
+      <div className="photo-skip">
+        <button className="primary-button photo-skip__button" type="button" disabled={loading} onClick={() => void continueFlow(true)}>
+          {loadingAction === 'skip' ? '处理中…' : '暂时跳过'}
+        </button>
+        <p className="skip-explainer">推荐先跳过，使用默认示意脸即可继续生成教程图示</p>
+      </div>
+
+      <div className="photo-actions">
+        <p className="photo-actions__hint">也可以上传本人照片，效果会更贴近你</p>
+        <input
+          id="photo-upload"
+          className="visually-hidden"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          aria-label="上传本人照片"
+          onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)}
+        />
+        <div className="photo-actions__row">
+          <label className="photo-upload-button" htmlFor="photo-upload">{file ? '重新上传' : '选择照片'}</label>
+          <button className="photo-confirm-button" type="button" disabled={!file || loading} onClick={() => void continueFlow(false)}>
+            {loadingAction === 'upload' ? '上传中…' : '确认上传'}
+          </button>
+        </div>
+      </div>
+
       <section className="photo-value-card">
         <div className="section-title-row">
           <span className="section-icon"><ImagePlus size={18} /></span>
@@ -78,25 +107,6 @@ export function PhotoPage() {
       </section>
 
       <div className="privacy-note"><LockKeyhole size={15} /><p>照片仅用于生成个人化预览和适配建议，你可以随时删除。</p></div>
-
-      {error ? <p className="upload-error" role="alert">{error}</p> : null}
-
-      <div className="photo-actions">
-        <input
-          id="photo-upload"
-          className="visually-hidden"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          aria-label="上传本人照片"
-          onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)}
-        />
-        <label className="secondary-button" htmlFor="photo-upload">{file ? '重新上传' : '选择照片'}</label>
-        <button className="primary-button" type="button" disabled={!file || loading} onClick={() => void continueFlow(false)}>
-          {loading ? '上传中…' : '确认上传'}
-        </button>
-      </div>
-      <button className="text-button" type="button" disabled={loading} onClick={() => void continueFlow(true)}>暂时跳过</button>
-      <p className="skip-explainer">跳过后将使用默认示意脸生成教程图示</p>
     </MobileShell>
   );
 }

@@ -78,6 +78,10 @@ class TaskStore:
             "parse_run_dir": None,
             "preview_run_dir": None,
             "tutorial_path": None,
+            "optimized_tutorial_path": None,
+            "optimization_run_dir": None,
+            "adjustment": None,
+            "optimization_summary": None,
             "analysis_status": None,
             "progress_doc": progress_payload(task_id, active_index=0, progress=0, status="processing"),
             "failureReason": None,
@@ -364,6 +368,36 @@ class TaskStore:
         task = self.load(task_id)
         task["step_diagrams_status"] = "failed"
         task["step_diagrams_failure"] = reason
+        self.save(task)
+        return task
+
+    def reset_step_diagrams(self, task_id: str) -> dict[str, Any]:
+        task = self.load(task_id)
+        task["step_diagrams_status"] = "idle"
+        task["step_diagrams_run_dir"] = None
+        task["step_diagrams_failure"] = None
+        task["step_diagrams_progress"] = None
+        self.save(task)
+        return task
+
+    def save_adjustment(
+        self,
+        task_id: str,
+        *,
+        adjustment: dict[str, Any],
+        optimized_tutorial_path: str,
+        optimization_run_dir: str,
+        summary: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        task = self.load(task_id)
+        task["adjustment"] = adjustment
+        task["optimized_tutorial_path"] = optimized_tutorial_path
+        task["optimization_run_dir"] = optimization_run_dir
+        task["optimization_summary"] = summary
+        task["step_diagrams_status"] = "idle"
+        task["step_diagrams_run_dir"] = None
+        task["step_diagrams_failure"] = None
+        task["step_diagrams_progress"] = None
         self.save(task)
         return task
 

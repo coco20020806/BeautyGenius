@@ -2,6 +2,8 @@
 -e ./packages/makeup-preview
 -e ./packages/tutorial-mapper
 -e ./packages/makeup-understanding
+-e ./packages/picture-makeup
+-e ./packages/makeup-visual-optimization
 -e ./packages/api-server
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0

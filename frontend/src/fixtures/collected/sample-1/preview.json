@@ -1,0 +1,104 @@
+{
+  "contract_version": "v1",
+  "generated_at": "2026-07-22T17:23:18.586125+00:00",
+  "reference": {
+    "source": "parse_run",
+    "parse_run_dir": "C:\\Users\\fei.kong\\Desktop\\Beauty Genius\\outputs\\runs\\20260723_011751",
+    "parse_contract_version": "v2.1",
+    "reference_tier": "replication_after",
+    "keyframe_role": "replication_after",
+    "filename": "复刻-妆后-01-000407.jpg",
+    "after_source": "last_step_end",
+    "replication_pair_pass": true
+  },
+  "target": {
+    "path": "target.jpg",
+    "type": "average_baseline",
+    "baseline": "female",
+    "skill_asset": "female_average_face.png"
+  },
+  "validation": null,
+  "transfer": {
+    "model": "wan2.7-image-pro",
+    "prompt_version": "v2",
+    "prompt_text_version": "wan-long-2",
+    "prompt_mode": "full",
+    "requested_size": "1280*1280",
+    "target_pixel_size": [
+      1254,
+      1254
+    ],
+    "scope": {
+      "source": "taxonomy-coverage",
+      "present_primaries": [
+        "修容",
+        "唇妆",
+        "妆前",
+        "定妆",
+        "底妆",
+        "眉毛",
+        "眼睛",
+        "眼线",
+        "腮红"
+      ],
+      "application_primaries": [
+        "修容",
+        "唇妆",
+        "定妆",
+        "底妆",
+        "眉毛",
+        "眼睛",
+        "眼线",
+        "腮红"
+      ],
+      "allowed_region_labels": [
+        "修容",
+        "唇妆",
+        "定妆",
+        "底妆",
+        "眉毛",
+        "眼睛",
+        "眼线",
+        "腮红"
+      ]
+    }
+  },
+  "outputs": [
+    {
+      "filename": "preview_01.jpg",
+      "selected": true
+    }
+  ],
+  "warnings": [],
+  "alignment": {
+    "warnings": [],
+    "target_size": [
+      1254,
+      1254
+    ],
+    "preview_size_before": [
+      1254,
+      1254
+    ],
+    "method": "landmark_similarity",
+    "display_crop": true,
+    "display_size": [
+      765,
+      765
+    ],
+    "object_position": "49.7% 49.9%",
+    "display_fill_scale": 1.0,
+    "preview_size_after": [
+      1254,
+      1254
+    ]
+  },
+  "tutorial_replication": {
+    "before": {
+      "role": "replication_before",
+      "filename": "复刻-妆前-01-000028.jpg",
+      "source": "first_step_start"
+    },
+    "tutorial_before_file": "tutorial_before.jpg"
+  }
+}

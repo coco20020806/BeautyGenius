@@ -1,4 +1,6 @@
 import type {
+  AdjustmentRequest,
+  AdjustmentResult,
   AnalysisProgress,
   MakeupPreview,
   MakeupService,
@@ -55,6 +57,14 @@ export class HttpMakeupService implements MakeupService {
 
   async getTutorial(taskId: string): Promise<Tutorial> {
     return requestJson<Tutorial>(`${API_PREFIX}/tasks/${taskId}/tutorial`);
+  }
+
+  async saveAdjustment(taskId: string, request: AdjustmentRequest): Promise<AdjustmentResult> {
+    return requestJson<AdjustmentResult>(`${API_PREFIX}/tasks/${taskId}/adjustment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
   }
 
   async startStepDiagrams(taskId: string): Promise<StepDiagramsStartResult> {

@@ -64,6 +64,9 @@ sudo apt-get install -y libgl1 libglib2.0-0 ffmpeg
 | GET | `/api/v1/makeup/tasks/{taskId}/analysis` |
 | GET | `/api/v1/makeup/tasks/{taskId}/preview` |
 | GET | `/api/v1/makeup/tasks/{taskId}/tutorial` |
+| POST | `/api/v1/makeup/tasks/{taskId}/adjustment` |
+| POST | `/api/v1/makeup/tasks/{taskId}/step-diagrams` |
+| GET | `/api/v1/makeup/tasks/{taskId}/step-diagrams` |
 | POST | `/api/v1/makeup/dev/skip-to-preview`（仅 dev；见 `ENABLE_DEV_SHORTCUTS`） |
 | GET | `/media/{taskId}/{filename}` |
 

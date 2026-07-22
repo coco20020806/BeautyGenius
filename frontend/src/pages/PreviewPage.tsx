@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Clock3, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Clock3, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
@@ -36,6 +36,13 @@ export function PreviewPage() {
     intensityLevels.find((level) => level.id === DEFAULT_INTENSITY_ID) ??
     intensityLevels[intensityLevels.length - 1];
 
+  const generationFailed = Boolean(
+    preview && (preview.generationFailed || !preview.afterImage),
+  );
+  const failureReason =
+    preview?.generationFailureReason
+    ?? '妆容生成失败，暂无适配预览';
+
   return (
     <MobileShell className="preview-page">
       <header className="detail-header">
@@ -46,34 +53,47 @@ export function PreviewPage() {
 
       {preview ? (
         <>
-          <BeforeAfterSlider
-            beforeSrc={preview.beforeImage}
-            afterSrc={preview.afterImage}
-            frameAspectRatio={
-              preview.comparison
-                ? preview.comparison.width / preview.comparison.height
-                : undefined
-            }
-            objectPosition={preview.comparison?.objectPosition}
-            afterOpacity={activeLevel?.opacity ?? 0.8}
-          />
+          {generationFailed ? (
+            <section className="preview-generation-error" aria-label="妆容生成失败">
+              <RotateCcw size={26} />
+              <h2>妆容生成失败</h2>
+              <p>{failureReason}</p>
+              <button className="primary-button" type="button" onClick={() => navigate('/', { replace: true })}>
+                重新上传
+              </button>
+            </section>
+          ) : (
+            <BeforeAfterSlider
+              beforeSrc={preview.beforeImage}
+              afterSrc={preview.afterImage!}
+              frameAspectRatio={
+                preview.comparison
+                  ? preview.comparison.width / preview.comparison.height
+                  : undefined
+              }
+              objectPosition={preview.comparison?.objectPosition}
+              afterOpacity={activeLevel?.opacity ?? 0.8}
+            />
+          )}
 
           <section className="makeup-summary" aria-labelledby="summary-title">
             <div className="summary-heading"><div><span className="section-eyebrow">解析妆容</span><h2 id="summary-title">{preview.title}</h2></div><span className="difficulty-pill">{preview.difficulty}</span></div>
-            <div className="palette" role="group" aria-label="妆容浓淡">
-              {intensityLevels.map((level) => (
-                <button
-                  key={level.id}
-                  type="button"
-                  className={level.id === activeLevel?.id ? 'is-active' : undefined}
-                  style={{ backgroundColor: level.color }}
-                  aria-label={`妆容浓淡 ${level.id}`}
-                  aria-pressed={level.id === activeLevel?.id}
-                  title={`妆容浓淡 ${Math.round(level.opacity * 100)}%`}
-                  onClick={() => setIntensityId(level.id)}
-                />
-              ))}
-            </div>
+            {!generationFailed && (
+              <div className="palette" role="group" aria-label="妆容浓淡">
+                {intensityLevels.map((level) => (
+                  <button
+                    key={level.id}
+                    type="button"
+                    className={level.id === activeLevel?.id ? 'is-active' : undefined}
+                    style={{ backgroundColor: level.color }}
+                    aria-label={`妆容浓淡 ${level.id}`}
+                    aria-pressed={level.id === activeLevel?.id}
+                    title={`妆容浓淡 ${Math.round(level.opacity * 100)}%`}
+                    onClick={() => setIntensityId(level.id)}
+                  />
+                ))}
+              </div>
+            )}
             <div className="summary-meta"><span><Sparkles size={14} />{preview.style}</span><span><Clock3 size={14} />{preview.duration}</span><span>{preview.occasion}</span></div>
           </section>
 
@@ -89,51 +109,53 @@ export function PreviewPage() {
             </div>
           </section>
 
-          <section className="decision-card" aria-label="妆容适配判断">
-            <h2>这个妆适合你吗？</h2>
-            <p>你的选择会帮助我们继续优化教程</p>
-            <div className="decision-actions">
-              <button
-                type="button"
-                className="is-positive"
-                onClick={() => {
-                  try {
-                    const raw = sessionStorage.getItem('makeupTask');
-                    const parsed = raw ? JSON.parse(raw) as { taskId?: string } : {};
-                    sessionStorage.setItem(
-                      'makeupTask',
-                      JSON.stringify({ ...parsed, suitability: 'accepted' }),
-                    );
-                  } catch {
-                    /* ignore */
-                  }
-                  navigate('/practice');
-                }}
-              >
-                <Check size={17} />
-                适合我
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    const raw = sessionStorage.getItem('makeupTask');
-                    const parsed = raw ? JSON.parse(raw) as { taskId?: string } : {};
-                    sessionStorage.setItem(
-                      'makeupTask',
-                      JSON.stringify({ ...parsed, suitability: 'adjust' }),
-                    );
-                  } catch {
-                    /* ignore */
-                  }
-                  navigate('/adjust');
-                }}
-              >
-                <SlidersHorizontal size={17} />
-                需要微调
-              </button>
-            </div>
-          </section>
+          {!generationFailed && (
+            <section className="decision-card" aria-label="妆容适配判断">
+              <h2>这个妆适合你吗？</h2>
+              <p>你的选择会帮助我们继续优化教程</p>
+              <div className="decision-actions">
+                <button
+                  type="button"
+                  className="is-positive"
+                  onClick={() => {
+                    try {
+                      const raw = sessionStorage.getItem('makeupTask');
+                      const parsed = raw ? JSON.parse(raw) as { taskId?: string } : {};
+                      sessionStorage.setItem(
+                        'makeupTask',
+                        JSON.stringify({ ...parsed, suitability: 'accepted' }),
+                      );
+                    } catch {
+                      /* ignore */
+                    }
+                    navigate('/practice');
+                  }}
+                >
+                  <Check size={17} />
+                  适合我
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      const raw = sessionStorage.getItem('makeupTask');
+                      const parsed = raw ? JSON.parse(raw) as { taskId?: string } : {};
+                      sessionStorage.setItem(
+                        'makeupTask',
+                        JSON.stringify({ ...parsed, suitability: 'adjust' }),
+                      );
+                    } catch {
+                      /* ignore */
+                    }
+                    navigate('/adjust');
+                  }}
+                >
+                  <SlidersHorizontal size={17} />
+                  需要微调
+                </button>
+              </div>
+            </section>
+          )}
         </>
       ) : <div className="preview-loading"><Sparkles className="spin" size={26} /><p>正在生成你的适配效果…</p></div>}
     </MobileShell>

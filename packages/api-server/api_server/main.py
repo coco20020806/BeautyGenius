@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 
+from api_server.adjustment import ensure_task_ready_for_adjustment, run_adjustment_job
 from api_server.config import (
     CORS_ORIGINS,
     ENABLE_DEV_SHORTCUTS,
@@ -42,6 +44,16 @@ app.add_exception_handler(ApiError, api_error_handler)
 
 _running: set[str] = set()
 _diagram_running: set[str] = set()
+
+
+class AdjustmentBody(BaseModel):
+    styles: list[str] = Field(default_factory=list)
+    occasions: list[str] = Field(default_factory=list)
+    retainedParts: list[str] = Field(default_factory=list)
+    skinType: str = "混合性肌肤"
+    concerns: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    baseTutorialId: str | None = None
 
 
 def _parse_bool(value: str | bool | None, *, default: bool = False) -> bool:
@@ -236,6 +248,27 @@ async def get_tutorial(task_id: str) -> dict:
     if video_url:
         doc = {**doc, "videoUrl": video_url}
     return doc
+
+
+@app.post("/api/v1/makeup/tasks/{task_id}/adjustment")
+async def save_adjustment(task_id: str, body: AdjustmentBody) -> dict[str, Any]:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    ensure_task_ready_for_adjustment(task, request_id=req_id)
+    payload = body.model_dump(exclude_none=True)
+    try:
+        return run_adjustment_job(task_id, payload)
+    except Exception as exc:  # noqa: BLE001
+        raise ApiError(
+            500,
+            "ADJUSTMENT_FAILED",
+            str(exc) or "微调优化失败",
+            request_id=req_id,
+        ) from exc
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/step-diagrams", status_code=202)

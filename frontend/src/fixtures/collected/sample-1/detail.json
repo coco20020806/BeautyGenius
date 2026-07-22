@@ -1,0 +1,149 @@
+{
+  "id": "collected-sample-1",
+  "title": "示例视频1",
+  "previewTitle": "教程妆容预览",
+  "style": "自然妆感",
+  "occasion": "日常",
+  "difficulty": "—",
+  "duration": "约 6 分钟",
+  "hints": [
+    {
+      "title": "平均脸预览",
+      "description": "此为平均脸底图预览，不代表你的脸型；上传照片可获得更贴近个人的效果。",
+      "tone": "adjust"
+    },
+    {
+      "title": "适配说明",
+      "description": "根据教程步骤生成的妆效预览，实际上妆时请按步骤循序渐进。",
+      "tone": "neutral"
+    }
+  ],
+  "beforeImage": "media/target_display.jpg",
+  "afterImage": "media/preview_display.jpg",
+  "coverImage": "media/preview_display.jpg",
+  "comparison": {
+    "width": 765,
+    "height": 765,
+    "objectPosition": "49.7% 49.9%"
+  },
+  "illustratedSteps": [
+    {
+      "id": "prep_01",
+      "order": 1,
+      "title": "妆前",
+      "part": "base",
+      "product": "妆前",
+      "color": "#ead6cf",
+      "instruction": "戴美瞳",
+      "expertTip": "戴美瞳",
+      "videoSlice": "00:28–00:38",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_prep_01.jpg"
+    },
+    {
+      "id": "base_01",
+      "order": 2,
+      "title": "底妆",
+      "part": "base",
+      "product": "珂岸面部素颜霜",
+      "color": "#ead6cf",
+      "instruction": "珂岸面部素颜霜 没有手法 全脸推开即可",
+      "expertTip": "全脸推开",
+      "videoSlice": "00:38–01:33",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_base_01.jpg"
+    },
+    {
+      "id": "set_01",
+      "order": 3,
+      "title": "定妆",
+      "part": "base",
+      "product": "kato恰好合拍蜜粉饼03潜水滤镜",
+      "color": "#ead6cf",
+      "instruction": "有色粉饼 全脸定妆 kato恰好合拍蜜粉饼 (03潜水滤镜)",
+      "expertTip": "全脸定妆",
+      "videoSlice": "01:33–01:58",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_set_01.jpg"
+    },
+    {
+      "id": "eye_01",
+      "order": 4,
+      "title": "眼睛",
+      "part": "eyes",
+      "product": "peripera腮红02奶茶棕红色",
+      "color": "#c98586",
+      "instruction": "peripera (02 奶茶棕红色) 陈圆圆联名套刷 大号眼影刷蘸取腮红 打在眼下",
+      "expertTip": "大号眼影刷蘸取打在眼下",
+      "videoSlice": "01:58–02:28",
+      "hasEyeGuide": true,
+      "diagramImage": "media/diagram_eye_01.jpg"
+    },
+    {
+      "id": "contour_01",
+      "order": 5,
+      "title": "修容",
+      "part": "contour",
+      "product": "橘朵四色修容02",
+      "color": "#b18b7b",
+      "instruction": "橘朵四色修容 (02) 鼻影刷蘸取浅色修容 鼻头画小U 山根画大C 细节眼影刷蘸取浅色修容 加深人中 加深卧蚕线",
+      "expertTip": "鼻头画小U山根画大C",
+      "videoSlice": "02:28–03:04",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_contour_01.jpg"
+    },
+    {
+      "id": "eye_02",
+      "order": 6,
+      "title": "眼线",
+      "part": "eyes",
+      "product": "UNNY眼线胶笔黑色",
+      "color": "#c98586",
+      "instruction": "UNNY眼线胶笔 (黑色) 黑色眼线胶笔 填充内眼线 画一条加粗版下垂的外眼线",
+      "expertTip": "填充内眼线画加粗下垂外眼线",
+      "videoSlice": "03:04–03:30",
+      "hasEyeGuide": true,
+      "diagramImage": "media/diagram_eye_02.jpg"
+    },
+    {
+      "id": "brow_01",
+      "order": 7,
+      "title": "眉毛",
+      "part": "brows",
+      "product": "橘朵三色眉粉03",
+      "color": "#8d7167",
+      "instruction": "橘朵三色眉粉 (03) 刀锋刷蘸取棕色眉粉 加深下至",
+      "expertTip": "刀锋刷蘸取加深下至",
+      "videoSlice": "03:30–03:42",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_brow_01.jpg"
+    },
+    {
+      "id": "blush_01",
+      "order": 8,
+      "title": "腮红",
+      "part": "blush",
+      "product": "peripera腮红02奶茶棕红色",
+      "color": "#d3787d",
+      "instruction": "peripera (02 奶茶棕红色) 陈圆圆联名套刷 大号眼影刷蘸取腮红 打在眼下 鼻尖 人中上方 唇峰 腮红刷蘸取腮红 打在面中、下巴",
+      "expertTip": "眼下鼻尖面中下巴轻扫",
+      "videoSlice": "01:58–02:28",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_blush_01.jpg"
+    },
+    {
+      "id": "lip_01",
+      "order": 9,
+      "title": "唇妆",
+      "part": "lips",
+      "product": "橘朵小羊皮细管固体唇釉01+02",
+      "color": "#a94f5b",
+      "instruction": "橘朵小羊皮细管 (01+02) 固体唇釉 涂在嘴唇中间 手指过渡边缘",
+      "expertTip": "涂嘴唇中间手指过渡边缘",
+      "videoSlice": "03:48–04:07",
+      "hasEyeGuide": false,
+      "diagramImage": "media/diagram_lip_01.jpg"
+    }
+  ],
+  "tutorialJsonPath": "tutorial.json"
+}

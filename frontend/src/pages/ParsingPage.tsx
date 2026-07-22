@@ -1,6 +1,6 @@
 import { Check, Circle, LoaderCircle, RefreshCw, Sparkles } from 'lucide-react';
 import type { CSSProperties } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
 import { fetchAnalysisSnapshot, makeupService } from '../services/makeupService';
@@ -36,7 +36,6 @@ function readCachedProgress(taskId: string): AnalysisProgress | null {
 export function ParsingPage() {
   const navigate = useNavigate();
   const taskId = readTaskId();
-  const logEndRef = useRef<HTMLLIElement | null>(null);
   const [runId, setRunId] = useState(0);
   const [progress, setProgress] = useState<AnalysisProgress>(() => {
     const cached = readCachedProgress(taskId);
@@ -56,19 +55,11 @@ export function ParsingPage() {
       progress: 8,
       status: 'processing',
       failureReason: undefined,
-      logLines: [],
       detailMessage: undefined,
       stages: initialStages,
     }));
     setRunId((value) => value + 1);
   }, []);
-
-  useEffect(() => {
-    const el = logEndRef.current;
-    if (el && typeof el.scrollIntoView === 'function') {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [progress.logLines?.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,8 +99,6 @@ export function ParsingPage() {
     return () => { cancelled = true; };
   }, [navigate, runId, taskId]);
 
-  const logLines = progress.logLines ?? [];
-
   return (
     <MobileShell className="parsing-page">
       <header className="centered-heading">
@@ -147,18 +136,6 @@ export function ParsingPage() {
           ))}
         </ol>
       </section>
-
-      {logLines.length > 0 ? (
-        <section className="pipeline-log-card" aria-labelledby="pipeline-log-title" aria-live="polite">
-          <div className="section-heading"><h2 id="pipeline-log-title">处理日志</h2></div>
-          <ol className="pipeline-log">
-            {logLines.map((line, index) => (
-              <li key={`${index}-${line}`}>{line}</li>
-            ))}
-            <li ref={logEndRef} className="pipeline-log__anchor" aria-hidden="true" />
-          </ol>
-        </section>
-      ) : null}
 
       {progress.status === 'failed' ? (
         <div className="analysis-error" role="alert"><p>{progress.failureReason}</p><button className="primary-button" type="button" onClick={retry}><RefreshCw size={17} />重新解析</button></div>

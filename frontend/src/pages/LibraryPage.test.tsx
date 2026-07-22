@@ -27,8 +27,8 @@ test('shows collected-tutorial placeholders and opens collected detail', async (
 
   expect(await screen.findByRole('button', { name: '示例视频1，打开示例教程详情' })).toBeEnabled();
   expect(screen.getByRole('button', { name: '示例视频2，打开示例教程详情' })).toBeEnabled();
-  expect(screen.getAllByText('待生成')).toHaveLength(2);
-  expect(screen.queryByRole('img', { name: /视频封面/ })).not.toBeInTheDocument();
+  expect(screen.getByRole('img', { name: '示例视频1视频封面' })).toBeInTheDocument();
+  expect(screen.getAllByText('待生成')).toHaveLength(1);
 
   await user.click(screen.getByRole('button', { name: '示例视频1，打开示例教程详情' }));
   expect(screen.getByRole('heading', { name: '收藏详情' })).toBeInTheDocument();

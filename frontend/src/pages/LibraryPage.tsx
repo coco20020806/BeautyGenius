@@ -29,8 +29,8 @@ const parts: Array<{ id: PartFilter; label: string }> = [
 const occasions = ['全部', '日常', '通勤', '约会', '聚会'];
 const difficulties = ['全部', '新手', '进阶'];
 
-function isPlaceholderAsset(asset: LibraryAsset) {
-  return !asset.coverImage;
+function isCollectedSampleAsset(asset: LibraryAsset) {
+  return asset.category === 'tutorial' && asset.id.startsWith('collected-sample-');
 }
 
 export function LibraryPage() {
@@ -59,7 +59,7 @@ export function LibraryPage() {
   }, [category, style, part, occasion, difficulty]);
 
   function selectAsset(asset: LibraryAsset) {
-    if (isPlaceholderAsset(asset)) {
+    if (isCollectedSampleAsset(asset)) {
       navigate(`/library/collected/${asset.id}`);
       return;
     }
@@ -149,7 +149,12 @@ export function LibraryPage() {
             {assets.length ? (
               <div className="asset-grid">
                 {assets.map((asset) => (
-                  <AssetCard key={asset.id} asset={asset} onSelect={selectAsset} placeholder={isPlaceholderAsset(asset)} />
+                  <AssetCard
+                    key={asset.id}
+                    asset={asset}
+                    onSelect={selectAsset}
+                    placeholder={isCollectedSampleAsset(asset)}
+                  />
                 ))}
               </div>
             ) : (

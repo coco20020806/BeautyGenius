@@ -1,3 +1,5 @@
+import type { Tutorial } from './makeup';
+
 export type TutorialMode = 'beginner' | 'skilled';
 export type AssetCategory = 'tutorial' | 'part' | 'product';
 export type MakeupPart = 'base' | 'brows' | 'eyes' | 'blush' | 'contour' | 'highlight' | 'lips';
@@ -22,7 +24,7 @@ export interface TutorialStep {
   instruction: string;
   expertTip: string;
   videoSlice: string;
-  hasEyeGuide?: boolean;
+  diagramImage?: string;
 }
 
 export interface IllustratedTutorial {
@@ -32,15 +34,8 @@ export interface IllustratedTutorial {
   duration: string;
   mode: TutorialMode;
   steps: TutorialStep[];
-}
-
-export interface EyeRegionGuide {
-  id: string;
-  label: string;
-  description: string;
-  adaptation: string;
-  color: string;
-  videoSlice: string;
+  /** Full original source video URL when available (e.g. knowledge-base part presets). */
+  videoUrl?: string;
 }
 
 export interface LibraryAsset {
@@ -95,6 +90,12 @@ export interface CollectedSampleHint {
   tone: 'positive' | 'adjust' | 'neutral';
 }
 
+export interface CollectedSampleComparison {
+  width: number;
+  height: number;
+  objectPosition?: string;
+}
+
 export interface CollectedSampleDetail {
   id: string;
   title: string;
@@ -104,14 +105,17 @@ export interface CollectedSampleDetail {
   difficulty: string;
   duration: string;
   hints: CollectedSampleHint[];
-  tutorialJson: string;
+  /** 跟练步骤（产品 / 范围 / 手法），对齐 PracticePage */
+  practiceTutorial: Tutorial;
   illustratedSteps: TutorialStep[];
+  beforeImage?: string;
+  afterImage?: string;
+  comparison?: CollectedSampleComparison;
 }
 
 export interface LearningService {
   saveAdjustment(request: AdjustmentRequest): Promise<IllustratedTutorial>;
   getTutorial(tutorialId?: string): Promise<IllustratedTutorial>;
-  getEyeGuides(tutorialId?: string): Promise<EyeRegionGuide[]>;
   listAssets(filter: LibraryFilter): Promise<LibraryAsset[]>;
   getCollectedSample(assetId: string): Promise<CollectedSampleDetail | null>;
   checkCompatibility(selection: MixSelection): Promise<CompatibilityHint[]>;
