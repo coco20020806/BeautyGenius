@@ -175,6 +175,7 @@ def run_preview_job(
             run_dir,
             tutorial_before_path=before_api,
             image_size=requested_size,
+            output_canvas_path=tgt_run,
         )
         transfer_ms = (time.perf_counter() - t1) * 1000
         if prompt_fallback:

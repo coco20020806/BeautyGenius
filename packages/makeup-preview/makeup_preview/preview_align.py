@@ -130,8 +130,9 @@ def _apply_display_crop(
         t_crop = target_rgb.crop((left, top, right, bottom))
         p_crop = preview_rgb.crop((left, top, right, bottom))
         display_path = target_path.parent / "target_display.jpg"
+        preview_display_path = target_path.parent / "preview_display.jpg"
         t_crop.save(display_path, format="JPEG", quality=92)
-        p_crop.save(preview_path, format="JPEG", quality=92)
+        p_crop.save(preview_display_path, format="JPEG", quality=92)
         w, h = t_crop.size
     # Re-detect on display crop for object position (optional refinement)
     disp_geom = detect_primary_face(display_path, config, landmarker=landmarker)
@@ -203,6 +204,15 @@ def harmonize_preview_pair(
                 result["object_position"] = obj_pos
         else:
             warnings.append("preview_align_display_crop_skipped")
+
+        with Image.open(target_path) as t_im, Image.open(preview_path) as p_im:
+            tw, th = t_im.size
+            if p_im.size != (tw, th):
+                _resize_preview_to_target(p_im.convert("RGB"), tw, th).save(
+                    preview_path, format="JPEG", quality=92
+                )
+                warnings.append("preview_align_size_corrected")
+        result["preview_size_after"] = list(Image.open(preview_path).size)
     finally:
         landmarker.close()
 

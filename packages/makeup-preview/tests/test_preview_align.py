@@ -89,7 +89,10 @@ def test_harmonize_landmark_path_resizes_to_target(tmp_path: Path, preview_confi
 
     assert result["method"] == "landmark_similarity"
     with Image.open(preview) as im:
-        dw, dh = result["display_size"]
-        assert im.size == (dw, dh)
+        assert im.size == (500, 500)
+    dw, dh = result["display_size"]
     assert (tmp_path / "target_display.jpg").is_file()
+    assert (tmp_path / "preview_display.jpg").is_file()
+    with Image.open(tmp_path / "preview_display.jpg") as im:
+        assert im.size == (dw, dh)
     assert result.get("display_crop") is True

@@ -75,8 +75,25 @@ def _extract_images_from_response(response: Any) -> list[str]:
     return urls
 
 
-def _save_outputs(urls_or_b64: list[str], run_dir: Path, prefix: str) -> list[str]:
+def _fit_image_to_size(path: Path, width: int, height: int) -> None:
+    """Resize saved preview so pixel dimensions match the target face image."""
+    with Image.open(path) as im:
+        if im.size == (width, height):
+            return
+        im.convert("RGB").resize(
+            (width, height), Image.Resampling.LANCZOS
+        ).save(path, format="JPEG", quality=92)
+
+
+def _save_outputs(
+    urls_or_b64: list[str],
+    run_dir: Path,
+    prefix: str,
+    *,
+    target_size: tuple[int, int],
+) -> list[str]:
     saved: list[str] = []
+    tw, th = target_size
     for i, item in enumerate(urls_or_b64, start=1):
         name = f"{prefix}_{i:02d}.jpg"
         dest = run_dir / name
@@ -84,6 +101,7 @@ def _save_outputs(urls_or_b64: list[str], run_dir: Path, prefix: str) -> list[st
             _download_url(item, dest)
         else:
             _write_b64(item, dest)
+        _fit_image_to_size(dest, tw, th)
         saved.append(name)
     return saved
 
@@ -97,6 +115,7 @@ def run_transfer(
     tutorial_before_path: Path | None = None,
     n: int = 1,
     image_size: str | None = None,
+    output_canvas_path: Path | None = None,
 ) -> tuple[list[str], str, str, str, bool]:
     dashscope.api_key = config.api_key
     dashscope.base_http_api_url = config.base_url
@@ -123,10 +142,15 @@ def run_transfer(
         ]
         prompt_version = "v1"
 
+    with Image.open(target_path) as im:
+        target_w, target_h = im.size
+    if output_canvas_path is not None and output_canvas_path.is_file():
+        with Image.open(output_canvas_path) as canvas_im:
+            canvas_w, canvas_h = canvas_im.size
+    else:
+        canvas_w, canvas_h = target_w, target_h
     if image_size is None:
-        with Image.open(target_path) as im:
-            tw, th = im.size
-        image_size = resolve_image_size(tw, th, default=config.image_size)
+        image_size = resolve_image_size(canvas_w, canvas_h, default=config.image_size)
 
     message = Message(role="user", content=content)
     response = ImageGeneration.call(
@@ -155,7 +179,12 @@ def run_transfer(
         raise RuntimeError("未能从响应中解析预览图，请查看 transfer_raw.json")
 
     return (
-        _save_outputs(urls[:n], run_dir, "preview"),
+        _save_outputs(
+            urls[:n],
+            run_dir,
+            "preview",
+            target_size=(canvas_w, canvas_h),
+        ),
         prompt_version,
         image_size,
         loaded.prompt_text_version,

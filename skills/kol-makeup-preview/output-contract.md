@@ -14,7 +14,8 @@ Schema 演进：`contract_version: "v1"`（将来 v2 另文）。
 | `tutorial_before.jpg` | 教程妆前（三图 v2 的图2；缺则走二图降级） |
 | `target.jpg` | 用户图或底图拷贝（三图的图3） |
 | `target_display.jpg` | 可选；人脸对齐裁切后的妆前展示图（API `beforeImage` 优先） |
-| `preview_01.jpg` … | 模型输出（经对齐/裁切后与展示妆前同尺寸） |
+| `preview_01.jpg` … | 模型输出；**像素尺寸与 `target.jpg` 一致**（与平均脸/用户照同宽高） |
+| `preview_display.jpg` | 可选；与 `target_display.jpg` 同裁切的人脸展示用预览 |
 | `transfer_prompt.txt` | 送入 wan 的完整 text（自 transfer-prompt.md 加载） |
 | `user-photo-qa.json` | 仅用户上传分支 |
 
