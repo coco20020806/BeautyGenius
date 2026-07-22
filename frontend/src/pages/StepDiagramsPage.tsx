@@ -1,11 +1,13 @@
-import { ArrowLeft, Check, ChevronUp, ImageIcon, Play, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, Check, ChevronUp, ImageIcon, Play, RefreshCw, Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
 import { canPlayStepClip, StepClipPlayer } from '../components/StepClipPlayer';
-import { makeupService } from '../services/makeupService';
+import { isServerBusyError, makeupService } from '../services/makeupService';
 import type { StepDiagramItem, StepDiagramsResponse } from '../types/makeup';
 import { splitDiagramPrompt } from '../utils/splitDiagramPrompt';
+
+const QUEUE_POLL_MS = 5000;
 
 function readTaskId() {
   try {
@@ -47,12 +49,20 @@ export function StepDiagramsPage() {
   const taskId = readTaskId();
   const [data, setData] = useState<StepDiagramsResponse | null>(null);
   const [error, setError] = useState('');
+  const [queued, setQueued] = useState(false);
+  const [runId, setRunId] = useState(0);
   const [activeItem, setActiveItem] = useState<StepDiagramItem | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [collectMode, setCollectMode] = useState(false);
   const [selectedStepIds, setSelectedStepIds] = useState<string[]>([]);
 
   const sortedSteps = data?.steps?.length ? sortDiagramSteps(data.steps) : [];
+
+  const retry = useCallback(() => {
+    setQueued(false);
+    setError('');
+    setRunId((value) => value + 1);
+  }, []);
 
   useEffect(() => {
     if (!taskId) {
@@ -67,7 +77,6 @@ export function StepDiagramsPage() {
         const doc = await makeupService.getStepDiagrams(taskId);
         if (cancelled) return;
         setData(doc);
-        setError('');
         if (doc.status === 'completed' || doc.status === 'failed') {
           if (timer) clearInterval(timer);
         }
@@ -80,7 +89,15 @@ export function StepDiagramsPage() {
     void (async () => {
       try {
         await makeupService.startStepDiagrams(taskId);
-      } catch {
+        if (cancelled) return;
+        setQueued(false);
+        setError('');
+      } catch (reason) {
+        if (cancelled) return;
+        if (isServerBusyError(reason)) {
+          setQueued(true);
+          setError(reason instanceof Error ? reason.message : '排队中，请稍后再试');
+        }
         /* GET may still work if job already running */
       }
       await poll();
@@ -91,7 +108,26 @@ export function StepDiagramsPage() {
       cancelled = true;
       if (timer) clearInterval(timer);
     };
-  }, [taskId]);
+  }, [taskId, runId]);
+
+  useEffect(() => {
+    if (!queued) return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      void (async () => {
+        try {
+          const status = await makeupService.getServerStatus();
+          if (!cancelled && !status.busy) retry();
+        } catch {
+          /* keep waiting */
+        }
+      })();
+    }, QUEUE_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [queued, retry]);
 
   useEffect(() => {
     if (!sortedSteps.length) {
@@ -202,12 +238,18 @@ export function StepDiagramsPage() {
       </header>
 
       {error ? (
-        <section className="analysis-error" role="alert">
-          <p>{error}</p>
+        <section className="analysis-error" role={queued ? 'status' : 'alert'}>
+          <p>{queued ? '排队中' : null}{queued && error ? ' · ' : null}{error}</p>
+          {queued ? (
+            <button className="primary-button" type="button" onClick={retry}>
+              <RefreshCw size={17} />
+              再试一次
+            </button>
+          ) : null}
         </section>
       ) : null}
 
-      {processing && !data?.steps?.length ? (
+      {processing && !data?.steps?.length && !queued ? (
         <div className="preview-loading">
           <Sparkles className="spin" size={26} />
           <p>正在生成步骤示例图…</p>

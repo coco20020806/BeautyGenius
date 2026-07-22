@@ -1,11 +1,14 @@
-import { ArrowLeft, Check, ChevronRight, Hand, Palette, ScanFace, WandSparkles } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Check, ChevronRight, Hand, Palette, RefreshCw, ScanFace, WandSparkles } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BottomNav } from '../components/BottomNav';
 import { MobileShell } from '../components/MobileShell';
 import { learningService } from '../services/learningService';
-import { makeupService } from '../services/makeupService';
+import { isServerBusyError, makeupService } from '../services/makeupService';
+import type { AdjustmentRequest } from '../types/makeup';
+
+const QUEUE_POLL_MS = 5000;
 
 const styleOptions = ['清透自然', '甜美元气', '清冷高级', '性感成熟', '个性酷感'];
 const occasionOptions = ['日常上学', '通勤工作', '约会聚会', '艺术妆造'];
@@ -49,20 +52,13 @@ export function AdjustPage() {
   const [constraints, setConstraints] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queued, setQueued] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState<AdjustmentRequest | null>(null);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  const runAdjustment = useCallback(async (request: AdjustmentRequest) => {
     setSubmitting(true);
     setError(null);
-    const request = {
-      styles: style ? [style] : [],
-      occasions,
-      retainedParts,
-      skinType,
-      concerns,
-      constraints,
-      baseTutorialId: routeState?.baseTutorialId,
-    };
+    setQueued(false);
     try {
       if (taskId) {
         await makeupService.saveAdjustment(taskId, request);
@@ -72,10 +68,51 @@ export function AdjustPage() {
       const tutorial = await learningService.saveAdjustment(request);
       navigate('/tutorial', { state: { from: routeState?.from ?? '/adjust', tutorialId: tutorial.id } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '生成方案失败，请重试');
+      if (isServerBusyError(err)) {
+        setQueued(true);
+        setPendingRequest(request);
+        setError(err instanceof Error ? err.message : '排队中，请稍后再试');
+      } else {
+        setError(err instanceof Error ? err.message : '生成方案失败，请重试');
+      }
       setSubmitting(false);
     }
+  }, [navigate, routeState?.from, taskId]);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const request = {
+      styles: style ? [style] : [],
+      occasions,
+      retainedParts,
+      skinType,
+      concerns,
+      constraints,
+      baseTutorialId: routeState?.baseTutorialId,
+    };
+    await runAdjustment(request);
   }
+
+  useEffect(() => {
+    if (!queued || !pendingRequest) return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      void (async () => {
+        try {
+          const status = await makeupService.getServerStatus();
+          if (!cancelled && !status.busy) {
+            await runAdjustment(pendingRequest);
+          }
+        } catch {
+          /* keep waiting */
+        }
+      })();
+    }, QUEUE_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [queued, pendingRequest, runAdjustment]);
 
   const backTo = taskId ? '/preview' : (routeState?.from ?? '/preview');
 
@@ -104,8 +141,26 @@ export function AdjustPage() {
           <div className="choice-question"><h3>你有哪些限制？</h3><small>多选</small><MultiChoice name="constraints" options={constraintOptions} selected={constraints} onChange={setConstraints} /></div>
         </fieldset>
 
-        {error ? <p className="form-error" role="alert">{error}</p> : null}
-        <button className="primary-button" type="submit" disabled={submitting}>{submitting ? '正在生成…' : <>生成方案<ChevronRight size={18} /></>}</button>
+        {error ? (
+          <p className="form-error" role={queued ? 'status' : 'alert'}>
+            {queued ? `排队中 · ${error}` : error}
+          </p>
+        ) : null}
+        {queued && pendingRequest ? (
+          <button
+            className="primary-button"
+            type="button"
+            disabled={submitting}
+            onClick={() => void runAdjustment(pendingRequest)}
+          >
+            <RefreshCw size={17} />
+            再试一次
+          </button>
+        ) : (
+          <button className="primary-button" type="submit" disabled={submitting}>
+            {submitting ? '正在生成…' : <>生成方案<ChevronRight size={18} /></>}
+          </button>
+        )}
       </form>
       <BottomNav />
     </MobileShell>

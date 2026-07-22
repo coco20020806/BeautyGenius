@@ -22,6 +22,7 @@ from api_server.config import (
 from api_server.dev_bootstrap import bootstrap_from_pinned_file
 from api_server.errors import ApiError, api_error_handler, new_request_id
 from api_server.media_urls import resolve_task_video_url
+from api_server.occupancy import JobKind, occupancy
 from api_server.pipeline import run_task_pipeline
 from api_server.preview_assembler import assemble_makeup_preview
 from api_server.step_diagrams import (
@@ -44,6 +45,20 @@ app.add_exception_handler(ApiError, api_error_handler)
 
 _running: set[str] = set()
 _diagram_running: set[str] = set()
+
+_SERVER_BUSY_MESSAGE = "排队中，服务器已满（最多 {max} 人同时使用），请稍后再试"
+
+
+def _require_occupancy(task_id: str, job: JobKind, *, request_id: str) -> None:
+    if occupancy.try_acquire(task_id, job):
+        return
+    raise ApiError(
+        409,
+        "SERVER_BUSY",
+        _SERVER_BUSY_MESSAGE.format(max=occupancy.max_concurrent),
+        request_id=request_id,
+        details=occupancy.snapshot(),
+    )
 
 
 class AdjustmentBody(BaseModel):
@@ -187,6 +202,7 @@ async def start_analysis(task_id: str, background_tasks: BackgroundTasks) -> dic
     if task_id in _running:
         return {"taskId": task_id, "status": "processing"}
 
+    _require_occupancy(task_id, "analysis", request_id=req_id)
     store.mark_processing(task_id)
     _running.add(task_id)
 
@@ -195,6 +211,7 @@ async def start_analysis(task_id: str, background_tasks: BackgroundTasks) -> dic
             run_task_pipeline(task_id)
         finally:
             _running.discard(task_id)
+            occupancy.release(task_id, "analysis")
 
     background_tasks.add_task(_run)
     return {"taskId": task_id, "status": "processing"}
@@ -259,6 +276,7 @@ async def save_adjustment(task_id: str, body: AdjustmentBody) -> dict[str, Any]:
         raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
 
     ensure_task_ready_for_adjustment(task, request_id=req_id)
+    _require_occupancy(task_id, "adjustment", request_id=req_id)
     payload = body.model_dump(exclude_none=True)
     try:
         return run_adjustment_job(task_id, payload)
@@ -269,6 +287,8 @@ async def save_adjustment(task_id: str, body: AdjustmentBody) -> dict[str, Any]:
             str(exc) or "微调优化失败",
             request_id=req_id,
         ) from exc
+    finally:
+        occupancy.release(task_id, "adjustment")
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/step-diagrams", status_code=202)
@@ -292,6 +312,7 @@ async def start_step_diagrams(task_id: str, background_tasks: BackgroundTasks) -
         if has_diagram:
             return {"taskId": task_id, "status": "completed"}
 
+    _require_occupancy(task_id, "step_diagrams", request_id=req_id)
     store.set_step_diagrams_processing(task_id)
     _diagram_running.add(task_id)
 
@@ -302,6 +323,7 @@ async def start_step_diagrams(task_id: str, background_tasks: BackgroundTasks) -
             store.mark_step_diagrams_failed(task_id, reason=str(exc) or "示例图生成失败")
         finally:
             _diagram_running.discard(task_id)
+            occupancy.release(task_id, "step_diagrams")
 
     background_tasks.add_task(_run)
     return {"taskId": task_id, "status": "processing"}
@@ -318,6 +340,11 @@ async def get_step_diagrams(task_id: str) -> dict:
     ensure_task_ready_for_diagrams(task, request_id=req_id)
     tutorial = load_tutorial_document(task, request_id=req_id)
     return assemble_step_diagrams(task_id, task, tutorial)
+
+
+@app.get("/api/v1/makeup/server/status")
+async def server_status() -> dict:
+    return occupancy.snapshot()
 
 
 @app.post("/api/v1/makeup/dev/skip-to-preview")

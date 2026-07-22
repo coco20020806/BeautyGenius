@@ -12,7 +12,7 @@ import type {
 import faceAfter from '../assets/face-after.svg';
 import faceBefore from '../assets/face-before.svg';
 import { HttpMakeupService } from './httpMakeupService';
-import { requestJson } from './httpClient';
+import { HttpError, requestJson } from './httpClient';
 
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
 const VIDEO_TYPES = new Set(['video/mp4', 'video/quicktime']);
@@ -171,6 +171,10 @@ class LocalMakeupService implements MakeupService {
     return { taskId: 'demo-task', status: 'completed' as const };
   }
 
+  async getServerStatus() {
+    return { busy: false, activeCount: 0, maxConcurrent: 2 };
+  }
+
   async startStepDiagrams(taskId: string) {
     return { taskId, status: 'completed' as const };
   }
@@ -247,4 +251,8 @@ export async function fetchAnalysisSnapshot(taskId: string): Promise<AnalysisPro
   } catch {
     return null;
   }
+}
+
+export function isServerBusyError(error: unknown): boolean {
+  return error instanceof HttpError && error.code === 'SERVER_BUSY';
 }

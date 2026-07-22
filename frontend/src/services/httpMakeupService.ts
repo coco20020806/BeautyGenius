@@ -83,6 +83,15 @@ export class HttpMakeupService implements MakeupService {
       { method: 'POST' },
     );
   }
+
+  async getServerStatus() {
+    return requestJson<{
+      busy: boolean;
+      activeCount: number;
+      maxConcurrent: number;
+      slots?: Array<{ taskId: string; job: string; startedAt: number }>;
+    }>(`${API_PREFIX}/server/status`);
+  }
 }
 
 function readTaskId(): string | null {

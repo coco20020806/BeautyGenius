@@ -1,4 +1,4 @@
-export type AnalysisStatus = 'processing' | 'completed' | 'failed';
+export type AnalysisStatus = 'processing' | 'completed' | 'failed' | 'queued';
 export type AnalysisStageStatus = 'pending' | 'active' | 'completed';
 
 export interface UploadVideoResult {
@@ -169,6 +169,14 @@ export interface MakeupService {
   startStepDiagrams(taskId: string): Promise<StepDiagramsStartResult>;
   getStepDiagrams(taskId: string): Promise<StepDiagramsResponse>;
   skipToDevPreview(): Promise<DevSkipPreviewResult>;
+  getServerStatus(): Promise<ServerStatus>;
+}
+
+export interface ServerStatus {
+  busy: boolean;
+  activeCount: number;
+  maxConcurrent: number;
+  slots?: Array<{ taskId: string; job: string; startedAt: number }>;
 }
 
 export type StepDiagramItemStatus = 'pending' | 'ok' | 'failed' | 'skipped';

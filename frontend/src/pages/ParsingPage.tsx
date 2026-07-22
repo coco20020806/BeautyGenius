@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
-import { fetchAnalysisSnapshot, makeupService } from '../services/makeupService';
+import { fetchAnalysisSnapshot, isServerBusyError, makeupService } from '../services/makeupService';
 import type { AnalysisProgress, AnalysisStage } from '../types/makeup';
 
 const initialStages: AnalysisStage[] = [
@@ -12,6 +12,8 @@ const initialStages: AnalysisStage[] = [
   { id: 'preview-generation', label: '生成适配预览', status: 'pending' },
   { id: 'hint-generation', label: '整理关键建议', status: 'pending' },
 ];
+
+const QUEUE_POLL_MS = 5000;
 
 function readTaskId() {
   try {
@@ -86,6 +88,15 @@ export function ParsingPage() {
         }
       } catch (reason) {
         if (!cancelled) {
+          if (isServerBusyError(reason)) {
+            setProgress((current) => ({
+              ...current,
+              status: 'queued',
+              currentStage: '排队中',
+              failureReason: reason instanceof Error ? reason.message : '排队中，请稍后再试',
+            }));
+            return;
+          }
           setProgress((current) => ({
             ...current,
             status: 'failed',
@@ -98,6 +109,25 @@ export function ParsingPage() {
     return () => { cancelled = true; };
   }, [navigate, runId, taskId]);
 
+  useEffect(() => {
+    if (progress.status !== 'queued') return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      void (async () => {
+        try {
+          const status = await makeupService.getServerStatus();
+          if (!cancelled && !status.busy) retry();
+        } catch {
+          /* keep waiting */
+        }
+      })();
+    }, QUEUE_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [progress.status, retry]);
+
   const stageTitle =
     progress.currentStage === '检查视频质量' &&
     typeof progress.detailMessage === 'string' &&
@@ -105,25 +135,34 @@ export function ParsingPage() {
       ? '压缩视频以便分析'
       : progress.currentStage;
 
+  const isQueued = progress.status === 'queued';
+  const isFailed = progress.status === 'failed';
+
   return (
     <MobileShell className="parsing-page">
       <header className="centered-heading">
         <span className="page-kicker">AI MAKEUP ANALYSIS</span>
-        <h1>{progress.status === 'failed' ? '解析遇到问题' : '解析中，请稍候…'}</h1>
-        <p>{progress.status === 'failed' ? '你的视频和照片都已保留' : '正在把教程变成适合你的上妆方案'}</p>
+        <h1>{isQueued ? '排队中' : isFailed ? '解析遇到问题' : '解析中，请稍候…'}</h1>
+        <p>
+          {isQueued
+            ? '服务器已满（最多 2 人同时使用），有空位后将自动重试'
+            : isFailed
+              ? '你的视频和照片都已保留'
+              : '正在把教程变成适合你的上妆方案'}
+        </p>
       </header>
 
       <section className="progress-hero" aria-label={`解析进度 ${progress.progress}%`}>
-        <div className="progress-ring" style={{ '--progress': progress.progress } as CSSProperties}>
+        <div className="progress-ring" style={{ '--progress': isQueued ? 0 : progress.progress } as CSSProperties}>
           <div className="progress-ring__inner">
-            <strong>{progress.progress}<small>%</small></strong>
-            <span>{progress.status === 'completed' ? '已完成' : '解析进度'}</span>
+            <strong>{isQueued ? <LoaderCircle className="spin" size={28} /> : <>{progress.progress}<small>%</small></>}</strong>
+            <span>{isQueued ? '排队中' : progress.status === 'completed' ? '已完成' : '解析进度'}</span>
           </div>
         </div>
         <div className="current-stage">
-          <Sparkles size={16} /><span>当前阶段</span><strong>{stageTitle}</strong>
+          <Sparkles size={16} /><span>当前阶段</span><strong>{isQueued ? '排队中' : stageTitle}</strong>
         </div>
-        {progress.detailMessage ? (
+        {progress.detailMessage && !isQueued ? (
           <p className="current-stage-detail">{progress.detailMessage}</p>
         ) : null}
       </section>
@@ -143,7 +182,14 @@ export function ParsingPage() {
         </ol>
       </section>
 
-      {progress.status === 'failed' ? (
+      {isQueued ? (
+        <div className="analysis-error" role="status">
+          <p>{progress.failureReason ?? '排队中，请稍后再试'}</p>
+          <button className="primary-button" type="button" onClick={retry}><RefreshCw size={17} />再试一次</button>
+        </div>
+      ) : null}
+
+      {isFailed ? (
         <div className="analysis-error" role="alert"><p>{progress.failureReason}</p><button className="primary-button" type="button" onClick={retry}><RefreshCw size={17} />重新解析</button></div>
       ) : null}
     </MobileShell>
