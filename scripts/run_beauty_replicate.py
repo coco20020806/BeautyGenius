@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from makeup_preview import PreviewConfig, StrictReplicationError, UserPhotoRejected, run_preview_job
+from makeup_understanding import UnderstandingConfig, run_understanding_job
 from tutorial_mapper import MapperConfig, run_mapper_job
 from video_parse import ParseConfig, run_parse_job
 
@@ -129,6 +130,11 @@ def main() -> None:
         help="Tutorial 映射跳过视觉 enrichment（full 下可用；fast 已默认跳过）",
     )
     parser.add_argument(
+        "--skip-understanding",
+        action="store_true",
+        help="跳过 makeup-understanding（display_product / technique）",
+    )
+    parser.add_argument(
         "--quiet",
         action="store_true",
         help="关闭 stderr 阶段进度（也可用 BEAUTY_PARSE_QUIET=1）",
@@ -240,8 +246,31 @@ def main() -> None:
             tutorial_path = mapper_result.tutorial_path
             tutorial_id = (mapper_result.tutorial or {}).get("tutorial_id")
             job_log(f"Tutorial 映射完成: {tutorial_path}")
+            if not args.skip_understanding:
+                if not api_key:
+                    raise RuntimeError("makeup-understanding 需要 DASHSCOPE_API_KEY；或使用 --skip-understanding")
+                job_log("理解产品与手法…")
+                run_understanding_job(
+                    parse_run_dir,
+                    UnderstandingConfig(api_key=api_key, enabled=True),
+                )
+                job_log("理解完成")
+            else:
+                job_log("跳过 makeup-understanding")
         elif args.skip_tutorial_map:
             job_log("跳过 Tutorial 映射")
+            if parse_run_dir and not args.skip_understanding:
+                tutorial_candidate = parse_run_dir / "tutorial.json"
+                if tutorial_candidate.is_file():
+                    if not api_key:
+                        raise RuntimeError("makeup-understanding 需要 DASHSCOPE_API_KEY")
+                    job_log("理解产品与手法（已有 tutorial.json）…")
+                    run_understanding_job(
+                        parse_run_dir,
+                        UnderstandingConfig(api_key=api_key, enabled=True),
+                    )
+                    tutorial_path = tutorial_candidate
+                    job_log("理解完成")
         else:
             job_log("无 parse run，跳过 Tutorial 映射")
 

@@ -31,6 +31,7 @@ cd "<repo-root>"
 | `SKIP_TRANSFER=1` | 全局跳过 wan transfer（与任务 `skip_transfer` 为或关系）；首页也可勾选「跳过妆容预览」按任务跳过 |
 | `PARSE_MODE=fast` | 无 `fastParse` 字段时的服务端默认；上传表单 `fastParse` 优先 |
 | `API_PUBLIC_BASE_URL` | 预览图 URL 前缀，默认 `http://127.0.0.1:8000` |
+| `ENABLE_DEV_SHORTCUTS=1` 或 `APP_ENV=development` | 开启 `POST /api/v1/makeup/dev/skip-to-preview`（读取 `configs/dev-pinned-runs.json`） |
 
 ## 任务存储
 
@@ -47,6 +48,8 @@ cd "<repo-root>"
 | POST | `/api/v1/makeup/tasks/{taskId}/analysis` |
 | GET | `/api/v1/makeup/tasks/{taskId}/analysis` |
 | GET | `/api/v1/makeup/tasks/{taskId}/preview` |
+| GET | `/api/v1/makeup/tasks/{taskId}/tutorial` |
+| POST | `/api/v1/makeup/dev/skip-to-preview`（仅 dev；见 `ENABLE_DEV_SHORTCUTS`） |
 | GET | `/media/{taskId}/{filename}` |
 
 MVP 无用户鉴权；任务 ID 即访问凭证。
@@ -54,6 +57,14 @@ MVP 无用户鉴权；任务 ID 即访问凭证。
 上传 `POST /tasks` 表单：`video`（必填）、`fastParse`（可选，默认 true，对应 `-Mode fast`）、`skipMakeupPreview`（可选，默认 false；为 true 时写入 `task.skip_transfer`，等价跳过 wan 妆容预览）。
 
 ETA 历史样本：`outputs/tasks/_eta_stats.jsonl`（用于改善 `remainingSeconds`）。
+
+### 开发：跳过至预览
+
+```http
+POST /api/v1/makeup/dev/skip-to-preview
+```
+
+需 `ENABLE_DEV_SHORTCUTS=1` 或 `APP_ENV=development`。读取 [`configs/dev-pinned-runs.json`](../configs/dev-pinned-runs.json) 中的 `parse_run_dir` 与 `preview_run_dir`，注册 `status=completed` 任务并复制预览图到 `outputs/tasks/{taskId}/media/`。路径无效时 `409`，`code` 为 `DEV_RUNS_NOT_PINNED`。固定路径：`python scripts/pin-latest-dev-runs.py`。
 
 ## 前端联调
 

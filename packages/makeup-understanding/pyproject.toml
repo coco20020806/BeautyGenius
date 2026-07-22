@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "makeup-understanding"
+version = "0.1.0"
+description = "LLM extract display_product and technique from tutorial.json steps"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "dashscope>=1.24.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["makeup_understanding*"]

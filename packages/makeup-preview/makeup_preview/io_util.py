@@ -35,6 +35,19 @@ def maybe_copy(src: Path, dest: Path) -> None:
     copy_image_as_jpg(src, dest)
 
 
+def ensure_preview_matches_target(preview_path: Path, target_path: Path) -> tuple[int, int]:
+    """Resize preview to target.jpg pixel size; return (width, height)."""
+    with Image.open(target_path) as t_im:
+        tw, th = t_im.size
+    with Image.open(preview_path) as p_im:
+        if p_im.size == (tw, th):
+            return tw, th
+        p_im.convert("RGB").resize((tw, th), Image.Resampling.LANCZOS).save(
+            preview_path, format="JPEG", quality=92
+        )
+    return tw, th
+
+
 def prepare_for_api(path: Path, run_dir: Path, label: str, max_long: int) -> Path:
     """Resize in-run if needed; return path to use for API."""
     with Image.open(path) as im:

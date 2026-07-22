@@ -45,14 +45,15 @@ npm run lint
 | `/photo` | `src/pages/PhotoPage.tsx` | 上传本人照片或跳过 | 是 |
 | `/parsing` | `src/pages/ParsingPage.tsx` | 展示解析进度和失败信息 | 是 |
 | `/preview` | `src/pages/PreviewPage.tsx` | 展示妆前/妆后效果与适配建议 | 是 |
-| `/practice` | `src/pages/PlaceholderPage.tsx` | 跟练占位页 | 暂不需要 |
+| `/practice` | `src/pages/PracticePage.tsx` | 展示 tutorial.json 步骤（产品/范围/手法） | 是 |
+| `/practice/examples` | `src/pages/StepDiagramsPage.tsx` | 步骤着色范围示例图（按需生成） | 是 |
 | `/library` | `src/pages/PlaceholderPage.tsx` | 知识库占位页 | 暂不需要 |
 | `/profile` | `src/pages/PlaceholderPage.tsx` | 我的占位页 | 暂不需要 |
 
 核心流程：
 
 ```text
-上传视频 / → 照片确认 /photo → 解析进度 /parsing → 适配预览 /preview
+上传视频 / → 照片确认 /photo → 解析进度 /parsing → 适配预览 /preview → 适合我 → 跟练 /practice → 示例图 /practice/examples（按需生成）
 ```
 
 适配预览页的返回按钮会直接进入 `/`，不会重新进入解析页。
@@ -79,6 +80,10 @@ export interface MakeupService {
   uploadPhoto(file: File | null): Promise<UploadPhotoResult>;
   analyze(taskId: string): AsyncGenerator<AnalysisProgress>;
   getPreview(taskId: string): Promise<MakeupPreview>;
+  getTutorial(taskId: string): Promise<Tutorial>;
+  startStepDiagrams(taskId: string): Promise<StepDiagramsStartResult>;
+  getStepDiagrams(taskId: string): Promise<StepDiagramsResponse>;
+  skipToDevPreview(): Promise<DevSkipPreviewResult>;
 }
 ```
 
@@ -290,6 +295,46 @@ GET /api/v1/makeup/tasks/{taskId}/preview
 ```
 
 对应类型：`MakeupPreview`。
+
+### 6.6 获取教程解读（tutorial.json）
+
+```http
+GET /api/v1/makeup/tasks/{taskId}/tutorial
+```
+
+任务 `status` 为 `completed` 且存在 `tutorial_path` 时，返回磁盘上的 `tutorial.v1` JSON（与 parse run 目录中 `tutorial.json` 一致）。未就绪时返回 `409`，`code` 为 `TUTORIAL_NOT_READY`。
+
+对应类型：`Tutorial`（见 `src/types/makeup.ts`）。
+
+### 6.7 步骤示例图（picture-makeup，按需）
+
+启动生成（幂等；主任务 `completed` 且存在 tutorial 后）：
+
+```http
+POST /api/v1/makeup/tasks/{taskId}/step-diagrams
+```
+
+响应：`202`，`{ "taskId": "...", "status": "processing" | "completed" }`。
+
+查询进度与图片 URL：
+
+```http
+GET /api/v1/makeup/tasks/{taskId}/step-diagrams
+```
+
+响应：`StepDiagramsResponse`（`status`: `idle` | `processing` | `completed` | `failed`；`steps[].imageUrl` 为 `{API_PUBLIC_BASE_URL}/media/{taskId}/diagram_{stepId}.jpg`；失败步含 `steps[].error`，全部失败时顶层 `failureReason` 会汇总首条错误）。
+
+未就绪：`409`，`STEP_DIAGRAMS_NOT_READY` 或 `TUTORIAL_NOT_READY`。
+
+前端：`/practice` 底部「前往示例图」进入 `/practice/examples`，进入后 POST + 轮询 GET。
+
+### 6.8 开发捷径：跳过照片与解析
+
+```http
+POST /api/v1/makeup/dev/skip-to-preview
+```
+
+响应：`{ "taskId": "...", "status": "completed", "parseRunDir": "...", "previewRunDir": "..." }`。需服务端开启 `ENABLE_DEV_SHORTCUTS`；固定路径来自仓库根目录 `configs/dev-pinned-runs.json`（由 `scripts/pin-latest-dev-runs.py` 生成）。首页在开发模式下展示「跳过前两步（开发）」按钮。
 
 `beforeImage` 和 `afterImage` 必须满足：
 

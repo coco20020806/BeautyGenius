@@ -12,7 +12,7 @@ from makeup_preview.baselines import baseline_metadata, resolve_baseline_path
 from makeup_preview.config import CONTRACT_VERSION, PreviewConfig, PreviewJobResult, resolve_image_size
 from makeup_preview.face_gate import FaceValidationError, run_l0_l1
 from makeup_preview.face_qa import run_face_qa
-from makeup_preview.io_util import make_run_dir, maybe_copy, prepare_for_api
+from makeup_preview.io_util import make_run_dir, maybe_copy, prepare_for_api, ensure_preview_matches_target
 from makeup_preview.preview_align import harmonize_preview_pair
 from makeup_preview.reference_pick import pick_reference_from_parse_run
 from makeup_preview.transfer import run_transfer
@@ -161,11 +161,13 @@ def run_preview_job(
     preview_alignment: dict[str, Any] | None = None
     prompt_version = "v2" if before_run.is_file() else "v1"
     prompt_text_version: str | None = None
+    target_pixel_size: list[int] | None = None
     if not skip_transfer and ref_api and ref_api.is_file():
         from PIL import Image
 
         with Image.open(tgt_run) as im:
             tw, th = im.size
+        target_pixel_size = [tw, th]
         requested_size = resolve_image_size(tw, th, default=config.image_size)
         t1 = time.perf_counter()
         names, prompt_version, requested_size, prompt_text_version, prompt_fallback = run_transfer(
@@ -182,7 +184,10 @@ def run_preview_job(
             warnings.append("transfer_prompt_fallback_static")
         outputs = [{"filename": n, "selected": i == 0} for i, n in enumerate(names)]
         if names:
-            preview_alignment = harmonize_preview_pair(tgt_run, run_dir / names[0], config)
+            preview_path = run_dir / names[0]
+            preview_alignment = harmonize_preview_pair(tgt_run, preview_path, config)
+            out_w, out_h = ensure_preview_matches_target(preview_path, tgt_run)
+            preview_alignment["preview_size_after"] = [out_w, out_h]
 
     preview: dict[str, Any] = {
         "contract_version": CONTRACT_VERSION,
@@ -200,6 +205,8 @@ def run_preview_job(
     }
     if requested_size:
         preview["transfer"]["requested_size"] = requested_size
+    if target_pixel_size is not None:
+        preview["transfer"]["target_pixel_size"] = target_pixel_size
     if preview_alignment is not None:
         preview["alignment"] = preview_alignment
         align_warnings = preview_alignment.get("warnings") or []

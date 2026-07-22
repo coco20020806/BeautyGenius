@@ -3,6 +3,7 @@ import type {
   AnalysisStage,
   MakeupPreview,
   MakeupService,
+  Tutorial,
   UploadPhotoResult,
   UploadVideoResult,
 } from '../types/makeup';
@@ -86,6 +87,78 @@ class LocalMakeupService implements MakeupService {
         logLines,
       };
     }
+  }
+
+  async getTutorial(taskId: string): Promise<Tutorial> {
+    return {
+      contract_version: 'tutorial.v1',
+      tutorial_id: `tutorial_${taskId}`,
+      title: '清透玫瑰通勤妆',
+      steps: [
+        {
+          step_id: 'base_01',
+          part: 'base',
+          taxonomy_primary: '底妆',
+          product: { name: '珂岸面部素颜霜', keywords: ['素颜霜'] },
+          display_product: '珂岸面部素颜霜',
+          display_product_tier: 'specific',
+          technique: '全脸推开',
+          visual_layer: { position: '全脸均匀铺开' },
+          instruction: '从面中向外拍开，边缘少量带过',
+          adaptation_note: '',
+          video_clip: { start: 0, end: 45 },
+        },
+        {
+          step_id: 'blush_01',
+          part: 'cheek',
+          taxonomy_primary: '腮红',
+          product: { name: '橘朵腮红01', keywords: ['膨胀色腮红'] },
+          display_product: '橘朵腮红01',
+          display_product_tier: 'specific',
+          technique: '少量轻拍晕染',
+          visual_layer: { position: '颧骨外侧至太阳穴', color: '#d8aaa0' },
+          instruction: '少量多次轻拍晕染，与底妆自然衔接',
+          adaptation_note: '',
+          video_clip: { start: 45, end: 90 },
+        },
+        {
+          step_id: 'lip_01',
+          part: 'lip',
+          taxonomy_primary: '唇妆',
+          product: { name: 'unknown', keywords: ['低饱和玫瑰色'] },
+          display_product: '低饱和玫瑰色',
+          display_product_tier: 'characteristic',
+          technique: '薄涂指腹拍开',
+          visual_layer: { position: '唇峰与唇中' },
+          instruction: '薄涂一层，指腹轻拍开边缘',
+          adaptation_note: '',
+          video_clip: { start: 90, end: 120 },
+        },
+      ],
+    };
+  }
+
+  async skipToDevPreview() {
+    return { taskId: 'demo-task', status: 'completed' as const };
+  }
+
+  async startStepDiagrams(taskId: string) {
+    return { taskId, status: 'completed' as const };
+  }
+
+  async getStepDiagrams(taskId: string) {
+    const tutorial = await this.getTutorial(taskId);
+    return {
+      taskId,
+      status: 'completed' as const,
+      steps: tutorial.steps.map((step, index) => ({
+        stepId: step.step_id,
+        index,
+        heading: `步骤 ${index + 1} · ${step.taxonomy_primary ?? step.step_id}`,
+        imageUrl: faceBefore,
+        status: 'ok' as const,
+      })),
+    };
   }
 
   async getPreview(taskId: string): Promise<MakeupPreview> {

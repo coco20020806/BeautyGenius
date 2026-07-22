@@ -12,7 +12,24 @@ test('shows comparison, makeup summary and suitability decisions', async () => {
   await waitFor(() => expect(screen.getByRole('slider', { name: '妆前妆后对比位置' })).toBeInTheDocument());
   expect(screen.getByRole('button', { name: '适合我' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '需要微调' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '不适合我' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '不适合我' })).not.toBeInTheDocument();
+});
+
+test('navigates to practice when accepting the look', async () => {
+  const user = userEvent.setup();
+  sessionStorage.setItem('makeupTask', JSON.stringify({ taskId: 'task-1' }));
+  render(
+    <MemoryRouter initialEntries={['/preview']}>
+      <Routes>
+        <Route path="/preview" element={<PreviewPage />} />
+        <Route path="/practice" element={<h1>跟练教程</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  await screen.findByRole('heading', { name: '适配预览' });
+  await user.click(screen.getByRole('button', { name: '适合我' }));
+  expect(await screen.findByRole('heading', { name: '跟练教程' })).toBeInTheDocument();
 });
 
 test('returns directly to video upload instead of revisiting parsing', async () => {

@@ -14,7 +14,9 @@ C:\Users\fei.kong\Desktop\Beauty Genius\skills\
 |------|------|------|
 | [beauty-video-parse/](beauty-video-parse/) | `beauty-video-parse` | 美妆教程视频解析 → `analysis.json` + 关键帧 |
 | [tutorial-mapper/](tutorial-mapper/) | `tutorial-mapper` | `analysis.json` → Tutorial / Step / Part Asset（`tutorial.json`） |
+| [makeup-understanding/](makeup-understanding/) | `makeup-understanding` | `tutorial.json` 步骤 → `display_product` / `technique`（优先级产品名 + 短手法） |
 | [kol-makeup-preview/](kol-makeup-preview/) | `kol-makeup-preview` | KOL 整妆 → 用户正脸或中国平均脸底图预览（`wan2.7-image-pro`） |
+| [picture_makeup/](picture_makeup/) | `picture-makeup` | 教程逐步模块图示（`qwen3.7-plus` + `wan2.7-image-pro` + `image_format.png` 底图） |
 
 ## 在 Cursor 中使用
 

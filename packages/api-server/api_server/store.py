@@ -82,6 +82,10 @@ class TaskStore:
             "progress_doc": progress_payload(task_id, active_index=0, progress=0, status="processing"),
             "failureReason": None,
             "media_dir": None,
+            "step_diagrams_status": "idle",
+            "step_diagrams_run_dir": None,
+            "step_diagrams_failure": None,
+            "step_diagrams_progress": None,
             "photo_id": None,
             "pipeline_started_at": None,
             "created_at": _utc_now(),
@@ -314,6 +318,52 @@ class TaskStore:
             processing_started_at=prior.get("processingStartedAt"),
             prior_doc=prior,
         )
+        self.save(task)
+        return task
+
+    def set_step_diagrams_processing(self, task_id: str) -> dict[str, Any]:
+        task = self.load(task_id)
+        task["step_diagrams_status"] = "processing"
+        task["step_diagrams_failure"] = None
+        task["step_diagrams_progress"] = {"done": 0, "total": 0, "currentStepId": None}
+        self.save(task)
+        return task
+
+    def update_step_diagrams_progress(
+        self,
+        task_id: str,
+        *,
+        done: int,
+        total: int,
+        current_step_id: str | None,
+    ) -> None:
+        task = self.load(task_id)
+        task["step_diagrams_progress"] = {
+            "done": done,
+            "total": total,
+            "currentStepId": current_step_id,
+        }
+        self.save(task)
+
+    def mark_step_diagrams_completed(self, task_id: str, *, run_dir: str) -> dict[str, Any]:
+        task = self.load(task_id)
+        task["step_diagrams_status"] = "completed"
+        task["step_diagrams_run_dir"] = run_dir
+        task["step_diagrams_failure"] = None
+        prog = task.get("step_diagrams_progress") or {}
+        total = int(prog.get("total") or 0)
+        task["step_diagrams_progress"] = {
+            "done": total,
+            "total": total,
+            "currentStepId": None,
+        }
+        self.save(task)
+        return task
+
+    def mark_step_diagrams_failed(self, task_id: str, *, reason: str) -> dict[str, Any]:
+        task = self.load(task_id)
+        task["step_diagrams_status"] = "failed"
+        task["step_diagrams_failure"] = reason
         self.save(task)
         return task
 

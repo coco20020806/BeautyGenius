@@ -23,6 +23,38 @@ export function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [fastParse, setFastParse] = useState(true);
   const [skipMakeupPreview, setSkipMakeupPreview] = useState(false);
+  const [devSkipLoading, setDevSkipLoading] = useState(false);
+  const [devSkipError, setDevSkipError] = useState('');
+
+  const showDevSkip =
+    import.meta.env.DEV || import.meta.env.VITE_SHOW_DEV_SKIP === '1';
+
+  async function skipToPreviewDev() {
+    if (devSkipLoading) return;
+    setDevSkipLoading(true);
+    setDevSkipError('');
+    try {
+      const result = await makeupService.skipToDevPreview();
+      sessionStorage.setItem(
+        'makeupTask',
+        JSON.stringify({ taskId: result.taskId, devSkip: true }),
+      );
+      sessionStorage.removeItem('makeupProgress');
+      navigate('/preview');
+    } catch (reason) {
+      const message =
+        reason instanceof Error ? reason.message : '无法加载本地预览';
+      if (/not found/i.test(message)) {
+        setDevSkipError(
+          'API 返回 Not Found：8000 端口可能是旧版服务。请关闭所有 API 后重新运行 .\\scripts\\run-dev.ps1 或 .\\scripts\\run-api.ps1',
+        );
+      } else {
+        setDevSkipError(message);
+      }
+    } finally {
+      setDevSkipLoading(false);
+    }
+  }
 
   async function continueFlow() {
     if (!file || loading) return;
@@ -127,6 +159,27 @@ export function UploadPage() {
           ))}
         </div>
       </section>
+
+      {showDevSkip ? (
+        <div className="dev-skip-wrap">
+          <button
+            className="dev-skip-button"
+            type="button"
+            disabled={devSkipLoading}
+            onClick={() => void skipToPreviewDev()}
+          >
+            {devSkipLoading ? '正在加载本地预览…' : '跳过前两步（开发）'}
+          </button>
+          {devSkipError ? (
+            <p className="inline-error" role="alert">
+              {devSkipError}
+            </p>
+          ) : (
+            <p className="dev-skip-hint">使用 configs/dev-pinned-runs.json 中的固定 parse / preview run</p>
+          )}
+        </div>
+      ) : null}
+
       <BottomNav />
     </MobileShell>
   );

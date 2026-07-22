@@ -41,6 +41,8 @@ Python 等价：`scripts/run_beauty_replicate.py`。
 4. **预览**：`makeup_preview.run_preview_job` → `outputs/makeup-preview/runs/<id>/`。
 5. **Manifest**：`outputs/jobs/<timestamp>/manifest.json` 链接 parse / tutorial / preview。
 
+**步骤示例图（picture-makeup）**：不在本串联脚本默认步骤中；由 Web API 在用户进入跟练示例页时按需触发（`POST …/step-diagrams`），产物在 `outputs/picture-makeup/runs/` 并复制到任务 `media_dir`。CLI：`scripts/run_picture_makeup.py`。
+
 ## manifest.json（job_version: 1）
 
 | 字段 | 说明 |

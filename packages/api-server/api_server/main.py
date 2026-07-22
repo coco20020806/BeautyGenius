@@ -11,15 +11,23 @@ from fastapi.responses import FileResponse
 
 from api_server.config import (
     CORS_ORIGINS,
+    ENABLE_DEV_SHORTCUTS,
     MAX_VIDEO_BYTES,
     TASKS_ROOT,
     VIDEO_EXTENSIONS,
     VIDEO_MIMES,
 )
+from api_server.dev_bootstrap import bootstrap_from_pinned_file
 from api_server.errors import ApiError, api_error_handler, new_request_id
 from api_server.pipeline import run_task_pipeline
 from api_server.preview_assembler import assemble_makeup_preview
+from api_server.step_diagrams import (
+    assemble_step_diagrams,
+    ensure_task_ready_for_diagrams,
+    run_step_diagrams_job,
+)
 from api_server.store import store
+from api_server.tutorial_loader import load_tutorial_document
 
 app = FastAPI(title="Beauty Genius Makeup API", version="0.1.0")
 app.add_middleware(
@@ -32,6 +40,7 @@ app.add_middleware(
 app.add_exception_handler(ApiError, api_error_handler)
 
 _running: set[str] = set()
+_diagram_running: set[str] = set()
 
 
 def _parse_bool(value: str | bool | None, *, default: bool = False) -> bool:
@@ -213,6 +222,79 @@ async def get_preview(task_id: str) -> dict:
     )
 
 
+@app.get("/api/v1/makeup/tasks/{task_id}/tutorial")
+async def get_tutorial(task_id: str) -> dict:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    return load_tutorial_document(task, request_id=req_id)
+
+
+@app.post("/api/v1/makeup/tasks/{task_id}/step-diagrams", status_code=202)
+async def start_step_diagrams(task_id: str, background_tasks: BackgroundTasks) -> dict:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    ensure_task_ready_for_diagrams(task, request_id=req_id)
+    diagram_status = task.get("step_diagrams_status") or "idle"
+    if diagram_status == "processing" or task_id in _diagram_running:
+        return {"taskId": task_id, "status": "processing"}
+    # completed 且至少有一张图：幂等返回；全部失败 / failed 允许重试
+    if diagram_status == "completed":
+        media_dir = Path(task["media_dir"]) if task.get("media_dir") else None
+        has_diagram = False
+        if media_dir and media_dir.is_dir():
+            has_diagram = any(media_dir.glob("diagram_*.jpg"))
+        if has_diagram:
+            return {"taskId": task_id, "status": "completed"}
+
+    store.set_step_diagrams_processing(task_id)
+    _diagram_running.add(task_id)
+
+    def _run() -> None:
+        try:
+            run_step_diagrams_job(task_id)
+        except Exception as exc:  # noqa: BLE001
+            store.mark_step_diagrams_failed(task_id, reason=str(exc) or "示例图生成失败")
+        finally:
+            _diagram_running.discard(task_id)
+
+    background_tasks.add_task(_run)
+    return {"taskId": task_id, "status": "processing"}
+
+
+@app.get("/api/v1/makeup/tasks/{task_id}/step-diagrams")
+async def get_step_diagrams(task_id: str) -> dict:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    ensure_task_ready_for_diagrams(task, request_id=req_id)
+    tutorial = load_tutorial_document(task, request_id=req_id)
+    return assemble_step_diagrams(task_id, task, tutorial)
+
+
+@app.post("/api/v1/makeup/dev/skip-to-preview")
+async def dev_skip_to_preview() -> dict:
+    req_id = new_request_id()
+    if not ENABLE_DEV_SHORTCUTS:
+        raise ApiError(
+            404,
+            "DEV_SHORTCUTS_DISABLED",
+            "开发捷径未开启。请设置 ENABLE_DEV_SHORTCUTS=1 并重启 API，或勿将 APP_ENV 设为 production",
+            request_id=req_id,
+        )
+    return bootstrap_from_pinned_file(store, request_id=req_id)
+
+
 @app.get("/media/{task_id}/{filename}")
 async def serve_media(task_id: str, filename: str) -> FileResponse:
     req_id = new_request_id()
@@ -243,5 +325,12 @@ async def serve_media(task_id: str, filename: str) -> FileResponse:
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, object]:
+    return {
+        "status": "ok",
+        "features": {
+            "devSkipToPreview": ENABLE_DEV_SHORTCUTS,
+            "tutorialEndpoint": True,
+            "stepDiagramsEndpoint": True,
+        },
+    }

@@ -2,6 +2,9 @@ import type {
   AnalysisProgress,
   MakeupPreview,
   MakeupService,
+  StepDiagramsResponse,
+  StepDiagramsStartResult,
+  Tutorial,
   UploadPhotoResult,
   UploadVideoResult,
 } from '../types/makeup';
@@ -48,6 +51,27 @@ export class HttpMakeupService implements MakeupService {
 
   async getPreview(taskId: string): Promise<MakeupPreview> {
     return requestJson<MakeupPreview>(`${API_PREFIX}/tasks/${taskId}/preview`);
+  }
+
+  async getTutorial(taskId: string): Promise<Tutorial> {
+    return requestJson<Tutorial>(`${API_PREFIX}/tasks/${taskId}/tutorial`);
+  }
+
+  async startStepDiagrams(taskId: string): Promise<StepDiagramsStartResult> {
+    return requestJson<StepDiagramsStartResult>(`${API_PREFIX}/tasks/${taskId}/step-diagrams`, {
+      method: 'POST',
+    });
+  }
+
+  async getStepDiagrams(taskId: string): Promise<StepDiagramsResponse> {
+    return requestJson<StepDiagramsResponse>(`${API_PREFIX}/tasks/${taskId}/step-diagrams`);
+  }
+
+  async skipToDevPreview() {
+    return requestJson<{ taskId: string; status: 'completed' }>(
+      `${API_PREFIX}/dev/skip-to-preview`,
+      { method: 'POST' },
+    );
   }
 }
 

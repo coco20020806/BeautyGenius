@@ -51,7 +51,12 @@ if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
 
 $apiProcess = $null
 try {
+    & (Join-Path $PSScriptRoot "Stop-ApiPort.ps1") -Port 8000
+
     Write-Host "Starting API (http://127.0.0.1:8000)..."
+    if (-not $env:ENABLE_DEV_SHORTCUTS) {
+        $env:ENABLE_DEV_SHORTCUTS = "1"
+    }
     $apiProcess = Start-Process `
         -FilePath $python `
         -ArgumentList "scripts/run_api.py" `

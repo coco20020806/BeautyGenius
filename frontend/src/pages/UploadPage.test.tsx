@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeupService } from '../services/makeupService';
 import { UploadPage } from './UploadPage';
@@ -70,5 +70,27 @@ describe('UploadPage', () => {
     await user.click(screen.getByRole('button', { name: '下一步' }));
 
     expect(uploadSpy).toHaveBeenCalledWith(file, { fastParse: true, skipMakeupPreview: true });
+  });
+
+  it('skips photo and parsing via dev shortcut', async () => {
+    const skipSpy = vi.spyOn(makeupService, 'skipToDevPreview').mockResolvedValue({
+      taskId: 'task-dev-skip',
+      status: 'completed',
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<UploadPage />} />
+          <Route path="/preview" element={<h1>适配预览</h1>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: '跳过前两步（开发）' }));
+
+    expect(skipSpy).toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem('makeupTask') ?? '{}').taskId).toBe('task-dev-skip');
+    expect(await screen.findByRole('heading', { name: '适配预览' })).toBeInTheDocument();
   });
 });

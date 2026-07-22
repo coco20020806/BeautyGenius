@@ -40,6 +40,17 @@ cd "Beauty Genius"
 
 输出：`outputs/makeup-preview/runs/<时间戳>/`（`preview.json`、`preview_01.jpg` 等）。Skill 文档：[`skills/kol-makeup-preview/`](skills/kol-makeup-preview/)。
 
+**仅测 transfer（三图）**：
+
+```powershell
+cd "Beauty Genius"
+python .\scripts\test_makeup_transfer_only.py
+# 可选覆盖输入 run
+python .\scripts\test_makeup_transfer_only.py --run-dir "outputs\makeup-preview\runs\20260722_164939"
+```
+
+该脚本会真实调用 WAN，并在 `outputs/makeup-preview/transfer-only-runs/<时间戳>/` 输出 `preview_01.jpg`、`transfer_raw.json`、`transfer_prompt.txt`、`result.json`；其中 `result.json` 会给出 `size_match`（是否与 `target.jpg` 同尺寸）。
+
 **一键串联**（解析 + 预览 + job manifest）：
 
 ```powershell
@@ -88,6 +99,16 @@ cd "Beauty Genius"
 ```
 
 浏览器打开 **http://127.0.0.1:5174**。按 **Ctrl+C** 会同时停止 API 与前端。
+
+**开发捷径（跳过照片 + 解析，直达预览）**：将本机最新 parse / preview run 写入固定配置后，在首页底部点击「跳过前两步（开发）」。
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\pin-latest-dev-runs.py
+$env:ENABLE_DEV_SHORTCUTS = "1"   # run-dev.ps1 默认已开启
+.\scripts\run-dev.ps1
+```
+
+配置见 [`configs/dev-pinned-runs.json`](configs/dev-pinned-runs.json)；新跑完流水线后请重新执行 `pin-latest-dev-runs.py`。
 
 （脚本通过 `npm.cmd` 启动前端，避免 PowerShell 执行策略拦截 `npm.ps1`。）
 

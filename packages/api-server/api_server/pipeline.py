@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from makeup_preview import PreviewConfig, UserPhotoRejected, run_preview_job
+from makeup_understanding import UnderstandingConfig, run_understanding_job
 from tutorial_mapper import MapperConfig, run_mapper_job
 from video_parse import ParseConfig, run_parse_job
 from video_parse.preprocess import probe_video, resolve_ffmpeg, resolve_ffprobe
@@ -133,6 +134,30 @@ def run_task_pipeline(task_id: str) -> None:
             ),
         )
         tutorial_path = mapper_result.tutorial_path
+
+        store.update_pipeline_step(
+            task_id,
+            active_index=1,
+            progress=56,
+            micro_step_id="understand:1",
+            log_line="[job] 理解产品与手法…",
+            skip_transfer=skip_transfer,
+        )
+
+        def on_understand_progress(stage: int, message: str) -> None:
+            store.update_pipeline_step(
+                task_id,
+                active_index=1,
+                progress=min(57, 54 + stage),
+                micro_step_id=f"understand:{stage}",
+                log_line=f"[understand {stage}] {message}",
+                skip_transfer=skip_transfer,
+            )
+
+        run_understanding_job(
+            parse_run_dir,
+            UnderstandingConfig(api_key=api_key, enabled=True, on_progress=on_understand_progress),
+        )
 
         store.update_pipeline_step(
             task_id,
