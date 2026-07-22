@@ -125,6 +125,35 @@ npm run dev
 
 纯前端演示（不连后端）：`frontend/.env` 中设置 `VITE_USE_MOCK=1`。
 
+## Linux / 云服务器部署依赖
+
+无桌面 Linux（Debian/Ubuntu）除 Python 依赖与 `DASHSCOPE_API_KEY` 外，还需要：
+
+| 依赖 | 用途 |
+|------|------|
+| `ffmpeg` / `ffprobe` | 视频探针、抽帧、抽音频 |
+| `libgl1` + `libglib2.0-0` | MediaPipe → OpenCV（妆容预览人脸检测）；缺失时报 `libGL.so.1: cannot open shared object file` |
+
+一键安装：
+
+```bash
+sudo bash scripts/install-linux-deps.sh
+```
+
+或手动：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libgl1 libglib2.0-0 ffmpeg
+```
+
+旧版 Ubuntu 若无 `libgl1`，改用 `libgl1-mesa-glx`。装完后**重启 API**，再用：
+
+```bash
+python -c "import cv2; print(cv2.__version__)"
+python -c "import mediapipe; print('ok')"
+```
+
 ## License
 
 TBD

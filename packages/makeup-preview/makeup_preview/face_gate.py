@@ -38,6 +38,20 @@ class FaceValidationError(Exception):
         super().__init__(", ".join(codes))
 
 
+_LIBGL_HINT = (
+    "缺少系统库 libGL.so.1（MediaPipe/OpenCV 在无桌面 Linux 上需要）。"
+    "Debian/Ubuntu 请执行: sudo apt-get install -y libgl1 libglib2.0-0"
+    "（或 sudo bash scripts/install-linux-deps.sh），然后重启 API 服务。"
+)
+
+
+def reraise_if_libgl_missing(exc: BaseException) -> None:
+    """If *exc* is the common headless OpenCV libGL error, raise a clearer RuntimeError."""
+    msg = str(exc)
+    if "libGL" in msg or "libgl.so" in msg.lower():
+        raise RuntimeError(_LIBGL_HINT) from exc
+
+
 def ensure_landmarker_model(config: PreviewConfig) -> Path:
     if config.landmarker_model_path and config.landmarker_model_path.is_file():
         return config.landmarker_model_path
@@ -108,25 +122,33 @@ def _landmarks_in_frame(landmarks: Any, w: int, h: int) -> bool:
 
 
 def l1_mediapipe(path: Path, config: PreviewConfig) -> dict[str, Any]:
-    import mediapipe as mp
-    from mediapipe.tasks import python as mp_python
-    from mediapipe.tasks.python import vision
+    try:
+        import mediapipe as mp
+        from mediapipe.tasks import python as mp_python
+        from mediapipe.tasks.python import vision
+    except (ImportError, OSError) as e:
+        reraise_if_libgl_missing(e)
+        raise
 
     model_path = ensure_landmarker_model(config)
     w, h = l0_check(path, config.max_user_photo_bytes)
 
-    base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
-    options = vision.FaceLandmarkerOptions(
-        base_options=base_options,
-        num_faces=2,
-        min_face_detection_confidence=0.5,
-        min_face_presence_confidence=0.5,
-        min_tracking_confidence=0.5,
-    )
-    landmarker = vision.FaceLandmarker.create_from_options(options)
+    try:
+        base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
+        options = vision.FaceLandmarkerOptions(
+            base_options=base_options,
+            num_faces=2,
+            min_face_detection_confidence=0.5,
+            min_face_presence_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+        landmarker = vision.FaceLandmarker.create_from_options(options)
 
-    mp_image = mp.Image.create_from_file(str(path))
-    result = landmarker.detect(mp_image)
+        mp_image = mp.Image.create_from_file(str(path))
+        result = landmarker.detect(mp_image)
+    except (ImportError, OSError) as e:
+        reraise_if_libgl_missing(e)
+        raise
     n = len(result.face_landmarks or [])
     if n == 0:
         raise FaceValidationError(["NO_FACE"])

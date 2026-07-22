@@ -15,6 +15,7 @@ from makeup_preview.face_gate import (
     _IDX_RIGHT_EYE,
     _lm_xy,
     ensure_landmarker_model,
+    reraise_if_libgl_missing,
 )
 
 
@@ -41,19 +42,23 @@ def _face_bbox(landmarks: Any, w: int, h: int) -> tuple[float, float, float, flo
 
 
 def create_face_landmarker(config: PreviewConfig):
-    from mediapipe.tasks import python as mp_python
-    from mediapipe.tasks.python import vision
+    try:
+        from mediapipe.tasks import python as mp_python
+        from mediapipe.tasks.python import vision
 
-    model_path = ensure_landmarker_model(config)
-    base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
-    options = vision.FaceLandmarkerOptions(
-        base_options=base_options,
-        num_faces=2,
-        min_face_detection_confidence=0.5,
-        min_face_presence_confidence=0.5,
-        min_tracking_confidence=0.5,
-    )
-    return vision.FaceLandmarker.create_from_options(options)
+        model_path = ensure_landmarker_model(config)
+        base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
+        options = vision.FaceLandmarkerOptions(
+            base_options=base_options,
+            num_faces=2,
+            min_face_detection_confidence=0.5,
+            min_face_presence_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+        return vision.FaceLandmarker.create_from_options(options)
+    except (ImportError, OSError) as e:
+        reraise_if_libgl_missing(e)
+        raise
 
 
 def detect_primary_face(
@@ -64,17 +69,25 @@ def detect_primary_face(
 ) -> FaceGeometry | None:
     if not path.is_file():
         return None
-    import mediapipe as mp
+    try:
+        import mediapipe as mp
+    except (ImportError, OSError) as e:
+        reraise_if_libgl_missing(e)
+        raise
 
     close_landmarker = False
     if landmarker is None:
         landmarker = create_face_landmarker(config)
         close_landmarker = True
     try:
-        with Image.open(path) as im:
-            w, h = im.size
-        mp_image = mp.Image.create_from_file(str(path))
-        result = landmarker.detect(mp_image)
+        try:
+            with Image.open(path) as im:
+                w, h = im.size
+            mp_image = mp.Image.create_from_file(str(path))
+            result = landmarker.detect(mp_image)
+        except (ImportError, OSError) as e:
+            reraise_if_libgl_missing(e)
+            raise
         n = len(result.face_landmarks or [])
         if n != 1:
             return None

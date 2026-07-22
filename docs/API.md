@@ -23,6 +23,21 @@ cd "<repo-root>"
 服务默认：`http://127.0.0.1:8000`  
 健康检查：`GET /health`
 
+## Linux 系统依赖（云部署）
+
+无桌面服务器除 `pip install -r requirements.txt` 外还需：
+
+- **ffmpeg / ffprobe** — 视频解析抽帧
+- **libgl1 + libglib2.0-0** — MediaPipe/OpenCV（妆容预览）；缺失会出现 `libGL.so.1: cannot open shared object file`
+
+```bash
+sudo bash scripts/install-linux-deps.sh
+# 或
+sudo apt-get install -y libgl1 libglib2.0-0 ffmpeg
+```
+
+装完后重启 uvicorn / API 进程。
+
 ## 环境变量
 
 | 变量 | 说明 |
