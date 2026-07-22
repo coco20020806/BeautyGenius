@@ -5,7 +5,7 @@ import { FaceLayers } from '../components/FaceLayers';
 import { MobileShell } from '../components/MobileShell';
 import { canPlaySourceVideo, StepClipPlayer } from '../components/StepClipPlayer';
 import { learningService } from '../services/learningService';
-import type { IllustratedTutorial, TutorialMode } from '../types/learning';
+import type { IllustratedTutorial } from '../types/learning';
 
 export function TutorialPage() {
   const navigate = useNavigate();
@@ -14,7 +14,6 @@ export function TutorialPage() {
   const returnTo = routeState?.from ?? '/preview';
   const [tutorial, setTutorial] = useState<IllustratedTutorial | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
-  const [mode, setMode] = useState<TutorialMode>('beginner');
   const [videoOpen, setVideoOpen] = useState(false);
 
   useEffect(() => {
@@ -35,7 +34,8 @@ export function TutorialPage() {
 
   const step = tutorial.steps[stepIndex];
   const hasDiagram = Boolean(step.diagramImage);
-  const canPlayVideo = canPlaySourceVideo(tutorial.videoUrl);
+  const stepVideoUrl = step.videoUrl ?? tutorial.videoUrl;
+  const canPlayVideo = canPlaySourceVideo(stepVideoUrl);
 
   return (
     <MobileShell className="learning-page tutorial-page">
@@ -62,14 +62,6 @@ export function TutorialPage() {
               {tutorial.duration}
             </span>
           </p>
-        </div>
-        <div className="mode-switch" role="group" aria-label="教程模式">
-          <button type="button" className={mode === 'beginner' ? 'is-active' : ''} onClick={() => setMode('beginner')}>
-            新手
-          </button>
-          <button type="button" className={mode === 'skilled' ? 'is-active' : ''} onClick={() => setMode('skilled')}>
-            熟练
-          </button>
         </div>
       </section>
 
@@ -112,7 +104,7 @@ export function TutorialPage() {
       <section className="step-detail-card">
         <span className="step-number">STEP {String(step.order).padStart(2, '0')}</span>
         <h2>{step.title}</h2>
-        {mode === 'beginner' && <p>{step.instruction}</p>}
+        <p>{step.instruction}</p>
         <div className="product-row">
           <span>
             <PackageOpen size={17} />
@@ -123,12 +115,10 @@ export function TutorialPage() {
           </div>
           <i style={{ backgroundColor: step.color }} />
         </div>
-        {mode === 'beginner' && (
-          <div className="expert-tip">
-            <Sparkles size={14} />
-            <span>{step.expertTip}</span>
-          </div>
-        )}
+        <div className="expert-tip">
+          <Sparkles size={14} />
+          <span>{step.expertTip}</span>
+        </div>
         <button
           className="slice-button"
           type="button"
@@ -144,10 +134,10 @@ export function TutorialPage() {
         </button>
       </section>
 
-      {videoOpen && tutorial.videoUrl ? (
+      {videoOpen && stepVideoUrl ? (
         <StepClipPlayer
           open={videoOpen}
-          videoUrl={tutorial.videoUrl}
+          videoUrl={stepVideoUrl}
           title={step.title}
           onClose={() => setVideoOpen(false)}
         />

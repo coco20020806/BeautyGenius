@@ -17,15 +17,21 @@ test('moves from preview through adjustment to tutorial without eye guide', asyn
   expect(screen.queryByRole('link', { name: /跟练/ })).not.toBeInTheDocument();
 });
 
-test('loads a preset preview and tutorial with untouched parts skipped', async () => {
+test('builds an illustrated flow from checked library parts in order', async () => {
   const user = userEvent.setup();
   render(<MemoryRouter initialEntries={['/library?tab=mix']}><AppRoutes /></MemoryRouter>);
 
-  expect(screen.getByRole('button', { name: '生成效果' })).toBeEnabled();
-  await user.click(screen.getByRole('button', { name: '生成效果' }));
+  expect(await screen.findByRole('button', { name: '生成图示流程' })).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: '勾选眼妆' }));
+  await user.click(screen.getByRole('button', { name: '勾选修容' }));
+  await user.click(screen.getByRole('button', { name: '生成图示流程' }));
 
-  expect(await screen.findByRole('heading', { name: '生成妆效中' })).toBeInTheDocument();
-  expect(await screen.findByRole('heading', { name: '混搭效果预览' }, { timeout: 3000 })).toBeInTheDocument();
-  await user.click(await screen.findByRole('button', { name: '适合我' }));
   expect(await screen.findByRole('heading', { name: '图示教程' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '我的混搭图示流程' })).toBeInTheDocument();
+  expect(screen.getByRole('img', { name: '清透玫瑰眼妆 示例图' })).toBeInTheDocument();
+  expect(screen.getByText('裸粉眼影')).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '2. 柔和轮廓修容' }));
+  expect(await screen.findByRole('img', { name: '柔和轮廓修容 示例图' })).toBeInTheDocument();
+  expect(screen.getByText('暖棕修容粉')).toBeInTheDocument();
 });

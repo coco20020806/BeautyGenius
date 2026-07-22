@@ -103,8 +103,11 @@ test('replaces the product tab with the embedded mix editor', async () => {
   await user.click(screen.getByRole('tab', { name: '混搭' }));
 
   expect(screen.getByRole('region', { name: '混搭编辑' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '展开底妆选项' })).toHaveAttribute('aria-expanded', 'false');
-  expect(screen.getByRole('button', { name: '生成效果' })).toBeEnabled();
+  expect(await screen.findByRole('button', { name: '勾选眼妆' })).toHaveAttribute('aria-pressed', 'false');
+  expect(screen.getByRole('button', { name: '勾选修容' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '勾选唇妆' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /勾选底妆|勾选腮红/ })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '生成图示流程' })).toBeDisabled();
   expect(screen.queryByRole('img', { name: '混搭妆容预览' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: '筛选' })).not.toBeInTheDocument();
 });

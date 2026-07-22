@@ -86,6 +86,7 @@ export function getPartPresetTutorial(tutorialId: string): IllustratedTutorial |
         expertTip: preset.expertTip,
         videoSlice: '完整原视频',
         diagramImage: preset.diagramImage,
+        videoUrl: preset.videoUrl,
       },
     ],
   };

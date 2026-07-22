@@ -12,12 +12,14 @@ import type {
   LibraryAsset,
   LibraryFilter,
   MixDecision,
+  MixPart,
   MixResult,
   MixSelection,
   TutorialStep,
 } from '../types/learning';
 import type { Tutorial } from '../types/makeup';
 
+const MIX_PART_ORDER: MixPart[] = ['base', 'eyes', 'blush', 'contour', 'lips'];
 const tutorial: IllustratedTutorial = {
   id: 'tutorial-rose-commute',
   title: '清透玫瑰通勤妆',
@@ -222,20 +224,57 @@ class LocalLearningService implements LearningService {
 
   async generateMix(decision: MixDecision): Promise<MixResult> {
     sessionStorage.setItem('makeupMixDecision', JSON.stringify(decision));
-    const selected = Object.entries(decision)
-      .map(([part, id]) => ({ part, asset: assets.find((item) => item.id === id) }))
-      .filter((item) => item.asset);
+    const selected = MIX_PART_ORDER
+      .map((part) => {
+        const id = decision[part];
+        if (!id) return null;
+        const asset = assets.find((item) => item.id === id);
+        return asset ? { part, asset } : null;
+      })
+      .filter((item): item is { part: MixPart; asset: CuratedAsset } => Boolean(item));
+
     const stamp = Date.now();
-    const mixed = copyTutorial({
-      id: `tutorial-mix-${stamp}`,
-      title: '我的混搭定制妆',
-      steps: tutorial.steps.map((step) => {
-        const match = selected.find((item) => item.part === step.part)?.asset;
-        return match ? { ...step, product: match.title, color: match.color } : { ...step };
-      }),
+    const steps: TutorialStep[] = selected.flatMap(({ part, asset }, index) => {
+      const preset = getPartPresetTutorial(asset.tutorialId);
+      if (preset) {
+        return preset.steps.map((step) => ({
+          ...step,
+          id: `${part}-${step.id}`,
+          order: index + 1,
+          videoUrl: step.videoUrl ?? preset.videoUrl,
+        }));
+      }
+      return [{
+        id: part,
+        order: index + 1,
+        title: asset.title,
+        part: asset.part ?? part,
+        product: asset.title,
+        color: asset.color,
+        instruction: `${asset.title}：按知识库部位步骤完成。`,
+        expertTip: '参考知识库部位图示。',
+        videoSlice: '完整原视频',
+      }];
     });
+
+    const mixed: IllustratedTutorial = {
+      id: `tutorial-mix-${stamp}`,
+      title: '我的混搭图示流程',
+      difficulty: '新手友好',
+      duration: `约 ${Math.max(5, selected.length * 5)} 分钟`,
+      mode: 'beginner',
+      steps,
+      videoUrl: steps.find((step) => step.videoUrl)?.videoUrl,
+    };
     rememberTutorial(mixed);
-    const result: MixResult = { id: `mix-result-${stamp}`, beforeImage: faceBefore, afterImage: faceAfter, title: '我的混搭定制妆', summary: '已根据五个部位的预制选择完成妆效匹配。', tutorialId: mixed.id };
+    const result: MixResult = {
+      id: `mix-result-${stamp}`,
+      beforeImage: faceBefore,
+      afterImage: faceAfter,
+      title: mixed.title,
+      summary: '已按勾选部件顺序生成图示流程。',
+      tutorialId: mixed.id,
+    };
     sessionStorage.setItem('makeupMixResult', JSON.stringify(result));
     return result;
   }

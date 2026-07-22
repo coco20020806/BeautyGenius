@@ -102,8 +102,8 @@ h1, h2, h3, p { margin-top: 0; }
 .home-exit-button {
   position: fixed;
   z-index: 50;
-  top: max(14px, env(safe-area-inset-top));
-  right: max(12px, calc(50% - var(--phone-max-width) / 2 + 12px));
+  top: max(22px, calc(env(safe-area-inset-top) + 10px));
+  right: max(20px, calc(50% - var(--phone-max-width) / 2 + 20px));
   display: inline-flex;
   align-items: center;
   gap: 5px;

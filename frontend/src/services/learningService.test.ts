@@ -105,17 +105,24 @@ test('keeps personalized adjustment and mix results as the current tutorial', as
   expect(JSON.parse(sessionStorage.getItem('makeupAdjustment') ?? '{}')).toEqual(request);
   expect((await learningService.getTutorial()).id).toBe(adjusted.id);
 
-  const decision = { base: null, eyes: 'eyes-smoky', blush: 'blush-sheer', contour: null, lips: 'lips-rose' };
+  const decision = { base: null, eyes: 'eyes-rose', blush: null, contour: 'contour-soft', lips: 'lips-rose' };
   const mixed = await learningService.generateMix(decision);
   expect(mixed.tutorialId).toContain('tutorial-mix-');
-  expect((await learningService.getTutorial(mixed.tutorialId)).steps.find((step) => step.part === 'eyes')?.product).toBe('低饱和烟熏眼妆');
+  const tutorial = await learningService.getTutorial(mixed.tutorialId);
+  expect(tutorial.title).toBe('我的混搭图示流程');
+  expect(tutorial.steps.map((step) => step.part)).toEqual(['eyes', 'contour', 'lips']);
+  expect(tutorial.steps[0]?.product).toBe('裸粉眼影');
+  expect(tutorial.steps[0]?.diagramImage).toBeTruthy();
+  expect(tutorial.steps[1]?.product).toBe('暖棕修容粉');
+  expect(tutorial.steps[2]?.product).toBe('低饱和玫瑰唇釉');
   expect(await learningService.getMixResult(mixed.id)).toEqual(mixed);
   expect(JSON.parse(sessionStorage.getItem('makeupMixDecision') ?? '{}')).toEqual(decision);
 });
 
 test('selects tutorials by id so the default flow cannot reuse stale personalization', async () => {
-  const mixed = await learningService.generateMix({ base: null, eyes: null, blush: 'blush-peach', contour: null, lips: null });
+  const mixed = await learningService.generateMix({ base: null, eyes: null, blush: null, contour: null, lips: 'lips-rose' });
 
   expect((await learningService.getTutorial(mixed.tutorialId)).id).toBe(mixed.tutorialId);
+  expect((await learningService.getTutorial(mixed.tutorialId)).steps).toHaveLength(1);
   expect((await learningService.getTutorial('tutorial-rose-commute')).title).toBe('清透玫瑰通勤妆');
 });

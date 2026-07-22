@@ -25,6 +25,8 @@ export interface TutorialStep {
   expertTip: string;
   videoSlice: string;
   diagramImage?: string;
+  /** Per-step source video when mixing multiple part presets. */
+  videoUrl?: string;
 }
 
 export interface IllustratedTutorial {

@@ -8,37 +8,42 @@ function renderMixPage() {
     <MemoryRouter initialEntries={['/library?tab=mix']}>
       <Routes>
         <Route path="/library" element={<LibraryPage />} />
-        <Route path="/mix/generating" element={<h1>生成妆效中</h1>} />
+        <Route path="/tutorial" element={<h1>图示教程</h1>} />
       </Routes>
     </MemoryRouter>,
   );
 }
 
-test('starts collapsed and treats untouched parts as skipped', async () => {
+test('shows library parts as checkable modules and disables generate until selected', async () => {
   const user = userEvent.setup();
   renderMixPage();
 
-  expect(screen.queryByRole('img', { name: '混搭妆容预览' })).not.toBeInTheDocument();
-  const eyes = screen.getByRole('button', { name: '展开眼妆选项' });
-  expect(screen.queryByRole('button', { name: '清透玫瑰眼妆' })).not.toBeInTheDocument();
-  expect(screen.queryByText(/默认跳过|已展开|待选择|跳过此部位/)).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '生成效果' })).toBeEnabled();
+  expect(await screen.findByRole('button', { name: '勾选眼妆' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '勾选修容' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '勾选唇妆' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /勾选底妆|勾选腮红/ })).not.toBeInTheDocument();
+  expect(screen.getByRole('img', { name: '清透玫瑰眼妆封面' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '生成图示流程' })).toBeDisabled();
 
-  await user.click(eyes);
-  expect(await screen.findByRole('button', { name: '清透玫瑰眼妆' })).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: '收起眼妆选项' }));
-  expect(screen.queryByRole('button', { name: '清透玫瑰眼妆' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '勾选眼妆' }));
+  expect(screen.getByRole('button', { name: '取消勾选眼妆' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: '生成图示流程' })).toBeEnabled();
 });
 
-test('shows the chosen asset and generates null for untouched parts', async () => {
+test('generates an illustrated flow from checked parts in order', async () => {
   const user = userEvent.setup();
   renderMixPage();
 
-  await user.click(screen.getByRole('button', { name: '展开眼妆选项' }));
-  await user.click(await screen.findByRole('button', { name: '清透玫瑰眼妆' }));
-  expect(screen.getByRole('button', { name: '收起眼妆选项' })).toHaveTextContent('清透玫瑰眼妆');
-  await user.click(screen.getByRole('button', { name: '生成效果' }));
+  await user.click(await screen.findByRole('button', { name: '勾选眼妆' }));
+  await user.click(screen.getByRole('button', { name: '勾选唇妆' }));
+  await user.click(screen.getByRole('button', { name: '生成图示流程' }));
 
-  expect(JSON.parse(sessionStorage.getItem('makeupMixDecision') ?? '{}')).toEqual({ base: null, eyes: 'eyes-rose', blush: null, contour: null, lips: null });
-  expect(screen.getByRole('heading', { name: '生成妆效中' })).toBeInTheDocument();
+  expect(JSON.parse(sessionStorage.getItem('makeupMixDecision') ?? '{}')).toEqual({
+    base: null,
+    eyes: 'eyes-rose',
+    blush: null,
+    contour: null,
+    lips: 'lips-rose',
+  });
+  expect(await screen.findByRole('heading', { name: '图示教程' })).toBeInTheDocument();
 });

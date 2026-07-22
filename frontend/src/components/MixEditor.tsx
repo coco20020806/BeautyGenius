@@ -1,55 +1,103 @@
-import { Check, ChevronDown, ChevronRight, ChevronUp, WandSparkles } from 'lucide-react';
+import { Check, ChevronRight, Layers3 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { learningService } from '../services/learningService';
 import type { LibraryAsset, MixDecision, MixPart } from '../types/learning';
 
-const mixParts: Array<{ id: MixPart; label: string }> = [
-  { id: 'base', label: '底妆' }, { id: 'eyes', label: '眼妆' }, { id: 'blush', label: '腮红' }, { id: 'contour', label: '修容' }, { id: 'lips', label: '唇妆' },
-];
+const partLabels: Record<MixPart, string> = {
+  base: '底妆', eyes: '眼妆', blush: '腮红', contour: '修容', lips: '唇妆',
+};
+const mixPartOrder: MixPart[] = ['base', 'eyes', 'blush', 'contour', 'lips'];
 const initialDecision: MixDecision = { base: null, eyes: null, blush: null, contour: null, lips: null };
 
 export function MixEditor() {
   const navigate = useNavigate();
   const [assets, setAssets] = useState<LibraryAsset[]>([]);
   const [decision, setDecision] = useState<MixDecision>(initialDecision);
-  const [expandedParts, setExpandedParts] = useState<Set<MixPart>>(() => new Set());
+  const [generating, setGenerating] = useState(false);
 
-  useEffect(() => { void learningService.listAssets({ category: 'part', placement: 'mix' }).then(setAssets); }, []);
-  const assetsByPart = useMemo(() => Object.fromEntries(mixParts.map(({ id }) => [id, assets.filter((asset) => asset.part === id)])) as Record<MixPart, LibraryAsset[]>, [assets]);
+  useEffect(() => {
+    // 混搭选项与知识库「部位」卡位同源，只展示库内已有部件
+    void learningService.listAssets({ category: 'part', placement: 'library' }).then(setAssets);
+  }, []);
 
-  function decide(part: MixPart, value: string) {
-    setDecision((current) => ({ ...current, [part]: value }));
+  const mixParts = useMemo(
+    () => mixPartOrder
+      .map((id) => {
+        const options = assets.filter((asset) => asset.part === id);
+        return options.length ? { id, label: partLabels[id], asset: options[0]! } : null;
+      })
+      .filter((item): item is { id: MixPart; label: string; asset: LibraryAsset } => Boolean(item)),
+    [assets],
+  );
+
+  const selectedCount = mixParts.filter(({ id }) => decision[id]).length;
+
+  function togglePart(part: MixPart, assetId: string) {
+    setDecision((current) => ({
+      ...current,
+      [part]: current[part] === assetId ? null : assetId,
+    }));
   }
 
-  function togglePart(part: MixPart) {
-    setExpandedParts((current) => {
-      const next = new Set(current);
-      if (next.has(part)) next.delete(part);
-      else next.add(part);
-      return next;
-    });
+  async function generate() {
+    if (!selectedCount || generating) return;
+    setGenerating(true);
+    try {
+      const result = await learningService.generateMix(decision);
+      navigate('/tutorial', { state: { from: '/library?tab=mix', tutorialId: result.tutorialId } });
+    } finally {
+      setGenerating(false);
+    }
   }
 
-  function generate() {
-    sessionStorage.setItem('makeupMixDecision', JSON.stringify(decision));
-    navigate('/mix/generating');
-  }
-
-  return <section className="mix-editor" aria-label="混搭编辑">
-    <div className="mix-progress"><div><strong>部位选择</strong><span>按需选择想要混搭的部位</span></div></div>
-    <div className="mix-decision-list">
-      {mixParts.map(({ id, label }) => {
-        const selected = assetsByPart[id].find((asset) => asset.id === decision[id]);
-        const expanded = expandedParts.has(id);
-        return <section className={`mix-part-card${expanded ? ' is-expanded' : ''}${selected ? ' has-selection' : ''}`} role="group" aria-label={`${label}选择`} key={id}>
-          <button className="mix-part-toggle" type="button" aria-expanded={expanded} aria-controls={`mix-options-${id}`} aria-label={`${expanded ? '收起' : '展开'}${label}选项`} onClick={() => togglePart(id)}><h2>{label}</h2>{selected && <small>{selected.title}</small>}{expanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}</button>
-          {expanded && <div className="mix-option-list" id={`mix-options-${id}`}>
-            {assetsByPart[id].map((asset) => <button type="button" aria-label={asset.title} key={asset.id} className={decision[id] === asset.id ? 'is-selected' : ''} onClick={() => decide(id, asset.id)}><i style={{ backgroundColor: asset.color }} /><span><strong>{asset.title}</strong><small>{asset.style} · {asset.source}</small></span>{decision[id] === asset.id && <Check size={14} />}</button>)}
-          </div>}
-        </section>;
-      })}
-    </div>
-    <button className="primary-button mix-generate" type="button" onClick={generate}><WandSparkles size={18} />生成效果<ChevronRight size={17} /></button>
-  </section>;
+  return (
+    <section className="mix-editor" aria-label="混搭编辑">
+      <div className="mix-progress">
+        <div>
+          <strong>部件勾选</strong>
+          <span>勾选想要的部件，按顺序生成图示流程</span>
+        </div>
+      </div>
+      <div className="mix-decision-list">
+        {mixParts.map(({ id, label, asset }) => {
+          const checked = decision[id] === asset.id;
+          return (
+            <button
+              key={id}
+              type="button"
+              className={`mix-select-card${checked ? ' is-selected' : ''}`}
+              aria-pressed={checked}
+              aria-label={`${checked ? '取消勾选' : '勾选'}${label}`}
+              onClick={() => togglePart(id, asset.id)}
+            >
+              <span className="mix-select-cover">
+                {asset.coverImage
+                  ? <img src={asset.coverImage} alt={`${asset.title}封面`} />
+                  : <i style={{ backgroundColor: asset.color }} />}
+              </span>
+              <span className="mix-select-copy">
+                <strong>{label}</strong>
+                <small>{asset.title}</small>
+                <em>{asset.style} · {asset.source}</em>
+              </span>
+              <span className={`mix-select-check${checked ? ' is-on' : ''}`} aria-hidden="true">
+                {checked ? <Check size={14} /> : null}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <button
+        className="primary-button mix-generate"
+        type="button"
+        disabled={!selectedCount || generating}
+        onClick={() => void generate()}
+      >
+        <Layers3 size={18} />
+        {generating ? '生成中…' : '生成图示流程'}
+        <ChevronRight size={17} />
+      </button>
+    </section>
+  );
 }
