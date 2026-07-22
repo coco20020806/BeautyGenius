@@ -9,7 +9,7 @@ function TutorialTarget() {
   return <h1>图示教程 <span>{state?.tutorialId}</span></h1>;
 }
 
-test('shows collected-tutorial placeholders and opens collected detail', async () => {
+test('shows collected tutorial and opens collected detail', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/library']}>
@@ -25,12 +25,12 @@ test('shows collected-tutorial placeholders and opens collected detail', async (
   expect(within(tabRow).getByRole('tab', { name: '收藏教程' })).toBeInTheDocument();
   expect(within(tabRow).queryByRole('tab', { name: '教程' })).not.toBeInTheDocument();
 
-  expect(await screen.findByRole('button', { name: '示例视频1，打开示例教程详情' })).toBeEnabled();
-  expect(screen.getByRole('button', { name: '示例视频2，打开示例教程详情' })).toBeEnabled();
-  expect(screen.getByRole('img', { name: '示例视频1视频封面' })).toBeInTheDocument();
-  expect(screen.getAllByText('待生成')).toHaveLength(1);
+  expect(await screen.findByRole('button', { name: '早八五分钟妆，打开示例教程详情' })).toBeEnabled();
+  expect(screen.queryByRole('button', { name: /示例视频2/ })).not.toBeInTheDocument();
+  expect(screen.getByRole('img', { name: '早八五分钟妆视频封面' })).toBeInTheDocument();
+  expect(screen.queryByText('待生成')).not.toBeInTheDocument();
 
-  await user.click(screen.getByRole('button', { name: '示例视频1，打开示例教程详情' }));
+  await user.click(screen.getByRole('button', { name: '早八五分钟妆，打开示例教程详情' }));
   expect(screen.getByRole('heading', { name: '收藏详情' })).toBeInTheDocument();
 });
 

@@ -28,31 +28,24 @@ test('filters part assets by makeup part', async () => {
   expect(assets.every((asset) => asset.category === 'part' && asset.part === 'eyes')).toBe(true);
 });
 
-test('exposes collected-tutorial cards with sample-1 cover from fixture', async () => {
+test('exposes collected-tutorial card with sample-1 cover from fixture', async () => {
   const assets = await learningService.listAssets({ category: 'tutorial' });
 
-  expect(assets).toHaveLength(2);
-  expect(assets.map(({ title }) => title)).toEqual(['示例视频1', '示例视频2']);
+  expect(assets).toHaveLength(1);
+  expect(assets[0]?.title).toBe('早八五分钟妆');
   expect(assets[0]?.coverImage).toBeTruthy();
   expect(assets[0]?.source).toBe('本地解析');
-  expect(assets[1]?.coverImage).toBe('');
-  expect(assets[1]?.source).toBe('待解析');
 });
 
-test('loads collected sample detail placeholders by asset id', async () => {
-  const sample = await learningService.getCollectedSample('collected-sample-2');
-
-  expect(sample?.title).toBe('示例视频2');
-  expect(sample?.practiceTutorial.tutorial_id).toContain('placeholder_sample_2');
-  expect(sample?.practiceTutorial.steps.length).toBeGreaterThan(0);
-  expect(sample?.illustratedSteps.length).toBeGreaterThan(0);
+test('returns null for unknown collected sample ids', async () => {
   expect(await learningService.getCollectedSample('missing')).toBeNull();
+  expect(await learningService.getCollectedSample('collected-sample-2')).toBeNull();
 });
 
 test('loads collected sample 1 from packaged pipeline fixture', async () => {
   const sample = await learningService.getCollectedSample('collected-sample-1');
 
-  expect(sample?.title).toBe('示例视频1');
+  expect(sample?.title).toBe('早八五分钟妆');
   expect(sample?.beforeImage).toBeTruthy();
   expect(sample?.afterImage).toBeTruthy();
   expect(sample?.practiceTutorial.tutorial_id).toBe('tutorial_20260723_011751');

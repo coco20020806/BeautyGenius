@@ -15,7 +15,7 @@ test('renders preview practice steps and illustrated sections for sample 1', asy
     </MemoryRouter>,
   );
 
-  expect(await screen.findByRole('heading', { name: '示例视频1' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: '早八五分钟妆' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '妆容预览' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '跟练步骤' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '图示教程' })).toBeInTheDocument();

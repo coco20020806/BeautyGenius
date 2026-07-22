@@ -17,7 +17,6 @@ import type {
   MixSelection,
   TutorialStep,
 } from '../types/learning';
-import type { Tutorial } from '../types/makeup';
 
 const MIX_PART_ORDER: MixPart[] = ['base', 'eyes', 'blush', 'contour', 'lips'];
 const tutorial: IllustratedTutorial = {
@@ -40,8 +39,7 @@ const tutorial: IllustratedTutorial = {
 type CuratedAsset = LibraryAsset & { placements?: Array<'library' | 'mix'> };
 
 const assets: CuratedAsset[] = [
-  { id: 'collected-sample-1', title: '示例视频1', category: 'tutorial', source: '本地解析', style: sample1CollectedDetail.style, occasion: sample1CollectedDetail.occasion, difficulty: sample1CollectedDetail.difficulty === '—' ? '新手' : sample1CollectedDetail.difficulty, color: '#e8e4dc', practiced: true, coverImage: sample1CoverImage, tutorialId: 'collected-sample-1' },
-  { id: 'collected-sample-2', title: '示例视频2', category: 'tutorial', source: '待解析', style: '自然', occasion: '日常', difficulty: '新手', color: '#e8e4dc', practiced: false, coverImage: '', tutorialId: 'collected-sample-2' },
+  { id: 'collected-sample-1', title: sample1CollectedDetail.title, category: 'tutorial', source: '本地解析', style: sample1CollectedDetail.style, occasion: sample1CollectedDetail.occasion, difficulty: sample1CollectedDetail.difficulty === '—' ? '新手' : sample1CollectedDetail.difficulty, color: '#e8e4dc', practiced: true, coverImage: sample1CoverImage, tutorialId: 'collected-sample-1' },
   { id: 'base-sheer', title: '轻薄柔焦底妆', category: 'part', part: 'base', source: '自然日常妆', style: '清透', occasion: '日常', difficulty: '新手', color: '#dfc5ba', practiced: true, coverImage: partCover, tutorialId: 'preset-base-sheer', placements: ['mix'] },
   { id: 'eyes-rose', title: '清透玫瑰眼妆', category: 'part', part: 'eyes', source: '知识库部位素材', style: '清透', occasion: '通勤', difficulty: '新手', color: '#bd7b82', practiced: true, coverImage: partCovers.eyes, tutorialId: 'preset-eyes-rose', placements: ['library', 'mix'] },
   { id: 'eyes-smoky', title: '低饱和烟熏眼妆', category: 'part', part: 'eyes', source: '冷感夜幕妆', style: '冷感', occasion: '聚会', difficulty: '进阶', color: '#716363', practiced: false, coverImage: partCover, tutorialId: 'preset-eyes-smoky', placements: ['mix'] },
@@ -57,110 +55,8 @@ const assets: CuratedAsset[] = [
 const tutorials = new Map<string, IllustratedTutorial>([[tutorial.id, tutorial]]);
 let currentTutorialId = tutorial.id;
 
-function placeholderSteps(sampleLabel: string): TutorialStep[] {
-  return [
-    {
-      id: 'base',
-      order: 1,
-      title: '底妆打底（占位）',
-      part: 'base',
-      product: '待接入产品',
-      color: '#ead6cf',
-      instruction: `${sampleLabel}：真实解析接入后将展示底妆铺开范围与手法。`,
-      expertTip: '占位提示：边缘保持轻薄。',
-      videoSlice: '00:00–00:00',
-    },
-    {
-      id: 'eyes',
-      order: 2,
-      title: '眼妆铺色（占位）',
-      part: 'eyes',
-      product: '待接入眼影',
-      color: '#c98586',
-      instruction: `${sampleLabel}：真实解析接入后将展示眼影范围与晕染说明。`,
-      expertTip: '占位提示：眼尾略加深即可。',
-      videoSlice: '00:00–00:00',
-    },
-    {
-      id: 'lips',
-      order: 3,
-      title: '唇妆完成（占位）',
-      part: 'lips',
-      product: '待接入唇釉',
-      color: '#a94f5b',
-      instruction: `${sampleLabel}：真实解析接入后将展示唇线与叠涂步骤。`,
-      expertTip: '占位提示：边缘用指腹柔化。',
-      videoSlice: '00:00–00:00',
-    },
-  ];
-}
-
-function placeholderPracticeTutorial(sampleId: string, title: string): Tutorial {
-  return {
-    contract_version: 'tutorial.v1',
-    tutorial_id: `placeholder_${sampleId}`,
-    title: `${title}（待接入真实解析）`,
-    steps: [
-      {
-        step_id: 'step_01',
-        part: 'base',
-        taxonomy_primary: '底妆',
-        product: { name: 'unknown', keywords: [] },
-        visual_layer: {},
-        instruction: '示例结构 · 待接入真实解析',
-        adaptation_note: '',
-        display_title: '底妆',
-        display_product: '待接入',
-        technique: '待接入',
-        video_clip: { start: 0, end: 0 },
-      },
-      {
-        step_id: 'step_02',
-        part: 'eye',
-        taxonomy_primary: '眼妆',
-        product: { name: 'unknown', keywords: [] },
-        visual_layer: {},
-        instruction: '示例结构 · 待接入真实解析',
-        adaptation_note: '',
-        display_title: '眼妆',
-        display_product: '待接入',
-        technique: '待接入',
-        video_clip: { start: 0, end: 0 },
-      },
-      {
-        step_id: 'step_03',
-        part: 'lip',
-        taxonomy_primary: '唇妆',
-        product: { name: 'unknown', keywords: [] },
-        visual_layer: {},
-        instruction: '示例结构 · 待接入真实解析',
-        adaptation_note: '',
-        display_title: '唇妆',
-        display_product: '待接入',
-        technique: '待接入',
-        video_clip: { start: 0, end: 0 },
-      },
-    ],
-  };
-}
-
 const collectedSamples: Record<string, CollectedSampleDetail> = {
   'collected-sample-1': sample1CollectedDetail,
-  'collected-sample-2': {
-    id: 'collected-sample-2',
-    title: '示例视频2',
-    previewTitle: '示例视频2 · 妆容预览占位',
-    style: '自然妆感',
-    occasion: '日常',
-    difficulty: '新手',
-    duration: '约 — 分钟',
-    hints: [
-      { title: '解析尚未接入', description: '妆前/妆后对比图将在真实视频解析完成后替换此处占位。', tone: 'adjust' },
-      { title: '结构预览', description: '本页展示妆容预览、跟练步骤与图示教程三段归档结构。', tone: 'neutral' },
-    ],
-    practiceTutorial: placeholderPracticeTutorial('sample_2', '示例视频2'),
-    illustratedSteps: placeholderSteps('示例视频2'),
-  },
 };
 
 function copyTutorial(overrides: Partial<IllustratedTutorial>): IllustratedTutorial {

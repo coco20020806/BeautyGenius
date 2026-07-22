@@ -1,6 +1,6 @@
 {
   "sample_id": "collected-sample-1",
-  "title": "示例视频1",
+  "title": "早八五分钟妆",
   "source_video": "示例视频1.mp4",
   "task_id": "task_6c29bddb02b74831",
   "packaged_at": "2026-07-22T17:57:18.871027+00:00",
@@ -32,7 +32,7 @@
   },
   "detail": {
     "id": "collected-sample-1",
-    "title": "示例视频1",
+    "title": "早八五分钟妆",
     "previewTitle": "教程妆容预览",
     "style": "自然妆感",
     "occasion": "日常",
