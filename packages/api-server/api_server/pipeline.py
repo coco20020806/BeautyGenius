@@ -187,6 +187,11 @@ def run_task_pipeline(task_id: str) -> None:
             config=preview_config,
             skip_transfer=skip_transfer,
             strict_replication=False,
+            prevalidated_qa=(
+                task.get("photo_qa")
+                if user_photo and isinstance(task.get("photo_qa"), dict) and task["photo_qa"].get("pass")
+                else None
+            ),
         )
         transfer_line = "[job] transfer 完成" if not skip_transfer else "[job] 已跳过 wan transfer（跳过妆容预览）"
         store.update_pipeline_step(

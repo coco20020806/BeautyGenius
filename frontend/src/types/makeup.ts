@@ -14,6 +14,7 @@ export interface UploadPhotoResult {
   photoId: string | null;
   previewUrl: string | null;
   skipped: boolean;
+  validationPass?: boolean;
 }
 
 export interface AnalysisStage {

@@ -23,6 +23,7 @@ from api_server.dev_bootstrap import bootstrap_from_pinned_file
 from api_server.errors import ApiError, api_error_handler, new_request_id
 from api_server.media_urls import resolve_task_video_url
 from api_server.occupancy import JobKind, occupancy
+from api_server.photo_validation import validate_user_photo_for_upload
 from api_server.pipeline import run_task_pipeline
 from api_server.preview_assembler import assemble_makeup_preview
 from api_server.step_diagrams import (
@@ -32,6 +33,7 @@ from api_server.step_diagrams import (
 )
 from api_server.store import store
 from api_server.tutorial_loader import load_tutorial_document
+from makeup_preview import UserPhotoRejected
 
 app = FastAPI(title="Beauty Genius Makeup API", version="0.1.0")
 app.add_middleware(
@@ -154,6 +156,8 @@ async def upload_photo(
     photo_id: str | None = None
     preview_url: str | None = None
     photo_path: str | None = None
+    photo_qa: dict[str, Any] | None = None
+    validation_pass: bool | None = None
 
     if not skip:
         if not photo:
@@ -175,8 +179,49 @@ async def upload_photo(
 
         preview_url = f"{API_PUBLIC_BASE_URL}/media/{task_id}/{dest.name}"
 
-    store.set_photo_ready(task_id, photo_path=photo_path, skipped=skip, photo_id=photo_id)
-    return {"photoId": photo_id, "previewUrl": preview_url, "skipped": skip}
+        try:
+            photo_qa = validate_user_photo_for_upload(dest)
+        except UserPhotoRejected as exc:
+            try:
+                dest.unlink(missing_ok=True)
+            except OSError:
+                pass
+            reason = exc.qa_doc.get("reason") or "用户照片未通过质检，请按拍摄指引重新上传"
+            raise ApiError(
+                422,
+                "USER_PHOTO_REJECTED",
+                reason,
+                request_id=req_id,
+                details=exc.qa_doc,
+            ) from exc
+        except Exception as exc:  # noqa: BLE001
+            try:
+                dest.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise ApiError(
+                500,
+                "PHOTO_VALIDATION_FAILED",
+                str(exc) or "照片质检失败，请稍后重试",
+                request_id=req_id,
+            ) from exc
+        validation_pass = True
+
+    store.set_photo_ready(
+        task_id,
+        photo_path=photo_path,
+        skipped=skip,
+        photo_id=photo_id,
+        photo_qa=photo_qa,
+    )
+    body: dict[str, Any] = {
+        "photoId": photo_id,
+        "previewUrl": preview_url,
+        "skipped": skip,
+    }
+    if validation_pass is not None:
+        body["validationPass"] = validation_pass
+    return body
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/analysis", status_code=202)

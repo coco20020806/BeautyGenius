@@ -2,6 +2,7 @@ import { ArrowLeft, Camera, Check, ImagePlus, LockKeyhole, ShieldCheck, SunMediu
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
+import { HttpError } from '../services/httpClient';
 import { makeupService } from '../services/makeupService';
 
 export function PhotoPage() {
@@ -38,7 +39,11 @@ export function PhotoPage() {
       );
       navigate('/parsing');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '照片上传失败，请重试');
+      if (reason instanceof HttpError && reason.code === 'USER_PHOTO_REJECTED') {
+        setError(reason.message || '照片未通过审核，请按拍摄指引重新上传');
+      } else {
+        setError(reason instanceof Error ? reason.message : '照片上传失败，请重试');
+      }
     } finally {
       setLoadingAction(null);
     }
@@ -88,7 +93,7 @@ export function PhotoPage() {
         <p className="photo-actions__hint">也可以点击上方人像上传本人照片，效果会更贴近你</p>
         <div className="photo-actions__row photo-actions__row--single">
           <button className="photo-confirm-button" type="button" disabled={!file || loading} onClick={() => void continueFlow(false)}>
-            {loadingAction === 'upload' ? '上传中…' : '确认上传'}
+            {loadingAction === 'upload' ? '正在审核照片…' : '确认上传'}
           </button>
         </div>
       </div>

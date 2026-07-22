@@ -75,6 +75,16 @@ sudo apt-get install -y libgl1 libglib2.0-0 ffmpeg
 
 MVP 无用户鉴权；任务 ID 即访问凭证。
 
+### 照片上传与质检
+
+`POST /api/v1/makeup/tasks/{taskId}/photo`：
+
+- **跳过**（`skipped=true`）：直接 `photo_ready`，使用标准人脸底图；不跑质检
+- **上传本人照片**：落盘后同步执行 L0 → L1 MediaPipe → L2 Qwen（`validate_only`）。仅通过后才写入 `photo_ready`，响应含 `validationPass: true`，task 记录 `photo_qa`
+- **不合格**：HTTP `422`，`code: USER_PHOTO_REJECTED`，`message` 为质检原因；**不**进入 `photo_ready`，前端应留在照片页提示重拍
+
+解析流水线若已有通过的 `photo_qa`，妆容预览阶段跳过二次质检。
+
 ### 并发占用（忙线）
 
 重任务（`analysis` / `adjustment` / `step-diagrams`）共用进程内槽位，**默认最多 2 个不同 task 同时跑**。第 3 个启动请求返回：

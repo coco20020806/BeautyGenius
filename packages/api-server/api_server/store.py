@@ -105,6 +105,7 @@ class TaskStore:
         photo_path: str | None,
         skipped: bool,
         photo_id: str | None,
+        photo_qa: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         task = self.load(task_id)
         if task["status"] not in {"uploaded", "photo_ready"}:
@@ -113,6 +114,10 @@ class TaskStore:
         task["photo_path"] = photo_path
         task["photo_skipped"] = skipped
         task["photo_id"] = photo_id
+        if skipped:
+            task["photo_qa"] = None
+        elif photo_qa is not None:
+            task["photo_qa"] = photo_qa
         self.save(task)
         return task
 

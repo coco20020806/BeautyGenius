@@ -1,11 +1,22 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { vi } from 'vitest';
+import { beforeEach, afterEach, expect, test, vi } from 'vitest';
+import { HttpError } from '../services/httpClient';
 import { PhotoPage } from './PhotoPage';
+
+const uploadPhoto = vi.fn();
+
+vi.mock('../services/makeupService', () => ({
+  makeupService: {
+    uploadPhoto: (...args: unknown[]) => uploadPhoto(...args),
+  },
+}));
 
 beforeEach(() => {
   sessionStorage.setItem('makeupTask', JSON.stringify({ taskId: 'demo-task' }));
+  uploadPhoto.mockReset();
+  uploadPhoto.mockResolvedValue({ photoId: null, previewUrl: null, skipped: true });
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:photo-preview');
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
 });
@@ -48,4 +59,24 @@ test('previews a selected image before confirmation', async () => {
   );
 
   expect(screen.getByRole('img', { name: '待确认的本人照片' })).toHaveAttribute('src', 'blob:photo-preview');
+});
+
+test('stays on photo page when upload validation rejects', async () => {
+  const user = userEvent.setup();
+  uploadPhoto.mockRejectedValue(
+    new HttpError('照片不符合平视正脸要求（NO_FACE）', 422, 'USER_PHOTO_REJECTED'),
+  );
+  renderPhotoPage();
+
+  await user.upload(
+    screen.getByLabelText('上传本人照片'),
+    new File(['face'], 'face.jpg', { type: 'image/jpeg' }),
+  );
+  await user.click(screen.getByRole('button', { name: '确认上传' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('alert')).toHaveTextContent('照片不符合平视正脸要求（NO_FACE）');
+  });
+  expect(screen.queryByRole('heading', { name: '解析中，请稍候…' })).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '确认照片' })).toBeInTheDocument();
 });

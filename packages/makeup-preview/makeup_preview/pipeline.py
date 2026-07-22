@@ -58,6 +58,7 @@ def run_preview_job(
     validate_only: bool = False,
     skip_transfer: bool = False,
     strict_replication: bool = False,
+    prevalidated_qa: dict[str, Any] | None = None,
 ) -> PreviewJobResult:
     _validate_inputs(
         parse_run_dir=parse_run_dir,
@@ -129,9 +130,17 @@ def run_preview_job(
 
     if user_photo:
         target_src = user_photo.resolve()
-        qa_doc = _validate_user_photo(target_src, config, run_dir)
-        if not qa_doc["pass"]:
-            raise UserPhotoRejected(qa_doc)
+        if prevalidated_qa and prevalidated_qa.get("pass"):
+            qa_doc = prevalidated_qa
+            qa_path = run_dir / "user-photo-qa.json"
+            qa_path.write_text(
+                json.dumps(qa_doc, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        else:
+            qa_doc = _validate_user_photo(target_src, config, run_dir)
+            if not qa_doc["pass"]:
+                raise UserPhotoRejected(qa_doc)
         target_meta = {"type": "user_photo", "path": "target.jpg"}
         validation_doc = qa_doc
     else:
