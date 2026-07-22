@@ -52,8 +52,24 @@ def run_parse_job(
     _progress(config, 1, "Probe…")
     probe = probe_video(ffprobe, video_path)
 
+    size_bytes = video_path.stat().st_size
+    if size_bytes > config.max_upload_bytes:
+        _progress(
+            config,
+            2,
+            f"准备压缩上传代理（{size_bytes / (1024 * 1024):.1f}MB）…",
+        )
+    else:
+        _progress(config, 2, "检查体积（未超限，将跳过压缩）…")
+
     analysis_video, compressed = prepare_video_for_api(
-        ffmpeg, video_path, run_dir, config.max_upload_bytes
+        ffmpeg,
+        video_path,
+        run_dir,
+        config.max_upload_bytes,
+        config=config,
+        duration_sec=float(probe.get("duration_sec") or 0),
+        on_progress=lambda msg: _progress(config, 2, msg),
     )
     if compressed:
         _progress(config, 2, "Prepare（已压缩上传代理）…")

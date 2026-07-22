@@ -98,6 +98,13 @@ export function ParsingPage() {
     return () => { cancelled = true; };
   }, [navigate, runId, taskId]);
 
+  const stageTitle =
+    progress.currentStage === '检查视频质量' &&
+    typeof progress.detailMessage === 'string' &&
+    progress.detailMessage.includes('压缩')
+      ? '压缩视频以便分析'
+      : progress.currentStage;
+
   return (
     <MobileShell className="parsing-page">
       <header className="centered-heading">
@@ -114,7 +121,7 @@ export function ParsingPage() {
           </div>
         </div>
         <div className="current-stage">
-          <Sparkles size={16} /><span>当前阶段</span><strong>{progress.currentStage}</strong>
+          <Sparkles size={16} /><span>当前阶段</span><strong>{stageTitle}</strong>
         </div>
         {progress.detailMessage ? (
           <p className="current-stage-detail">{progress.detailMessage}</p>
