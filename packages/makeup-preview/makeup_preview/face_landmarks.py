@@ -163,3 +163,12 @@ def inter_eye_distance(geom: FaceGeometry) -> float:
     lx, ly = geom.left_eye
     rx, ry = geom.right_eye
     return max(math.hypot(rx - lx, ry - ly), 1.0)
+
+
+def face_bbox(geom: FaceGeometry) -> tuple[float, float, float, float]:
+    return _face_bbox(geom.landmarks, geom.width, geom.height)
+
+
+def face_height(geom: FaceGeometry) -> float:
+    x0, y0, x1, y1 = face_bbox(geom)
+    return max(y1 - y0, 1.0)

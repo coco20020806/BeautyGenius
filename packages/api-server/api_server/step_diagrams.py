@@ -98,11 +98,19 @@ def run_step_diagrams_job(task_id: str) -> None:
         store.save(task)
 
 
-def _read_final_prompt(step_dir: Path) -> str | None:
-    path = step_dir / "final_prompt.txt"
+def _read_prompt_file(step_dir: Path, name: str) -> str | None:
+    path = step_dir / name
     if path.is_file():
-        return path.read_text(encoding="utf-8").strip()
+        return path.read_text(encoding="utf-8").strip() or None
     return None
+
+
+def _read_final_prompt(step_dir: Path) -> str | None:
+    return _read_prompt_file(step_dir, "final_prompt.txt")
+
+
+def _read_base_prompt(step_dir: Path) -> str | None:
+    return _read_prompt_file(step_dir, "base_prompt.txt")
 
 
 def _manifest_step_map(run_dir: Path | None) -> dict[str, dict[str, Any]]:
@@ -153,8 +161,11 @@ def assemble_step_diagrams(task_id: str, task: dict[str, Any], tutorial: dict[st
             image_url = f"{base}/media/{task_id}/{media_name}"
 
         final_prompt: str | None = None
+        base_prompt: str | None = None
         if run_dir:
-            final_prompt = _read_final_prompt(run_dir / "steps" / step_id)
+            step_out_dir = run_dir / "steps" / step_id
+            final_prompt = _read_final_prompt(step_out_dir)
+            base_prompt = _read_base_prompt(step_out_dir)
 
         item: dict[str, Any] = {
             "stepId": step_id,
@@ -171,6 +182,8 @@ def assemble_step_diagrams(task_id: str, task: dict[str, Any], tutorial: dict[st
                 pass
         if final_prompt:
             item["finalPrompt"] = final_prompt
+        if base_prompt:
+            item["basePrompt"] = base_prompt
         err = mentry.get("error")
         if err:
             item["error"] = str(err)

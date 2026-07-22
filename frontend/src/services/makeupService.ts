@@ -153,14 +153,22 @@ class LocalMakeupService implements MakeupService {
       taskId,
       status: 'completed' as const,
       videoUrl: tutorial.videoUrl,
-      steps: tutorial.steps.map((step, index) => ({
-        stepId: step.step_id,
-        index,
-        heading: `步骤 ${index + 1} · ${step.taxonomy_primary ?? step.step_id}`,
-        imageUrl: faceBefore,
-        status: 'ok' as const,
-        videoClip: step.video_clip,
-      })),
+      steps: tutorial.steps.map((step, index) => {
+        const basePrompt =
+          `${step.instruction || '按步骤上妆'}，请在原始图片上用色块标注着色范围`;
+        const finalPrompt =
+          `${basePrompt}画面中可见对应部位操作痕迹，范围边界柔和。`;
+        return {
+          stepId: step.step_id,
+          index,
+          heading: `步骤 ${index + 1} · ${step.taxonomy_primary ?? step.step_id}`,
+          imageUrl: faceBefore,
+          status: 'ok' as const,
+          videoClip: step.video_clip,
+          basePrompt,
+          finalPrompt,
+        };
+      }),
     };
   }
 

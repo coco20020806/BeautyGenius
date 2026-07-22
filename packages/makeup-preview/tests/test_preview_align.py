@@ -8,7 +8,12 @@ from PIL import Image
 
 from makeup_preview.config import PreviewConfig, resolve_image_size
 from makeup_preview.face_landmarks import FaceGeometry
-from makeup_preview.preview_align import harmonize_preview_pair
+from makeup_preview.preview_align import (
+    _clamp_square_crop,
+    _content_bbox,
+    _zoom_pair_around_center,
+    harmonize_preview_pair,
+)
 
 
 def test_resolve_image_size_portrait():
@@ -25,6 +30,36 @@ def test_resolve_image_size_square():
 
 def test_resolve_image_size_invalid_defaults():
     assert resolve_image_size(0, 100, default="2K") == "2K"
+
+
+def test_content_bbox_strips_letterbox():
+    im = Image.new("RGB", (200, 200), color=(245, 238, 234))
+    for y in range(40, 160):
+        for x in range(30, 170):
+            im.putpixel((x, y), (180, 120, 100))
+    box = _content_bbox(im, (245, 238, 234), tol=10)
+    assert box[0] <= 35
+    assert box[1] <= 45
+    assert box[2] >= 165
+    assert box[3] >= 155
+
+
+def test_zoom_pair_keeps_same_size_and_alignment_center():
+    t = Image.new("RGB", (100, 100), color=(200, 180, 170))
+    p = Image.new("RGB", (100, 100), color=(180, 160, 150))
+    t2, p2, center = _zoom_pair_around_center(t, p, (50, 50), 1.5)
+    assert t2.size == (100, 100)
+    assert p2.size == (100, 100)
+    assert abs(center[0] - 50) < 2
+    assert abs(center[1] - 50) < 2
+
+
+def test_clamp_square_stays_inside_bounds():
+    box = _clamp_square_crop(10, 10, 80, (0, 0, 100, 100))
+    left, top, right, bottom = box
+    assert right - left == bottom - top
+    assert left >= 0 and top >= 0 and right <= 100 and bottom <= 100
+
 
 
 def _fake_geom(w: int, h: int, lx: float, ly: float, rx: float, ry: float) -> FaceGeometry:

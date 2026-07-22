@@ -132,6 +132,8 @@ export interface StepDiagramItem {
   imageUrl: string | null;
   status: StepDiagramItemStatus;
   finalPrompt?: string;
+  /** qwen 第 1 阶段 base_prompt，用于截取化妆手法句 */
+  basePrompt?: string;
   /** 单步生成失败时的错误信息（来自 picture-makeup manifest） */
   error?: string;
   videoClip?: { start: number; end: number };

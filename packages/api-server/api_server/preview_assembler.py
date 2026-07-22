@@ -89,25 +89,37 @@ def _hints_from_tutorial(
     return hints
 
 
-def before_image_filename(_preview_run_dir: Path) -> str:
-    """妆前对比图：始终用与 preview_01 同尺寸的 target.jpg（不用 display 裁切）。"""
+def before_image_filename(preview_run_dir: Path) -> str:
+    """妆前对比图：优先人脸裁切后的 target_display.jpg（与 preview_display 同尺寸）。"""
+    if (preview_run_dir / "target_display.jpg").is_file():
+        return "target_display.jpg"
     return "target.jpg"
 
 
-def after_image_filename(_preview_run_dir: Path) -> str:
-    """妆后对比图：始终用对齐后的 preview_01.jpg。"""
+def after_image_filename(preview_run_dir: Path) -> str:
+    """妆后对比图：优先与妆前同裁切的 preview_display.jpg。"""
+    if (preview_run_dir / "preview_display.jpg").is_file():
+        return "preview_display.jpg"
     return "preview_01.jpg"
 
 
 def comparison_from_alignment(alignment: dict[str, Any] | None) -> dict[str, Any] | None:
-    """对比框尺寸跟全图 pair（target.jpg / preview_01.jpg）走 target_size。"""
+    """对比框优先用 display_size（展示裁切对），否则回退 target_size。"""
     if not alignment:
         return None
-    target_size = alignment.get("target_size")
-    if not (isinstance(target_size, list) and len(target_size) == 2):
-        return None
-    w, h = int(target_size[0]), int(target_size[1])
-    return {"width": w, "height": h}
+    size = alignment.get("display_size")
+    if isinstance(size, list) and len(size) == 2:
+        w, h = int(size[0]), int(size[1])
+    else:
+        target_size = alignment.get("target_size")
+        if not (isinstance(target_size, list) and len(target_size) == 2):
+            return None
+        w, h = int(target_size[0]), int(target_size[1])
+    out: dict[str, Any] = {"width": w, "height": h}
+    obj = alignment.get("object_position")
+    if isinstance(obj, str) and obj.strip():
+        out["objectPosition"] = obj.strip()
+    return out
 
 
 def assemble_makeup_preview(
@@ -175,7 +187,9 @@ def publish_media_files(task_id: str, preview_run_dir: Path, task_dir: Path) -> 
     media_dir.mkdir(parents=True, exist_ok=True)
     mapping = {
         "target.jpg": preview_run_dir / "target.jpg",
+        "target_display.jpg": preview_run_dir / "target_display.jpg",
         "preview_01.jpg": preview_run_dir / "preview_01.jpg",
+        "preview_display.jpg": preview_run_dir / "preview_display.jpg",
     }
     for name, src in mapping.items():
         if src.is_file():

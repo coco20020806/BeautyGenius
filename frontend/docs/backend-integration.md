@@ -322,7 +322,7 @@ POST /api/v1/makeup/tasks/{taskId}/step-diagrams
 GET /api/v1/makeup/tasks/{taskId}/step-diagrams
 ```
 
-响应：`StepDiagramsResponse`（`status`: `idle` | `processing` | `completed` | `failed`；顶层 `videoUrl` 同上传原片；`steps[].imageUrl` 为 `{API_PUBLIC_BASE_URL}/media/{taskId}/diagram_{stepId}.jpg`；`steps[].videoClip` 来自 tutorial 对应步的 `video_clip`；失败步含 `steps[].error`，全部失败时顶层 `failureReason` 会汇总首条错误）。
+响应：`StepDiagramsResponse`（`status`: `idle` | `processing` | `completed` | `failed`；顶层 `videoUrl` 同上传原片；`steps[].imageUrl` 为 `{API_PUBLIC_BASE_URL}/media/{taskId}/diagram_{stepId}.jpg`；`steps[].videoClip` 来自 tutorial 对应步的 `video_clip`；可选 `steps[].basePrompt`（qwen 第 1 阶段，前端用于截取化妆手法）与 `steps[].finalPrompt`（手法+标注全文）；失败步含 `steps[].error`，全部失败时顶层 `failureReason` 会汇总首条错误）。
 
 未就绪：`409`，`STEP_DIAGRAMS_NOT_READY` 或 `TUTORIAL_NOT_READY`。
 
@@ -343,15 +343,16 @@ POST /api/v1/makeup/dev/skip-to-preview
 - 人脸关键位置对齐。
 - 浏览器允许前端域名访问图片；若跨域，CDN 需正确设置 CORS。
 - 推荐 WebP 或 AVIF，并返回稳定的宽高，避免滑动对比时错位。
+- 当 run 中存在展示裁切对时，后端应优先返回同尺寸的 `target_display.jpg`（妆前）与 `preview_display.jpg`（妆后）；否则回退 `target.jpg` / `preview_01.jpg`。
 
-可选字段 `comparison`（对齐 run 由后端填充）：
+可选字段 `comparison`（对齐 run 由后端填充；有 display 裁切时用 `display_size`）：
 
 ```json
 {
   "comparison": {
-    "width": 900,
-    "height": 900,
-    "objectPosition": "50% 48%"
+    "width": 780,
+    "height": 780,
+    "objectPosition": "50% 37.1%"
   }
 }
 ```

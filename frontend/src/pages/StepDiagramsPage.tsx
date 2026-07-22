@@ -1,10 +1,11 @@
-import { ArrowLeft, ImageIcon, Play, Sparkles } from 'lucide-react';
+import { ArrowLeft, ChevronUp, ImageIcon, Play, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
 import { canPlayStepClip, StepClipPlayer } from '../components/StepClipPlayer';
 import { makeupService } from '../services/makeupService';
 import type { StepDiagramItem, StepDiagramsResponse } from '../types/makeup';
+import { splitDiagramPrompt } from '../utils/splitDiagramPrompt';
 
 function readTaskId() {
   try {
@@ -20,6 +21,25 @@ function diagramStepDomId(stepId: string) {
 
 function sortDiagramSteps(steps: StepDiagramItem[]) {
   return [...steps].sort((a, b) => a.index - b.index);
+}
+
+function resolvePromptParts(item: StepDiagramItem) {
+  const fromBase = item.basePrompt ? splitDiagramPrompt(item.basePrompt) : null;
+  const fromFinal = item.finalPrompt ? splitDiagramPrompt(item.finalPrompt) : null;
+  const technique = (fromBase?.technique || fromFinal?.technique || '').trim();
+  const annotation = fromFinal?.annotation ?? null;
+  return { technique, annotation };
+}
+
+/** Prefer the name after "步骤 N · ", fall back to full heading. */
+function stepDisplayName(heading: string) {
+  const marker = ' · ';
+  const at = heading.indexOf(marker);
+  if (at >= 0) {
+    const name = heading.slice(at + marker.length).trim();
+    if (name) return name;
+  }
+  return heading;
 }
 
 export function StepDiagramsPage() {
@@ -119,12 +139,21 @@ export function StepDiagramsPage() {
     node.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const scrollToTop = () => {
+    const top = document.getElementById('diagram-gallery-top');
+    if (top) {
+      top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const processing = data?.status === 'processing' || data?.status === 'idle';
   const progress = data?.progress;
 
   return (
     <MobileShell className="practice-page diagram-gallery-page">
-      <header className="detail-header">
+      <header className="detail-header" id="diagram-gallery-top">
         <button
           className="icon-button"
           type="button"
@@ -175,6 +204,7 @@ export function StepDiagramsPage() {
             <ul className="diagram-gallery" aria-label="步骤示例图列表">
               {sortedSteps.map((item) => {
                 const playable = canPlayStepClip(data?.videoUrl, item.videoClip);
+                const { technique, annotation } = resolvePromptParts(item);
                 return (
                   <li
                     key={item.stepId}
@@ -205,10 +235,11 @@ export function StepDiagramsPage() {
                         </div>
                       )}
                     </div>
-                    {item.finalPrompt ? (
+                    {technique ? <p className="diagram-card__technique">{technique}</p> : null}
+                    {annotation ? (
                       <details className="diagram-card__prompt">
                         <summary>标注说明</summary>
-                        <p>{item.finalPrompt}</p>
+                        <p>{annotation}</p>
                       </details>
                     ) : null}
                     <button
@@ -226,22 +257,35 @@ export function StepDiagramsPage() {
             </ul>
 
             <nav className="diagram-step-index" aria-label="步骤索引">
-              {sortedSteps.map((item) => {
-                const label = String(item.index + 1);
-                const isActive = activeStepId === item.stepId;
-                return (
-                  <button
-                    key={item.stepId}
-                    type="button"
-                    className={`diagram-step-index__btn${isActive ? ' is-active' : ''}`}
-                    aria-label={`跳转到步骤 ${label}`}
-                    aria-current={isActive ? 'true' : undefined}
-                    onClick={() => jumpToStep(item.stepId)}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+              <div className="diagram-step-index__list">
+                {sortedSteps.map((item) => {
+                  const label = String(item.index + 1);
+                  const name = stepDisplayName(item.heading);
+                  const isActive = activeStepId === item.stepId;
+                  return (
+                    <button
+                      key={item.stepId}
+                      type="button"
+                      className={`diagram-step-index__btn${isActive ? ' is-active' : ''}`}
+                      aria-label={`跳转到步骤 ${label} ${name}`}
+                      aria-current={isActive ? 'true' : undefined}
+                      onClick={() => jumpToStep(item.stepId)}
+                    >
+                      <span className="diagram-step-index__num">{label}</span>
+                      <span className="diagram-step-index__name">{name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                className="diagram-step-index__top"
+                aria-label="回到顶部"
+                onClick={scrollToTop}
+              >
+                <ChevronUp size={14} />
+                顶部
+              </button>
             </nav>
           </div>
 
