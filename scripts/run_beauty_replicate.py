@@ -14,6 +14,7 @@ from pathlib import Path
 from makeup_preview import PreviewConfig, StrictReplicationError, UserPhotoRejected, run_preview_job
 from makeup_understanding import UnderstandingConfig, run_understanding_job
 from tutorial_mapper import MapperConfig, run_mapper_job
+from tutorial_mapper.step_validation import format_step_validation_summary
 from video_parse import ParseConfig, run_parse_job
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -53,6 +54,8 @@ def write_manifest(
     preview: dict | None,
     tutorial_path: Path | None = None,
     tutorial_id: str | None = None,
+    tutorial_step_validation_pass: bool | None = None,
+    tutorial_step_validation_issues: int | None = None,
 ) -> Path:
     job_dir.mkdir(parents=True, exist_ok=True)
     upstream = None
@@ -73,6 +76,8 @@ def write_manifest(
         "preview_run_dir": str(preview_run_dir.resolve()) if preview_run_dir else None,
         "tutorial_path": str(tutorial_path.resolve()) if tutorial_path else None,
         "tutorial_id": tutorial_id,
+        "tutorial_step_validation_pass": tutorial_step_validation_pass,
+        "tutorial_step_validation_issues": tutorial_step_validation_issues,
         "upstream_reference": upstream,
         "target": target,
     }
@@ -174,7 +179,7 @@ def main() -> None:
 
         def on_map_progress(stage: int, message: str) -> None:
             elapsed = time.monotonic() - t0
-            sys.stderr.write(f"[map {stage}/6] {message} ({elapsed:.0f}s)\n")
+            sys.stderr.write(f"[map {stage}/7] {message} ({elapsed:.0f}s)\n")
             sys.stderr.flush()
 
     else:
@@ -187,6 +192,8 @@ def main() -> None:
 
     tutorial_path: Path | None = None
     tutorial_id: str | None = None
+    tutorial_validation_pass: bool | None = None
+    tutorial_validation_issues: int | None = None
 
     try:
         if args.video:
@@ -245,6 +252,15 @@ def main() -> None:
             )
             tutorial_path = mapper_result.tutorial_path
             tutorial_id = (mapper_result.tutorial or {}).get("tutorial_id")
+            val_block = mapper_result.enrichment_meta.get("tutorial_step_validation") or {}
+            if val_block:
+                tutorial_validation_pass = bool(val_block.get("pass"))
+                tutorial_validation_issues = len(val_block.get("issues") or [])
+                job_log(format_step_validation_summary(val_block))
+                if not tutorial_validation_pass:
+                    job_log(
+                        "步骤校验未通过，仍已写入 tutorial.json（见 enrichment_meta）"
+                    )
             job_log(f"Tutorial 映射完成: {tutorial_path}")
             if not args.skip_understanding:
                 if not api_key:
@@ -307,6 +323,8 @@ def main() -> None:
             preview=preview_result.preview if preview_result else None,
             tutorial_path=tutorial_path,
             tutorial_id=tutorial_id,
+            tutorial_step_validation_pass=tutorial_validation_pass,
+            tutorial_step_validation_issues=tutorial_validation_issues,
         )
         job_log("完成")
     except UserPhotoRejected as e:

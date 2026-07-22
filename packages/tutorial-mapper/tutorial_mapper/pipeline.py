@@ -11,6 +11,7 @@ from tutorial_mapper.config import MapperConfig, MapperJobResult
 from tutorial_mapper.from_analysis import from_analysis
 from tutorial_mapper.merge import apply_text_patch, apply_vision_patch, refresh_assets_from_steps
 from tutorial_mapper.schema import validate_tutorial
+from tutorial_mapper.step_validation import validate_tutorial_steps
 from tutorial_mapper.text_enrich import enrich_from_text
 from tutorial_mapper.vision_enrich import enrich_from_vision
 
@@ -82,15 +83,28 @@ def run_mapper_job(parse_run_dir: Path, config: MapperConfig) -> MapperJobResult
         _progress(config, 4, "跳过视觉 enrichment")
         enrichment_meta["stages"]["vision"] = {"ok": True, "skipped": True}
 
-    _progress(config, 5, "刷新 assets + schema 校验…")
+    _progress(config, 5, "刷新 assets + tutorial.v1 schema 校验…")
     refresh_assets_from_steps(tutorial)
     validate_tutorial(tutorial)
+    _progress(config, 6, "步骤语义校验…")
+    step_validation = validate_tutorial_steps(tutorial)
+    enrichment_meta["tutorial_step_validation"] = step_validation
+    issues = step_validation.get("issues") or []
+    error_count = sum(1 for i in issues if i.get("severity") == "error")
+    warning_count = sum(1 for i in issues if i.get("severity") == "warning")
+    enrichment_meta["stages"]["step_validation"] = {
+        "ok": True,
+        "pass": bool(step_validation.get("pass")),
+        "issue_count": len(issues),
+        "error_count": error_count,
+        "warning_count": warning_count,
+    }
 
     tutorial_path = parse_run_dir / "tutorial.json"
     meta_path = parse_run_dir / "enrichment_meta.json"
     _write_json(tutorial_path, tutorial)
     _write_json(meta_path, enrichment_meta)
-    _progress(config, 6, "写盘完成")
+    _progress(config, 7, "写盘完成")
 
     return MapperJobResult(
         parse_run_dir=parse_run_dir,

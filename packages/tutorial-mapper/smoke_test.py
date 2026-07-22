@@ -114,6 +114,9 @@ def main() -> None:
         assert t["steps"][1]["part"] == "eye"
         assert any(a["part"] == "cheek" and a["asset_id"] == "cheek_001" for a in t["assets"])
         assert any(a["part"] == "eye" and a["asset_id"] == "eye_001" for a in t["assets"])
+        val = result.enrichment_meta.get("tutorial_step_validation") or {}
+        assert val.get("pass") is True
+        assert "腮红" in (val.get("by_primary") or {})
         print("OK", t["tutorial_id"], len(t["steps"]), len(t["assets"]))
         print(result.tutorial_path)
 

@@ -36,7 +36,7 @@ Python 等价：`scripts/run_beauty_replicate.py`。
 ## 数据流
 
 1. **解析**（可选）：`video_parse.run_parse_job` → `analysis.json` + `keyframes/`（默认可含 v2.1 复刻参考）。
-2. **Tutorial 映射**（默认开启，有 parse run 时）：`tutorial_mapper.run_mapper_job` → `tutorial.json` + `enrichment_meta.json`（写在同一 parse run 目录）。
+2. **Tutorial 映射**（默认开启，有 parse run 时）：`tutorial_mapper.run_mapper_job` → `tutorial.json` + `enrichment_meta.json`（含 `tutorial_step_validation` 步骤语义校验，写在同一 parse run 目录）。
 3. **上游妆面图**：`makeup_preview.resolve_transfer_reference` 优先 `makeup_replication_refs.after` + `before`。
 4. **预览**：`makeup_preview.run_preview_job` → `outputs/makeup-preview/runs/<id>/`。
 5. **Manifest**：`outputs/jobs/<timestamp>/manifest.json` 链接 parse / tutorial / preview。

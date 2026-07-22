@@ -113,6 +113,6 @@ python scripts/parse_beauty_video.py --video /path/to/video.mp4 --mode fast
 | [taxonomy-enums.json](taxonomy-enums.json) | 机器可读枚举 |
 | [examples.md](examples.md) | 命令与样例 |
 | [module-structure.md](module-structure.md) | 可复用包与演进 |
-| 下游 | [`tutorial-mapper`](../tutorial-mapper/) 消费 `analysis.json` → `tutorial.json`；[`kol-makeup-preview`](../kol-makeup-preview/) 消费 `makeup_replication_refs.after`；串联 [`docs/REPLICATE_PIPELINE.md`](../../docs/REPLICATE_PIPELINE.md) |
+| 下游 | [`tutorial-mapper`](../tutorial-mapper/) 消费 `analysis.json` → `tutorial.json`，并在 mapper 内做**重复步语义校验**（非 parse 阶段合并；同一 `taxonomy_primary` 可多 step）；[`kol-makeup-preview`](../kol-makeup-preview/) 消费 `makeup_replication_refs.after`；串联 [`docs/REPLICATE_PIPELINE.md`](../../docs/REPLICATE_PIPELINE.md) |
 
 Machine-readable schema：`packages/video-parse/video_parse/schemas/beauty_video_analysis.v2.json` / `beauty_video_analysis.v2.1.json`。

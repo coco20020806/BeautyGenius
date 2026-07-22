@@ -16,7 +16,9 @@ cd "<repo-root>"
 
 确定性映射始终执行；文本 / 视觉 enrichment 默认开启（可用 `--skip-text-enrich` / `--skip-vision-enrich` 关闭）。
 
-产物写在 parse run 目录：`tutorial.json`、`enrichment_meta.json`。
+产物写在 parse run 目录：`tutorial.json`、`enrichment_meta.json`（含 `tutorial_step_validation` 步骤语义校验与 `stages.step_validation`）。
+
+`scripts/map_tutorial_from_parse.py` 与 `scripts/run_beauty_replicate.py` 在 stderr / job 日志中打印校验摘要；**warn_write**：`pass=false` 时仍写 `tutorial.json`。
 
 ## 边界
 

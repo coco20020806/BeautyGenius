@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from tutorial_mapper import MapperConfig, run_mapper_job
+from tutorial_mapper.step_validation import format_step_validation_summary
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -80,7 +81,7 @@ def main() -> None:
 
         def on_progress(stage: int, message: str) -> None:
             elapsed = time.monotonic() - t0
-            sys.stderr.write(f"[{stage}/6] {message} ({elapsed:.0f}s)\n")
+            sys.stderr.write(f"[{stage}/7] {message} ({elapsed:.0f}s)\n")
             sys.stderr.flush()
 
     config = MapperConfig(
@@ -90,6 +91,15 @@ def main() -> None:
         on_progress=on_progress,
     )
     result = run_mapper_job(parse_run, config)
+    block = result.enrichment_meta.get("tutorial_step_validation") or {}
+    if not quiet and block:
+        sys.stderr.write(format_step_validation_summary(block) + "\n")
+        if not block.get("pass"):
+            sys.stderr.write(
+                "tutorial_step_validation 未通过，仍已写入 tutorial.json；"
+                "详见 enrichment_meta.json\n"
+            )
+        sys.stderr.flush()
     print(str(result.tutorial_path))
 
 
