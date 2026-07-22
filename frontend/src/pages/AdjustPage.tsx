@@ -41,7 +41,7 @@ export function AdjustPage() {
   const location = useLocation();
   const routeState = location.state as { from?: string; baseTutorialId?: string } | null;
   const taskId = readTaskId();
-  const [styles, setStyles] = useState<string[]>([]);
+  const [style, setStyle] = useState('');
   const [occasions, setOccasions] = useState<string[]>([]);
   const [retainedParts, setRetainedParts] = useState<string[]>([]);
   const [skinType, setSkinType] = useState('混合性肌肤');
@@ -55,7 +55,7 @@ export function AdjustPage() {
     setSubmitting(true);
     setError(null);
     const request = {
-      styles,
+      styles: style ? [style] : [],
       occasions,
       retainedParts,
       skinType,
@@ -90,7 +90,7 @@ export function AdjustPage() {
 
       <form className="adjust-form" onSubmit={submit}>
         <fieldset className="choice-section" aria-labelledby="personal-style-title"><div className="choice-section__heading"><Palette size={17} /><h2 id="personal-style-title">个人风格</h2></div>
-          <div className="choice-question"><h3>你希望这个妆容更偏向哪种风格？</h3><small>多选</small><MultiChoice name="styles" options={styleOptions} selected={styles} onChange={setStyles} /></div>
+          <div className="choice-question"><h3>你希望这个妆容更偏向哪种风格？</h3><small>单选</small><div className="choice-grid">{styleOptions.map((item) => <label className={`choice-chip${style === item ? ' is-selected' : ''}`} key={item}><input type="radio" name="styles" value={item} checked={style === item} onChange={() => setStyle(item)} /><span>{item}</span>{style === item && <Check size={13} />}</label>)}</div></div>
           <div className="choice-question"><h3>这个妆主要使用在哪些场景？</h3><small>多选</small><MultiChoice name="occasions" options={occasionOptions} selected={occasions} onChange={setOccasions} /></div>
         </fieldset>
 

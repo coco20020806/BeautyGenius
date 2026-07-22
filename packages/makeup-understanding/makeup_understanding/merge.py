@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from makeup_understanding.prompt import TIERS
+from makeup_understanding.prompt import DISPLAY_RANGE_MAX_LEN, TIERS
 
 
 def apply_understanding_patch(
@@ -32,9 +32,14 @@ def apply_understanding_patch(
         if len(technique) > 40:
             technique = technique[:40].rstrip()
 
+        display_range = (item.get("display_range") or "").strip()
+        if len(display_range) > DISPLAY_RANGE_MAX_LEN:
+            display_range = display_range[:DISPLAY_RANGE_MAX_LEN].rstrip()
+
         step["display_product"] = display
         step["display_product_tier"] = tier
         step["technique"] = technique
+        step["display_range"] = display_range
 
         product_name = (item.get("product_name") or "").strip()
         if product_name and product_name != "unknown" and tier == "specific":
@@ -57,6 +62,11 @@ def build_user_payload(tutorial: dict[str, Any]) -> str:
     for s in tutorial.get("steps") or []:
         if not isinstance(s, dict):
             continue
+        vl = s.get("visual_layer") if isinstance(s.get("visual_layer"), dict) else {}
+        slim_vl: dict[str, Any] = {}
+        for key in ("position", "shape", "color", "opacity"):
+            if key in vl and vl[key] is not None and str(vl[key]).strip() != "":
+                slim_vl[key] = vl[key]
         slim.append(
             {
                 "step_id": s.get("step_id"),
@@ -64,6 +74,7 @@ def build_user_payload(tutorial: dict[str, Any]) -> str:
                 "taxonomy_primary": s.get("taxonomy_primary"),
                 "taxonomy_sub_steps": s.get("taxonomy_sub_steps"),
                 "product": s.get("product"),
+                "visual_layer": slim_vl,
                 "instruction": (s.get("instruction") or "")[:1200],
                 "adaptation_note": (s.get("adaptation_note") or "")[:400],
             }

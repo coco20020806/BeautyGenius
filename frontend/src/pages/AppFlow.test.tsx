@@ -12,7 +12,7 @@ test('completes the MVP flow by skipping photo upload', async () => {
     new File(['tutorial'], 'tutorial.mp4', { type: 'video/mp4' }),
   );
   await user.click(screen.getByRole('button', { name: '下一步' }));
-  await user.click(await screen.findByRole('button', { name: '暂时跳过' }, { timeout: 10000 }));
+  await user.click(await screen.findByRole('button', { name: '暂时跳过（使用标准人脸生成）' }, { timeout: 10000 }));
 
   await waitFor(() => expect(screen.getByRole('heading', { name: '适配预览' })).toBeInTheDocument(), { timeout: 15000 });
   expect(await screen.findByRole('slider', { name: '妆前妆后对比位置' })).toBeInTheDocument();

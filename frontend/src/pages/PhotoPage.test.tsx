@@ -28,9 +28,10 @@ test('allows the user to skip a personal photo', async () => {
   renderPhotoPage();
 
   expect(screen.getByText('推荐先跳过，使用默认示意脸即可继续生成教程图示')).toBeInTheDocument();
-  expect(screen.getByText('也可以上传本人照片，效果会更贴近你')).toBeInTheDocument();
+  expect(screen.getByText('上传正面照片')).toBeInTheDocument();
+  expect(screen.getByText('也可以点击上方人像上传本人照片，效果会更贴近你')).toBeInTheDocument();
 
-  await user.click(screen.getByRole('button', { name: '暂时跳过' }));
+  await user.click(screen.getByRole('button', { name: '暂时跳过（使用标准人脸生成）' }));
 
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: '解析中，请稍候…' })).toBeInTheDocument();

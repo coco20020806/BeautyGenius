@@ -219,7 +219,7 @@ export function CollectedTutorialPage() {
                         </div>
                         <div>
                           <dt>范围</dt>
-                          <dd>{formatRangeText(practiceStep.visual_layer)}</dd>
+                          <dd>{formatRangeText(practiceStep)}</dd>
                         </div>
                         <div>
                           <dt>手法</dt>

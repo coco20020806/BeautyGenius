@@ -54,7 +54,16 @@ export function PhotoPage() {
         <span className="header-spacer" />
       </header>
 
-      <section className="photo-preview" aria-label="照片预览区域">
+      <input
+        id="photo-upload"
+        className="visually-hidden"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        aria-label="上传本人照片"
+        onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)}
+      />
+
+      <label className="photo-preview photo-preview--upload" htmlFor="photo-upload" aria-label="照片预览区域">
         {previewUrl ? (
           <img src={previewUrl} alt="待确认的本人照片" />
         ) : (
@@ -63,30 +72,21 @@ export function PhotoPage() {
             <UserRound size={82} strokeWidth={1.15} />
           </div>
         )}
-        <span className="photo-preview__badge"><Camera size={15} />{file ? '照片已就绪' : '正面照片'}</span>
-      </section>
+        <span className="photo-preview__badge"><Camera size={15} />{file ? '照片已就绪' : '上传正面照片'}</span>
+      </label>
 
       {error ? <p className="upload-error" role="alert">{error}</p> : null}
 
       <div className="photo-skip">
         <button className="primary-button photo-skip__button" type="button" disabled={loading} onClick={() => void continueFlow(true)}>
-          {loadingAction === 'skip' ? '处理中…' : '暂时跳过'}
+          {loadingAction === 'skip' ? '处理中…' : '暂时跳过（使用标准人脸生成）'}
         </button>
         <p className="skip-explainer">推荐先跳过，使用默认示意脸即可继续生成教程图示</p>
       </div>
 
       <div className="photo-actions">
-        <p className="photo-actions__hint">也可以上传本人照片，效果会更贴近你</p>
-        <input
-          id="photo-upload"
-          className="visually-hidden"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          aria-label="上传本人照片"
-          onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)}
-        />
-        <div className="photo-actions__row">
-          <label className="photo-upload-button" htmlFor="photo-upload">{file ? '重新上传' : '选择照片'}</label>
+        <p className="photo-actions__hint">也可以点击上方人像上传本人照片，效果会更贴近你</p>
+        <div className="photo-actions__row photo-actions__row--single">
           <button className="photo-confirm-button" type="button" disabled={!file || loading} onClick={() => void continueFlow(false)}>
             {loadingAction === 'upload' ? '上传中…' : '确认上传'}
           </button>

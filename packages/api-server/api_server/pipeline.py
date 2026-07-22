@@ -140,7 +140,7 @@ def run_task_pipeline(task_id: str) -> None:
             active_index=1,
             progress=56,
             micro_step_id="understand:1",
-            log_line="[job] 理解产品与手法…",
+            log_line="[job] 理解产品、手法与范围…",
             skip_transfer=skip_transfer,
         )
 

@@ -1,4 +1,4 @@
-import type { Tutorial, TutorialStep, TutorialStepGroup, TutorialPart, TutorialVisualLayer } from '../types/makeup';
+import type { Tutorial, TutorialStep, TutorialStepGroup, TutorialPart } from '../types/makeup';
 
 const PART_LABELS: Record<TutorialPart, string> = {
   prep: '妆前',
@@ -44,16 +44,13 @@ export function formatProductLine(step: TutorialStep): string {
   return '无';
 }
 
-export function formatRangeText(visualLayer: TutorialVisualLayer | undefined): string {
-  if (!visualLayer) return '无';
-  const parts: string[] = [];
-  const position = (visualLayer.position ?? '').trim();
-  if (position) parts.push(position);
-  const shape = (visualLayer.shape ?? '').trim();
-  if (shape) parts.push(shape);
-  const color = (visualLayer.color ?? '').trim();
-  if (color) parts.push(color);
-  return parts.length ? parts.join(' · ') : '无';
+/** Prefer LLM display_range; else position only — never append raw shape/color tokens. */
+export function formatRangeText(step: TutorialStep | undefined): string {
+  if (!step) return '无';
+  const display = (step.display_range ?? '').trim();
+  if (display) return display;
+  const position = (step.visual_layer?.position ?? '').trim();
+  return position || '无';
 }
 
 export function formatTechnique(step: TutorialStep): string {

@@ -14,3 +14,15 @@ test('shows preference style as static profile information', () => {
   expect(screen.queryByRole('button', { name: /偏好风格/ })).not.toBeInTheDocument();
   expect(screen.queryByRole('listbox', { name: '选择偏好风格' })).not.toBeInTheDocument();
 });
+
+test('shows learner level and tool warehouse cosmetics', () => {
+  render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+
+  expect(screen.getByRole('heading', { name: /美妆学习者/ })).toBeInTheDocument();
+  expect(screen.getByText('Lv.1')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '编辑个人资料' })).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '工具仓库' })).toBeInTheDocument();
+  expect(screen.getByText('迪奥魅惑润唇油')).toBeInTheDocument();
+  expect(screen.getByText('SUQQU MS-01绢纱')).toBeInTheDocument();
+  expect(screen.getByText('香奈儿202')).toBeInTheDocument();
+});

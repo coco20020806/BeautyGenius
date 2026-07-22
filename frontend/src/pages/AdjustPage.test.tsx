@@ -72,3 +72,27 @@ test('without taskId keeps learning flow to tutorial', async () => {
     expect(screen.getByRole('heading', { name: '图示教程' })).toBeInTheDocument();
   });
 });
+
+test('personal style question is single-select and wraps styles as array', async () => {
+  const { makeupService } = await import('../services/makeupService');
+  sessionStorage.setItem('makeupTask', JSON.stringify({ taskId: 'task_real' }));
+  const user = userEvent.setup();
+
+  render(
+    <MemoryRouter initialEntries={['/adjust']}>
+      <Routes>
+        <Route path="/adjust" element={<AdjustPage />} />
+        <Route path="/practice" element={<h1>跟练页</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('radio', { name: '清透自然' }));
+  await user.click(screen.getByRole('radio', { name: '个性酷感' }));
+  await user.click(screen.getByRole('button', { name: '生成方案' }));
+
+  expect(makeupService.saveAdjustment).toHaveBeenCalledWith(
+    'task_real',
+    expect.objectContaining({ styles: ['个性酷感'] }),
+  );
+});

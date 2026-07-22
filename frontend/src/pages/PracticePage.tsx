@@ -146,7 +146,7 @@ export function PracticePage() {
                           </div>
                           <div>
                             <dt>范围</dt>
-                            <dd>{formatRangeText(step.visual_layer)}</dd>
+                            <dd>{formatRangeText(step)}</dd>
                           </div>
                           <div>
                             <dt>手法</dt>

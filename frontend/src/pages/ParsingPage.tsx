@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '../components/MobileShell';
 import { fetchAnalysisSnapshot, makeupService } from '../services/makeupService';
 import type { AnalysisProgress, AnalysisStage } from '../types/makeup';
-import { formatRemainingSeconds } from '../utils/formatRemainingSeconds';
 
 const initialStages: AnalysisStage[] = [
   { id: 'quality-check', label: '检查视频质量', status: 'active' },
@@ -139,13 +138,7 @@ export function ParsingPage() {
 
       {progress.status === 'failed' ? (
         <div className="analysis-error" role="alert"><p>{progress.failureReason}</p><button className="primary-button" type="button" onClick={retry}><RefreshCw size={17} />重新解析</button></div>
-      ) : (
-        <footer className="time-remaining">
-          <span>预计剩余</span>
-          <strong>{formatRemainingSeconds(progress.remainingSeconds)}</strong>
-          <p>完成后将自动进入适配预览</p>
-        </footer>
-      )}
+      ) : null}
     </MobileShell>
   );
 }

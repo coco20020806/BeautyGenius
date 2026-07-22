@@ -62,7 +62,7 @@ def run_understanding_job(
 
     progress(1, "组装步骤文本…")
     user = build_user_payload(tutorial)
-    progress(2, "LLM 提取产品与手法…")
+    progress(2, "LLM 提取产品、手法与范围…")
     try:
         patch = call_text_json(
             config,

@@ -109,6 +109,8 @@ export interface TutorialStep {
   display_product?: string;
   display_product_tier?: 'specific' | 'characteristic' | 'category' | 'none';
   technique?: string;
+  /** Fluent Chinese range for practice UI; prefer over raw visual_layer shape/color. */
+  display_range?: string;
 }
 
 export interface TutorialStepGroup {

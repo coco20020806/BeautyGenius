@@ -47,18 +47,35 @@ describe('formatProductLine', () => {
 });
 
 describe('formatRangeText', () => {
-  it('returns 无 when visual layer is empty', () => {
-    expect(formatRangeText({})).toBe('无');
+  it('returns 无 when step has no range info', () => {
+    expect(formatRangeText({ ...baseStep, visual_layer: {} })).toBe('无');
   });
 
-  it('combines position shape and color', () => {
+  it('prefers display_range over visual_layer fields', () => {
     expect(
       formatRangeText({
-        position: '眼下',
-        shape: 'diffuse',
-        color: '#d8aaa0',
+        ...baseStep,
+        display_range: '全唇薄涂打底，呈内深外浅豆沙粉渐变',
+        visual_layer: {
+          position: '全唇薄涂',
+          shape: 'gradient_inner_dark_outer_light',
+          color: '#9E6B6B',
+        },
       }),
-    ).toBe('眼下 · diffuse · #d8aaa0');
+    ).toBe('全唇薄涂打底，呈内深外浅豆沙粉渐变');
+  });
+
+  it('falls back to position only without raw shape or color', () => {
+    expect(
+      formatRangeText({
+        ...baseStep,
+        visual_layer: {
+          position: '眼下',
+          shape: 'diffuse',
+          color: '#d8aaa0',
+        },
+      }),
+    ).toBe('眼下');
   });
 });
 

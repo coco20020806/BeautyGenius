@@ -1,6 +1,6 @@
 # makeup-understanding
 
-从 `tutorial.json` 步骤文本提取 `display_product` / `technique`。
+从 `tutorial.json` 步骤文本提取 `display_product` / `technique` / `display_range`。
 
 ```powershell
 pip install -e packages/makeup-understanding
