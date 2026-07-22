@@ -1,12 +1,12 @@
 # 用户自拍质检 — 平视正脸
 
-版本：v1  
+版本：v1.1（阈值适度放宽）  
 结果写入：`outputs/makeup-preview/runs/<id>/user-photo-qa.json`  
 实现参考：`packages/makeup-preview/makeup_preview/face_gate.py`、`face_qa.py`
 
 ## 目标
 
-确保上传图为 **单人、平视、接近正脸**，适合作为 `wan2.7-image-pro` 的上妆底图。
+确保上传图为 **单人、接近平视正脸**，适合作为 `wan2.7-image-pro` 的上妆底图。允许日常自拍的轻微侧脸/歪头、淡妆与美颜。
 
 ## L0 文件基础（必须通过）
 
@@ -27,20 +27,21 @@
 | 检查项 | 规则 | code |
 |--------|------|------|
 | 人脸数 | `face_count == 1` | `NO_FACE` / `MULTIPLE_FACES` |
-| 人脸占比 | 框面积 / 图像面积 ∈ [0.08, 0.75] | `FACE_TOO_SMALL` / `FACE_TOO_LARGE` |
-| 偏航 yaw | \|yaw\| ≤ 15° | `YAW_TOO_LARGE` |
-| 俯仰 pitch | \|pitch\| ≤ 15° | `PITCH_NOT_EYE_LEVEL` |
-| 滚转 roll | \|roll\| ≤ 10° | `ROLL_TOO_LARGE` |
+| 人脸占比 | 框面积 / 图像面积 ∈ [0.05, 0.75] | `FACE_TOO_SMALL` / `FACE_TOO_LARGE` |
+| 偏航 yaw | \|yaw\| ≤ 25° | `YAW_TOO_LARGE` |
+| 俯仰 pitch | \|pitch\| ≤ 25° | `PITCH_NOT_EYE_LEVEL` |
+| 滚转 roll | \|roll\| ≤ 20° | `ROLL_TOO_LARGE` |
 | 裁切 | 鼻尖、双眼角、嘴角 landmark 在图内 | `FACE_CROPPED` |
 
 姿态角由 landmark 估计（实现层统一函数，阈值以本表为准）。
 
 **L1 失败时不调用 L2**（节省 API）。
 
-## L2 Qwen 视觉 JSON（必须通过）
+## L2 Qwen 视觉 JSON
 
 - 模型：`qwen3.7-plus`（与 [beauty-video-parse/keyframe-validation.md](../beauty-video-parse/keyframe-validation.md) L2 同风格）。
-- 输入：用户图单张 + 固定 system/user 说明（要求 **仅输出 JSON**）。
+- 输入：用户图单张 + 固定说明（要求 **仅输出 JSON**）。
+- 判定口径：允许淡妆/美颜；仅硬拦口罩/墨镜严重遮眼、大面积遮挡、非人脸主体等。
 
 | 字段 | 类型 | 通过条件 |
 |------|------|----------|
@@ -53,6 +54,8 @@
 | `reason` | string | 失败时简短中文，给用户看 |
 
 综合 `pass = L1 pass && L2.pass`（写入 `user-photo-qa.json`）。
+
+**API / JSON 解析失败**：软通过（`pass: true`，`l2_soft_pass: true`，`reason` 说明已放行）。L1 已保证单人脸与可用姿态。
 
 ## user-photo-qa.json 结构
 
@@ -70,8 +73,8 @@
 ## 非目标（v1）
 
 - 身份核验、与 KOL 是否为同一人  
-- 美颜/妆浓打分（除 `suitable_as_makeup_target` 粗筛）
+- 美颜/妆浓打分（除 `suitable_as_makeup_target` 粗筛严重遮挡）
 
 ## 维护
 
-修改阈值时同步：本文件、`face_gate.py` 常量、`face_qa.py` prompt。
+修改阈值时同步：本文件、`config.py` 常量、`face_qa.py` prompt。
