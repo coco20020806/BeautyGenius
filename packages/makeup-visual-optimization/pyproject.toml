@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "makeup-visual-optimization"
+version = "0.1.0"
+description = "Questionnaire-driven tutorial visual optimization for Beauty Genius"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "dashscope>=1.24.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["makeup_visual_optimization*"]

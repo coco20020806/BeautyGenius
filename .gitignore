@@ -45,3 +45,22 @@ tmp/
 # Logs
 *.log
 logs/
+
+# Local skill / test caches (not for deploy)
+skills/**/.cache/
+pytest-cache-files-*/
+
+# Local workspace media dumps (already packaged into frontend fixtures)
+知识库部位素材/
+首页素材/
+示例视频1解析结果/
+示例视频2.mp4
+嘴巴视频.mp4
+嘴巴视频解析结果.rar
+嘴巴视频解析结果/
+眼妆教程.mp4
+鼻子视频.mp4
+鼻子视频1.mp4
+鼻子视频解析结果.zip
+鼻子视频解析结果/
+示例视频1解析结果.zip

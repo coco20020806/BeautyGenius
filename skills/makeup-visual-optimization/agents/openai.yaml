@@ -1,0 +1,4 @@
+interface:
+  display_name: "美妆图示优化"
+  short_description: "把偏好与脸部目标转成可执行图示调整"
+  default_prompt: "Use $makeup-visual-optimization to convert my makeup preferences and face-state goals into visual tutorial layer adjustments."
