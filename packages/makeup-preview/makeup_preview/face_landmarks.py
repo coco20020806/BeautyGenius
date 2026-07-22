@@ -64,7 +64,7 @@ def detect_primary_face(
 ) -> FaceGeometry | None:
     if not path.is_file():
         return None
-    from mediapipe.tasks.python import vision
+    import mediapipe as mp
 
     close_landmarker = False
     if landmarker is None:
@@ -73,7 +73,7 @@ def detect_primary_face(
     try:
         with Image.open(path) as im:
             w, h = im.size
-        mp_image = vision.Image.create_from_file(str(path))
+        mp_image = mp.Image.create_from_file(str(path))
         result = landmarker.detect(mp_image)
         n = len(result.face_landmarks or [])
         if n != 1:
