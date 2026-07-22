@@ -150,6 +150,7 @@ class LocalLearningService implements LearningService {
         instruction: `${asset.title}：按知识库部位步骤完成。`,
         expertTip: '参考知识库部位图示。',
         videoSlice: '完整原视频',
+        videoUrl: undefined,
       }];
     });
 
