@@ -58,11 +58,13 @@ export interface LibraryAsset {
   tutorialId: string;
 }
 
+export type LibraryPartFilter = MakeupPart | 'full-face';
+
 export interface LibraryFilter {
   query?: string;
   category?: AssetCategory;
   placement?: 'library' | 'mix';
-  part?: MakeupPart;
+  part?: LibraryPartFilter;
   style?: string;
   occasion?: string;
   difficulty?: string;
@@ -87,11 +89,31 @@ export interface CompatibilityHint {
   suggestion: string;
 }
 
+export interface CollectedSampleHint {
+  title: string;
+  description: string;
+  tone: 'positive' | 'adjust' | 'neutral';
+}
+
+export interface CollectedSampleDetail {
+  id: string;
+  title: string;
+  previewTitle: string;
+  style: string;
+  occasion: string;
+  difficulty: string;
+  duration: string;
+  hints: CollectedSampleHint[];
+  tutorialJson: string;
+  illustratedSteps: TutorialStep[];
+}
+
 export interface LearningService {
   saveAdjustment(request: AdjustmentRequest): Promise<IllustratedTutorial>;
   getTutorial(tutorialId?: string): Promise<IllustratedTutorial>;
   getEyeGuides(tutorialId?: string): Promise<EyeRegionGuide[]>;
   listAssets(filter: LibraryFilter): Promise<LibraryAsset[]>;
+  getCollectedSample(assetId: string): Promise<CollectedSampleDetail | null>;
   checkCompatibility(selection: MixSelection): Promise<CompatibilityHint[]>;
   generateMix(decision: MixDecision): Promise<MixResult>;
   getMixResult(resultId?: string): Promise<MixResult | null>;

@@ -23,4 +23,6 @@ test('keeps the library tabs long and slim beside the filter button', () => {
   expect(learningCss).toMatch(/\.library-tab-row\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)\s+44px/);
   expect(learningCss).toMatch(/\.library-tabs\s*\{[^}]*padding:\s*3px/);
   expect(learningCss).toMatch(/\.library-tabs button\s*\{[^}]*min-height:\s*38px/);
+  expect(learningCss).toMatch(/\.filter-scroll button\.is-full-face\s*\{[^}]*background:\s*#c8dfc3/);
+  expect(learningCss).toMatch(/\.asset-card__visual\.is-empty/);
 });

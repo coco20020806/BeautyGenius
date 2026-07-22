@@ -28,10 +28,33 @@ test('filters part assets by makeup part', async () => {
   expect(assets.every((asset) => asset.category === 'part' && asset.part === 'eyes')).toBe(true);
 });
 
+test('exposes blank collected-tutorial placeholders without cover images', async () => {
+  const assets = await learningService.listAssets({ category: 'tutorial' });
+
+  expect(assets).toHaveLength(2);
+  expect(assets.map(({ title }) => title)).toEqual(['示例视频1', '示例视频2']);
+  expect(assets.every((asset) => asset.coverImage === '' && asset.source === '待解析')).toBe(true);
+});
+
+test('loads collected sample detail placeholders by asset id', async () => {
+  const sample = await learningService.getCollectedSample('collected-sample-2');
+
+  expect(sample?.title).toBe('示例视频2');
+  expect(sample?.tutorialJson).toContain('placeholder_sample_2');
+  expect(sample?.illustratedSteps.length).toBeGreaterThan(0);
+  expect(await learningService.getCollectedSample('missing')).toBeNull();
+});
+
 test('exposes only one eye contour and lip asset to the part library', async () => {
   const assets = await learningService.listAssets({ category: 'part', placement: 'library' });
 
   expect(assets.map(({ part }) => part)).toEqual(['eyes', 'contour', 'lips']);
+});
+
+test('returns no assets for the full-face part filter', async () => {
+  const assets = await learningService.listAssets({ category: 'part', placement: 'library', part: 'full-face' });
+
+  expect(assets).toEqual([]);
 });
 
 test('keeps personalized adjustment and mix results as the current tutorial', async () => {

@@ -1,9 +1,9 @@
 import faceAfter from '../assets/face-after.svg';
 import faceBefore from '../assets/face-before.svg';
-import tutorialCover from '../assets/analysis-collage.svg';
 import partCover from '../assets/photo-collage.svg';
 import type {
   AdjustmentRequest,
+  CollectedSampleDetail,
   CompatibilityHint,
   EyeRegionGuide,
   IllustratedTutorial,
@@ -13,6 +13,7 @@ import type {
   MixDecision,
   MixResult,
   MixSelection,
+  TutorialStep,
 } from '../types/learning';
 
 const tutorial: IllustratedTutorial = {
@@ -45,8 +46,8 @@ const eyeGuides: EyeRegionGuide[] = [
 type CuratedAsset = LibraryAsset & { placements?: Array<'library' | 'mix'> };
 
 const assets: CuratedAsset[] = [
-  { id: 'tutorial-commute', title: '清透通勤全妆', category: 'tutorial', source: '自然日常妆', style: '清透', occasion: '通勤', difficulty: '新手', color: '#d9b3aa', practiced: true, coverImage: tutorialCover, tutorialId: 'preset-tutorial-commute' },
-  { id: 'tutorial-date', title: '柔粉约会妆', category: 'tutorial', source: '春日桃花妆', style: '甜美', occasion: '约会', difficulty: '进阶', color: '#d98698', practiced: false, coverImage: tutorialCover, tutorialId: 'preset-tutorial-date' },
+  { id: 'collected-sample-1', title: '示例视频1', category: 'tutorial', source: '待解析', style: '自然', occasion: '日常', difficulty: '新手', color: '#e8e4dc', practiced: false, coverImage: '', tutorialId: 'collected-sample-1' },
+  { id: 'collected-sample-2', title: '示例视频2', category: 'tutorial', source: '待解析', style: '自然', occasion: '日常', difficulty: '新手', color: '#e8e4dc', practiced: false, coverImage: '', tutorialId: 'collected-sample-2' },
   { id: 'base-sheer', title: '轻薄柔焦底妆', category: 'part', part: 'base', source: '自然日常妆', style: '清透', occasion: '日常', difficulty: '新手', color: '#dfc5ba', practiced: true, coverImage: partCover, tutorialId: 'preset-base-sheer', placements: ['mix'] },
   { id: 'eyes-rose', title: '清透玫瑰眼妆', category: 'part', part: 'eyes', source: '清透玫瑰通勤妆', style: '清透', occasion: '通勤', difficulty: '新手', color: '#bd7b82', practiced: true, coverImage: partCover, tutorialId: 'preset-eyes-rose', placements: ['library', 'mix'] },
   { id: 'eyes-smoky', title: '低饱和烟熏眼妆', category: 'part', part: 'eyes', source: '冷感夜幕妆', style: '冷感', occasion: '聚会', difficulty: '进阶', color: '#716363', practiced: false, coverImage: partCover, tutorialId: 'preset-eyes-smoky', placements: ['mix'] },
@@ -61,6 +62,116 @@ const assets: CuratedAsset[] = [
 
 const tutorials = new Map<string, IllustratedTutorial>([[tutorial.id, tutorial]]);
 let currentTutorialId = tutorial.id;
+
+function placeholderSteps(sampleLabel: string): TutorialStep[] {
+  return [
+    {
+      id: 'base',
+      order: 1,
+      title: '底妆打底（占位）',
+      part: 'base',
+      product: '待接入产品',
+      color: '#ead6cf',
+      instruction: `${sampleLabel}：真实解析接入后将展示底妆铺开范围与手法。`,
+      expertTip: '占位提示：边缘保持轻薄。',
+      videoSlice: '00:00–00:00',
+    },
+    {
+      id: 'eyes',
+      order: 2,
+      title: '眼妆铺色（占位）',
+      part: 'eyes',
+      product: '待接入眼影',
+      color: '#c98586',
+      instruction: `${sampleLabel}：真实解析接入后将展示眼影范围与晕染说明。`,
+      expertTip: '占位提示：眼尾略加深即可。',
+      videoSlice: '00:00–00:00',
+      hasEyeGuide: true,
+    },
+    {
+      id: 'lips',
+      order: 3,
+      title: '唇妆完成（占位）',
+      part: 'lips',
+      product: '待接入唇釉',
+      color: '#a94f5b',
+      instruction: `${sampleLabel}：真实解析接入后将展示唇线与叠涂步骤。`,
+      expertTip: '占位提示：边缘用指腹柔化。',
+      videoSlice: '00:00–00:00',
+    },
+  ];
+}
+
+function placeholderTutorialJson(sampleId: string, title: string): string {
+  return JSON.stringify(
+    {
+      contract_version: 'tutorial.v1',
+      tutorial_id: `placeholder_${sampleId}`,
+      title: `${title}（待接入真实解析）`,
+      source_video: 'local_upload',
+      duration: 0,
+      difficulty: 'unknown',
+      style_tags: [],
+      occasion_tags: [],
+      steps: [
+        {
+          step_id: 'step_01',
+          part: 'base',
+          taxonomy_primary: '底妆',
+          instruction: '示例结构 · 待接入真实解析',
+          display_product: '待接入',
+          technique: '待接入',
+          video_clip: { start: 0, end: 0 },
+        },
+        {
+          step_id: 'step_02',
+          part: 'eye',
+          taxonomy_primary: '眼妆',
+          instruction: '示例结构 · 待接入真实解析',
+          display_product: '待接入',
+          technique: '待接入',
+          video_clip: { start: 0, end: 0 },
+        },
+      ],
+      note: '示例结构 · 待接入真实解析',
+    },
+    null,
+    2,
+  );
+}
+
+const collectedSamples: Record<string, CollectedSampleDetail> = {
+  'collected-sample-1': {
+    id: 'collected-sample-1',
+    title: '示例视频1',
+    previewTitle: '示例视频1 · 妆容预览占位',
+    style: '自然妆感',
+    occasion: '日常',
+    difficulty: '新手',
+    duration: '约 — 分钟',
+    hints: [
+      { title: '解析尚未接入', description: '妆前/妆后对比图将在真实视频解析完成后替换此处占位。', tone: 'adjust' },
+      { title: '结构预览', description: '本页展示妆容预览、tutorial.json 与图示教程三段归档结构。', tone: 'neutral' },
+    ],
+    tutorialJson: placeholderTutorialJson('sample_1', '示例视频1'),
+    illustratedSteps: placeholderSteps('示例视频1'),
+  },
+  'collected-sample-2': {
+    id: 'collected-sample-2',
+    title: '示例视频2',
+    previewTitle: '示例视频2 · 妆容预览占位',
+    style: '自然妆感',
+    occasion: '日常',
+    difficulty: '新手',
+    duration: '约 — 分钟',
+    hints: [
+      { title: '解析尚未接入', description: '妆前/妆后对比图将在真实视频解析完成后替换此处占位。', tone: 'adjust' },
+      { title: '结构预览', description: '本页展示妆容预览、tutorial.json 与图示教程三段归档结构。', tone: 'neutral' },
+    ],
+    tutorialJson: placeholderTutorialJson('sample_2', '示例视频2'),
+    illustratedSteps: placeholderSteps('示例视频2'),
+  },
+};
 
 function copyTutorial(overrides: Partial<IllustratedTutorial>): IllustratedTutorial {
   return { ...tutorial, ...overrides, steps: (overrides.steps ?? tutorial.steps).map((step) => ({ ...step })) };
@@ -107,6 +218,10 @@ class LocalLearningService implements LearningService {
       const haystack = `${asset.title}${asset.source}${asset.style}${asset.occasion}`.toLocaleLowerCase();
       return matchesCategory && matchesPlacement && matchesPart && matchesStyle && matchesOccasion && matchesDifficulty && (!query || haystack.includes(query));
     });
+  }
+
+  async getCollectedSample(assetId: string) {
+    return collectedSamples[assetId] ?? null;
   }
 
   async checkCompatibility(selection: MixSelection): Promise<CompatibilityHint[]> {

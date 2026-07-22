@@ -4,6 +4,7 @@ import { ParsingPage } from './pages/ParsingPage';
 import { PracticePage } from './pages/PracticePage';
 import { StepDiagramsPage } from './pages/StepDiagramsPage';
 import { CollectSuccessPage } from './pages/CollectSuccessPage';
+import { CollectedTutorialPage } from './pages/CollectedTutorialPage';
 import { PreviewPage } from './pages/PreviewPage';
 import { UploadPage } from './pages/UploadPage';
 import { AdjustPage } from './pages/AdjustPage';
@@ -29,6 +30,7 @@ export function AppRoutes() {
       <Route path="/tutorial" element={<TutorialPage />} />
       <Route path="/eyes" element={<EyeGuidePage />} />
       <Route path="/library" element={<LibraryPage />} />
+      <Route path="/library/collected/:assetId" element={<CollectedTutorialPage />} />
       <Route path="/mix" element={<MixPage />} />
       <Route path="/mix/generating" element={<MixGeneratingPage />} />
       <Route path="/mix/preview" element={<MixPreviewPage />} />
