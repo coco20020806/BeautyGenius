@@ -53,8 +53,8 @@ python scripts/run_makeup_preview.py --parse-run "outputs/runs/<timestamp>" --us
 2. **Resolve reference** — [reference-selection.md](reference-selection.md)：优先 parse run 的 **`makeup_replication_refs.after`** + **`before`**（v2.1）；无则建议重跑 parse（勿 `--skip-replication-refs`）。
 3. **Resolve target** — 用户图 **或** 平均脸底图（[baselines.md](baselines.md)：`female_average_face.png` / `male_average_face.png`）。
 4. **Validate user photo**（仅上传）— [face-validation.md](face-validation.md)：L0 → L1 MediaPipe → L2 Qwen；失败则 [user-flow.md](user-flow.md) 指引重拍。
-5. **Transfer** — [transfer-prompt.md](transfer-prompt.md) **v2 三图**（妆后 + 教程妆前 + 目标脸）；缺妆前则降级 v1 二图并 warning。
-6. **Write run** — `preview.json`、`preview_*.jpg`、`user-photo-qa.json`（若有）。
+5. **Transfer** — [transfer-prompt.md](transfer-prompt.md) **长 prompt**（`prompt_text_version: wan-long-1`，经 `prompt_loader` 加载）；**v2 三图**（妆后 + 教程妆前 + 目标脸），缺妆前则降级 v1 二图并 warning。
+6. **Write run** — `preview.json`、`transfer_prompt.txt`、`preview_*.jpg`、`user-photo-qa.json`（若有）。
 7. **Report** — 底图分支须说明「非本人脸型」；上传分支展示预览图路径。
 
 ## Agent 约束
@@ -71,6 +71,7 @@ python scripts/run_makeup_preview.py --parse-run "outputs/runs/<timestamp>" --us
 - [ ] `reference.jpg` 与至少一张 `preview_*.jpg`
 - [x] 有 parse before 时：`tutorial_before.jpg` 存在且 `transfer.prompt_version` 为 **v2**
 - [x] 无 before 时：`warnings` 含 `transfer_without_tutorial_before`，`prompt_version` 为 v1
+- [ ] 调 wan 时：`transfer.prompt_text_version` 为 `wan-long-1`（或 md 中更新后的版本）
 - [ ] `preview.json` 含 `contract_version`
 
 ## 延伸阅读

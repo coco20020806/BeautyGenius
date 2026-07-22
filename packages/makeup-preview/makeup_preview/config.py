@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 CONTRACT_VERSION = "v1"
 PROMPT_VERSION = "v2"  # default when tutorial before is available; pipeline writes actual v1|v2
+PROMPT_TEXT_VERSION_DEFAULT = "wan-long-1"
 
 BaselineGender = Literal["female", "male"]
 
@@ -43,6 +44,34 @@ TRANSFER_PROMPT_V2 = (
     "**保持图3的身份特征、脸型与发型不变**，光照与肤色协调，真实美妆照片效果，"
     "不要换脸，不要改变图3的五官结构。"
 )
+
+# wan2.7-image-pro size strings (fixed aspect presets + 2K fallback)
+SUPPORTED_IMAGE_SIZES: list[tuple[str, int, int]] = [
+    ("1280*1280", 1.0, 1280),
+    ("1280*720", 16 / 9, 1280),
+    ("720*1280", 9 / 16, 720),
+    ("1024*1024", 1.0, 1024),
+    ("2K", 0.0, 0),
+]
+
+
+def resolve_image_size(width: int, height: int, *, default: str = "2K") -> str:
+    """Pick API size string closest to target aspect ratio."""
+    if width <= 0 or height <= 0:
+        return default
+    aspect = width / height
+    best = default
+    best_delta = float("inf")
+    for label, ratio, _long in SUPPORTED_IMAGE_SIZES:
+        if label == "2K":
+            continue
+        delta = abs(aspect - ratio)
+        if delta < best_delta:
+            best_delta = delta
+            best = label
+    if best_delta > 0.35:
+        return default
+    return best
 
 
 @dataclass

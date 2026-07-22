@@ -9,10 +9,11 @@ from pathlib import Path
 from typing import Any, Literal
 
 from makeup_preview.baselines import baseline_metadata, resolve_baseline_path
-from makeup_preview.config import CONTRACT_VERSION, PreviewConfig, PreviewJobResult
+from makeup_preview.config import CONTRACT_VERSION, PreviewConfig, PreviewJobResult, resolve_image_size
 from makeup_preview.face_gate import FaceValidationError, run_l0_l1
 from makeup_preview.face_qa import run_face_qa
 from makeup_preview.io_util import make_run_dir, maybe_copy, prepare_for_api
+from makeup_preview.preview_align import harmonize_preview_pair
 from makeup_preview.reference_pick import pick_reference_from_parse_run
 from makeup_preview.transfer import run_transfer
 
@@ -156,18 +157,31 @@ def run_preview_job(
 
     outputs: list[dict[str, Any]] = []
     transfer_ms: float | None = None
+    requested_size: str | None = None
+    preview_alignment: dict[str, Any] | None = None
     prompt_version = "v2" if before_run.is_file() else "v1"
+    prompt_text_version: str | None = None
     if not skip_transfer and ref_api and ref_api.is_file():
+        from PIL import Image
+
+        with Image.open(tgt_run) as im:
+            tw, th = im.size
+        requested_size = resolve_image_size(tw, th, default=config.image_size)
         t1 = time.perf_counter()
-        names, prompt_version = run_transfer(
+        names, prompt_version, requested_size, prompt_text_version, prompt_fallback = run_transfer(
             ref_api,
             tgt_api,
             config,
             run_dir,
             tutorial_before_path=before_api,
+            image_size=requested_size,
         )
         transfer_ms = (time.perf_counter() - t1) * 1000
+        if prompt_fallback:
+            warnings.append("transfer_prompt_fallback_static")
         outputs = [{"filename": n, "selected": i == 0} for i, n in enumerate(names)]
+        if names:
+            preview_alignment = harmonize_preview_pair(tgt_run, run_dir / names[0], config)
 
     preview: dict[str, Any] = {
         "contract_version": CONTRACT_VERSION,
@@ -178,10 +192,19 @@ def run_preview_job(
         "transfer": {
             "model": config.image_model,
             "prompt_version": prompt_version,
+            "prompt_text_version": prompt_text_version,
         },
         "outputs": outputs,
         "warnings": warnings,
     }
+    if requested_size:
+        preview["transfer"]["requested_size"] = requested_size
+    if preview_alignment is not None:
+        preview["alignment"] = preview_alignment
+        align_warnings = preview_alignment.get("warnings") or []
+        if align_warnings:
+            warnings.extend(align_warnings)
+            preview["warnings"] = warnings
     if tutorial_replication:
         preview["tutorial_replication"] = tutorial_replication
     if skip_transfer:

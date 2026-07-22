@@ -1,0 +1,4 @@
+<svg width="780" height="1688" viewBox="0 0 780 1688" xmlns="http://www.w3.org/2000/svg">
+  <defs><filter id="g"><feTurbulence baseFrequency=".7" numOctaves="3" seed="4"/><feColorMatrix values="1 0 0 0 .12 0 1 0 0 .08 0 0 1 0 .05 0 0 0 .12 0"/></filter><linearGradient id="b" x2="1" y2="1"><stop stop-color="#F7D9DC"/><stop offset=".55" stop-color="#F2E5DF"/><stop offset="1" stop-color="#C9C98E"/></linearGradient></defs>
+  <rect width="780" height="1688" fill="#FAF6F2"/><path d="M0 0H780V620C602 535 470 690 297 593C171 523 98 598 0 566V0Z" fill="url(#b)"/><rect width="780" height="1688" filter="url(#g)" opacity=".22"/>
+  <circle cx="665" cy="210" r="98" fill="#77813B" opacity=".72"/><rect x="-48" y="360" width="280" height="350" rx="8" fill="#EDC9D8" opacity=".64" transform="rotate(-7 -48 360)"/><path d="M780 840C592 748 514 914 339 850C189 795 102 895 0 851V1688H780V840Z" fill="#F9F7F3" opacity=".9"/></svg>

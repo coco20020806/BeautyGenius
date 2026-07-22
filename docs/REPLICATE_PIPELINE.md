@@ -66,6 +66,7 @@ Python 等价：`scripts/run_beauty_replicate.py`。
 - 预览前优先确认 parse run 为 **v2.1** 且含 `makeup_replication_refs`；否则建议重跑 parse（勿 `--skip-replication-refs`）。
 - Tutorial 映射失败会中断 job（exit 2）；可用 `-SkipTutorialMap` 跳过。
 - 有教程 before 时：transfer 为 **图1=妆后、图2=教程妆前、图3=用户/平均脸**；无 before 时降级为二图并 warning。
+- Transfer 的 **text** 从 [kol-makeup-preview/transfer-prompt.md](../skills/kol-makeup-preview/transfer-prompt.md) 加载（长 prompt），非 `config.py` 短句 fallback（md 缺失时才会 fallback）。
 
 ## 相关 Skill
 

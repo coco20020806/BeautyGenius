@@ -60,6 +60,7 @@ Skill 目录：`<repo-root>/skills/kol-makeup-preview/`
 | `tutorial_before.jpg` | 有教程妆前时 | 妆前对照（transfer 图2，三图路径）。 |
 | `target.jpg` | 总是 | 用户照或平均脸（transfer 图3 或二图降级的图2）。 |
 | `preview_01.jpg` … | 生成成功 | `wan2.7-image-pro` 妆容迁移预览图。 |
+| `transfer_prompt.txt` | 调 wan 时 | 自 [transfer-prompt.md](transfer-prompt.md) 加载的完整 text。 |
 | `user-photo-qa.json` | 仅用户上传 | L1/L2 质检明细；须 `pass: true` 才应继续生成。 |
 
 ### `preview.json` 关键字段
@@ -67,7 +68,8 @@ Skill 目录：`<repo-root>/skills/kol-makeup-preview/`
 - **reference**：参考来源（parse_run / manual）、步骤名、关键帧 role 等。
 - **target.type**：`user_photo` | `average_baseline`。
 - **transfer.prompt_version**：`v2`（三图）或降级 `v1`（二图）。
-- **warnings**：如 `transfer_without_tutorial_before`、`replication_pair_not_validated`。
+- **transfer.prompt_text_version**：长正文版本（如 `wan-long-1`）。
+- **warnings**：如 `transfer_without_tutorial_before`、`transfer_prompt_fallback_static`、`replication_pair_not_validated`。
 - **outputs**：生成图文件名列表。
 
 完整字段见 [output-contract.md](output-contract.md)。

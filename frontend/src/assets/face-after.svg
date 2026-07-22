@@ -1,0 +1,22 @@
+<svg width="640" height="680" viewBox="0 0 640 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="680" rx="42" fill="#F3E7E2"/>
+  <circle cx="320" cy="294" r="218" fill="#EAD7D2"/>
+  <path d="M146 292C146 130 226 55 322 55C426 55 500 137 494 298L455 264H183L146 292Z" fill="#332B29"/>
+  <path d="M198 228C205 126 252 90 320 90C390 90 438 130 445 228V376C445 482 390 554 320 554C249 554 194 482 194 376L198 228Z" fill="#F9DED2"/>
+  <path d="M202 224C217 157 254 121 320 115C386 121 423 157 438 224C391 202 362 168 320 138C278 168 249 202 202 224Z" fill="#413431"/>
+  <path d="M220 291C246 271 276 272 302 292" stroke="#493835" stroke-width="9" stroke-linecap="round"/>
+  <path d="M338 292C364 272 395 271 420 291" stroke="#493835" stroke-width="9" stroke-linecap="round"/>
+  <path d="M230 311C251 293 278 293 300 313C277 307 252 307 230 311Z" fill="#B57975" opacity=".65"/>
+  <path d="M340 313C362 293 390 293 410 311C389 307 364 307 340 313Z" fill="#B57975" opacity=".65"/>
+  <ellipse cx="265" cy="318" rx="27" ry="14" fill="white"/>
+  <ellipse cx="375" cy="318" rx="27" ry="14" fill="white"/>
+  <circle cx="268" cy="318" r="10" fill="#403431"/><circle cx="372" cy="318" r="10" fill="#403431"/>
+  <path d="M238 320C258 334 282 334 301 318" stroke="#5B403D" stroke-width="5" stroke-linecap="round"/>
+  <path d="M339 318C358 334 383 334 404 320" stroke="#5B403D" stroke-width="5" stroke-linecap="round"/>
+  <path d="M320 324C315 359 307 382 320 389C330 391 338 386 342 380" stroke="#C79280" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="248" cy="382" rx="51" ry="24" fill="#D7827E" opacity=".30"/>
+  <ellipse cx="392" cy="382" rx="51" ry="24" fill="#D7827E" opacity=".30"/>
+  <path d="M276 424C302 444 339 444 365 424C338 404 303 404 276 424Z" fill="#A95658"/>
+  <path d="M282 424C307 431 337 431 359 424" stroke="#F1B5AD" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+  <path d="M220 552C248 525 285 518 320 518C357 518 395 526 421 552L486 680H154L220 552Z" fill="#CFAAA4"/>
+</svg>

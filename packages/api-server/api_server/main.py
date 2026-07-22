@@ -1,0 +1,247 @@
+from __future__ import annotations
+
+import json
+import uuid
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+
+from api_server.config import (
+    CORS_ORIGINS,
+    MAX_VIDEO_BYTES,
+    TASKS_ROOT,
+    VIDEO_EXTENSIONS,
+    VIDEO_MIMES,
+)
+from api_server.errors import ApiError, api_error_handler, new_request_id
+from api_server.pipeline import run_task_pipeline
+from api_server.preview_assembler import assemble_makeup_preview
+from api_server.store import store
+
+app = FastAPI(title="Beauty Genius Makeup API", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_exception_handler(ApiError, api_error_handler)
+
+_running: set[str] = set()
+
+
+def _parse_bool(value: str | bool | None, *, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+@app.post("/api/v1/makeup/tasks")
+async def upload_video(
+    video: Annotated[UploadFile, File(...)],
+    fastParse: Annotated[str | None, Form()] = None,
+    skipMakeupPreview: Annotated[str | None, Form()] = None,
+) -> dict:
+    req_id = new_request_id()
+    if video.content_type and video.content_type not in VIDEO_MIMES:
+        ext = Path(video.filename or "").suffix.lower()
+        if ext not in VIDEO_EXTENSIONS:
+            raise ApiError(415, "VIDEO_FORMAT_UNSUPPORTED", "仅支持 MP4 或 MOV 视频", request_id=req_id)
+    elif not video.content_type:
+        ext = Path(video.filename or "").suffix.lower()
+        if ext not in VIDEO_EXTENSIONS:
+            raise ApiError(415, "VIDEO_FORMAT_UNSUPPORTED", "仅支持 MP4 或 MOV 视频", request_id=req_id)
+
+    data = await video.read()
+    if len(data) > MAX_VIDEO_BYTES:
+        raise ApiError(413, "VIDEO_TOO_LARGE", "视频不能超过 500MB", request_id=req_id)
+    if not data:
+        raise ApiError(400, "VIDEO_EMPTY", "视频文件为空", request_id=req_id)
+
+    file_name = video.filename or "upload.mp4"
+    ext = Path(file_name).suffix.lower() or ".mp4"
+    if ext not in VIDEO_EXTENSIONS:
+        ext = ".mp4"
+
+    from api_server.store import new_task_id
+
+    tid = new_task_id()
+    task_dir = TASKS_ROOT / tid / "upload"
+    task_dir.mkdir(parents=True, exist_ok=True)
+    video_path = task_dir / f"video{ext}"
+    video_path.write_bytes(data)
+
+    parse_mode = "fast" if _parse_bool(fastParse, default=True) else "full"
+    skip_transfer = _parse_bool(skipMakeupPreview, default=False)
+
+    task = store.create_uploaded(
+        file_name=file_name,
+        file_size=len(data),
+        video_path=str(video_path.resolve()),
+        task_id=tid,
+        parse_mode=parse_mode,
+        skip_transfer=skip_transfer,
+    )
+    return {
+        "taskId": task["taskId"],
+        "fileName": task["fileName"],
+        "fileSize": task["fileSize"],
+        "status": "uploaded",
+        "parseMode": parse_mode,
+        "skipMakeupPreview": skip_transfer,
+    }
+
+
+@app.post("/api/v1/makeup/tasks/{task_id}/photo")
+async def upload_photo(
+    task_id: str,
+    skipped: Annotated[str, Form()] = "false",
+    photo: Annotated[UploadFile | None, File()] = None,
+) -> dict:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    if task["status"] not in {"uploaded", "photo_ready"}:
+        raise ApiError(409, "TASK_STATE_CONFLICT", "当前任务状态不允许上传照片", request_id=req_id)
+
+    skip = _parse_bool(skipped, default=False)
+    photo_id: str | None = None
+    preview_url: str | None = None
+    photo_path: str | None = None
+
+    if not skip:
+        if not photo:
+            raise ApiError(400, "PHOTO_REQUIRED", "请上传照片或选择跳过", request_id=req_id)
+        content_type = photo.content_type or ""
+        if not content_type.startswith("image/"):
+            raise ApiError(415, "PHOTO_FORMAT_UNSUPPORTED", "请选择 JPG、PNG 或 WebP 照片", request_id=req_id)
+        data = await photo.read()
+        if not data:
+            raise ApiError(400, "PHOTO_EMPTY", "照片文件为空", request_id=req_id)
+        photo_id = f"photo_{uuid.uuid4().hex[:12]}"
+        upload_dir = store.task_dir(task_id) / "upload"
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        ext = Path(photo.filename or "photo.jpg").suffix.lower() or ".jpg"
+        dest = upload_dir / f"photo{ext}"
+        dest.write_bytes(data)
+        photo_path = str(dest.resolve())
+        from api_server.config import API_PUBLIC_BASE_URL
+
+        preview_url = f"{API_PUBLIC_BASE_URL}/media/{task_id}/{dest.name}"
+
+    store.set_photo_ready(task_id, photo_path=photo_path, skipped=skip, photo_id=photo_id)
+    return {"photoId": photo_id, "previewUrl": preview_url, "skipped": skip}
+
+
+@app.post("/api/v1/makeup/tasks/{task_id}/analysis", status_code=202)
+async def start_analysis(task_id: str, background_tasks: BackgroundTasks) -> dict:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    if task["status"] == "processing":
+        return {"taskId": task_id, "status": "processing"}
+    if task["status"] == "completed":
+        return {"taskId": task_id, "status": "completed"}
+    if task["status"] == "failed":
+        task["status"] = "photo_ready"
+        task["failureReason"] = None
+        task["failureCode"] = None
+        store.save(task)
+    if task["status"] != "photo_ready":
+        raise ApiError(400, "PHOTO_STEP_REQUIRED", "请先完成照片确认步骤", request_id=req_id)
+
+    if task_id in _running:
+        return {"taskId": task_id, "status": "processing"}
+
+    store.mark_processing(task_id)
+    _running.add(task_id)
+
+    def _run() -> None:
+        try:
+            run_task_pipeline(task_id)
+        finally:
+            _running.discard(task_id)
+
+    background_tasks.add_task(_run)
+    return {"taskId": task_id, "status": "processing"}
+
+
+@app.get("/api/v1/makeup/tasks/{task_id}/analysis")
+async def get_analysis(task_id: str) -> dict:
+    req_id = new_request_id()
+    try:
+        return store.get_analysis_progress(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+
+@app.get("/api/v1/makeup/tasks/{task_id}/preview")
+async def get_preview(task_id: str) -> dict:
+    req_id = new_request_id()
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    if task["status"] != "completed":
+        raise ApiError(409, "PREVIEW_NOT_READY", "预览尚未就绪", request_id=req_id)
+
+    preview_run = Path(task["preview_run_dir"])
+    preview_doc_path = preview_run / "preview.json"
+    preview_doc = None
+    if preview_doc_path.is_file():
+        preview_doc = json.loads(preview_doc_path.read_text(encoding="utf-8"))
+
+    tutorial_path = Path(task["tutorial_path"]) if task.get("tutorial_path") else None
+    return assemble_makeup_preview(
+        task_id,
+        tutorial_path=tutorial_path,
+        preview_run_dir=preview_run,
+        preview_doc=preview_doc,
+    )
+
+
+@app.get("/media/{task_id}/{filename}")
+async def serve_media(task_id: str, filename: str) -> FileResponse:
+    req_id = new_request_id()
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise ApiError(400, "INVALID_PATH", "非法路径", request_id=req_id)
+    try:
+        task = store.load(task_id)
+    except FileNotFoundError:
+        raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
+
+    media_dir = task.get("media_dir")
+    if media_dir:
+        path = Path(media_dir) / filename
+        if path.is_file():
+            return FileResponse(path)
+
+    upload_dir = store.task_dir(task_id) / "upload"
+    upload_path = upload_dir / filename
+    if upload_path.is_file():
+        return FileResponse(upload_path)
+
+    if task.get("preview_run_dir"):
+        preview_path = Path(task["preview_run_dir"]) / filename
+        if preview_path.is_file():
+            return FileResponse(preview_path)
+
+    raise ApiError(404, "MEDIA_NOT_FOUND", "资源不存在", request_id=req_id)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}

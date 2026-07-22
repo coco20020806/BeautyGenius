@@ -14,8 +14,11 @@ import dashscope
 from dashscope.aigc.image_generation import ImageGeneration
 from dashscope.api_entities.dashscope_response import Message
 
-from makeup_preview.config import TRANSFER_PROMPT_V1, TRANSFER_PROMPT_V2, PreviewConfig
+from PIL import Image
+
+from makeup_preview.config import PreviewConfig, resolve_image_size
 from makeup_preview.io_util import to_file_uri
+from makeup_preview.prompt_loader import load_transfer_prompt
 
 
 def _serialize_response(response: Any) -> Any:
@@ -93,26 +96,37 @@ def run_transfer(
     *,
     tutorial_before_path: Path | None = None,
     n: int = 1,
-) -> tuple[list[str], str]:
+    image_size: str | None = None,
+) -> tuple[list[str], str, str, str, bool]:
     dashscope.api_key = config.api_key
     dashscope.base_http_api_url = config.base_url
 
     use_v2 = tutorial_before_path is not None and tutorial_before_path.is_file()
+    layout: str = "v2" if use_v2 else "v1"
+    loaded = load_transfer_prompt(config.skill_dir, layout=layout)  # type: ignore[arg-type]
+    prompt_text = loaded.text
+    (run_dir / "transfer_prompt.txt").write_text(prompt_text, encoding="utf-8")
+
     if use_v2:
         content: list[dict[str, str]] = [
             {"image": to_file_uri(reference_path)},
             {"image": to_file_uri(tutorial_before_path)},
             {"image": to_file_uri(target_path)},
-            {"text": TRANSFER_PROMPT_V2},
+            {"text": prompt_text},
         ]
         prompt_version = "v2"
     else:
         content = [
             {"image": to_file_uri(reference_path)},
             {"image": to_file_uri(target_path)},
-            {"text": TRANSFER_PROMPT_V1},
+            {"text": prompt_text},
         ]
         prompt_version = "v1"
+
+    if image_size is None:
+        with Image.open(target_path) as im:
+            tw, th = im.size
+        image_size = resolve_image_size(tw, th, default=config.image_size)
 
     message = Message(role="user", content=content)
     response = ImageGeneration.call(
@@ -121,7 +135,7 @@ def run_transfer(
         messages=[message],
         watermark=config.image_watermark,
         n=n,
-        size=config.image_size,
+        size=image_size,
     )
     raw_path = run_dir / "transfer_raw.json"
     raw_path.write_text(
@@ -140,4 +154,10 @@ def run_transfer(
         )
         raise RuntimeError("未能从响应中解析预览图，请查看 transfer_raw.json")
 
-    return _save_outputs(urls[:n], run_dir, "preview"), prompt_version
+    return (
+        _save_outputs(urls[:n], run_dir, "preview"),
+        prompt_version,
+        image_size,
+        loaded.prompt_text_version,
+        loaded.used_fallback,
+    )

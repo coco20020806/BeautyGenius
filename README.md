@@ -74,6 +74,36 @@ cp .env.example .env   # 按需填写
 
 应用代码与目录结构将随功能迭代补充。
 
+## Web 联调（FastAPI + 前端）
+
+移动端 Web 前端位于 [`frontend/`](frontend/)（上游：[makeup-frontend](https://github.com/qi00531/makeup-frontend)）。HTTP 接入层见 [`packages/api-server/`](packages/api-server/) 与 [`docs/API.md`](docs/API.md)。
+
+**一条命令启动（推荐）**：
+
+```powershell
+cd "Beauty Genius"
+# 可选：$env:SKIP_TRANSFER = "1"   # 省 wan 调用，先通 UI
+# 可选：$env:DASHSCOPE_API_KEY = "..."
+.\scripts\run-dev.ps1
+```
+
+浏览器打开 **http://127.0.0.1:5174**。按 **Ctrl+C** 会同时停止 API 与前端。
+
+（脚本通过 `npm.cmd` 启动前端，避免 PowerShell 执行策略拦截 `npm.ps1`。）
+
+**分开启动**（便于单独看 API 日志）：
+
+```powershell
+.\scripts\run-api.ps1
+# 另开终端
+cd frontend
+copy .env.example .env   # 首次
+npm install              # 首次
+npm run dev
+```
+
+纯前端演示（不连后端）：`frontend/.env` 中设置 `VITE_USE_MOCK=1`。
+
 ## License
 
 TBD
