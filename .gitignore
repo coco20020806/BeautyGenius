@@ -50,6 +50,9 @@ logs/
 skills/**/.cache/
 pytest-cache-files-*/
 
+# Legacy local export path (prefer frontend/public/demo)
+demo/latest/
+
 # Local workspace media dumps (already packaged into frontend fixtures)
 知识库部位素材/
 首页素材/

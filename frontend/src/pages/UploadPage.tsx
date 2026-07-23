@@ -1,4 +1,4 @@
-import { Check, ChevronRight, CloudUpload, Film, RefreshCw, Sparkles, Zap, EyeOff } from 'lucide-react';
+import { Check, ChevronRight, CloudUpload, Film, Play, RefreshCw, Sparkles, Zap, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '../components/BottomNav';
@@ -14,9 +14,16 @@ const recentTasks = [
   { name: '约会妆容', date: '2026-07-15', status: '解析完成', cover: recentDate },
 ];
 
+const STATIC_DEMO_URL =
+  (import.meta.env.VITE_STATIC_DEMO_URL as string | undefined)?.trim() || '/demo/index.html';
+
 function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function openStaticDemo() {
+  window.open(STATIC_DEMO_URL, '_blank', 'noopener,noreferrer');
 }
 
 export function UploadPage() {
@@ -184,6 +191,20 @@ export function UploadPage() {
           )}
         </div>
       ) : null}
+
+      <a
+        className="demo-float-entry"
+        href={STATIC_DEMO_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(event) => {
+          event.preventDefault();
+          openStaticDemo();
+        }}
+      >
+        <Play size={15} aria-hidden />
+        查看演示
+      </a>
 
       <BottomNav />
     </MobileShell>

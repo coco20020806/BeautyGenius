@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Beauty Genius · 静态演示</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+  <div class="app-stage">
+    <button type="button" class="demo-pager demo-pager--prev" id="pager-prev" aria-label="上一页">‹</button>
+    <div id="shell" class="mobile-shell upload-page" aria-live="polite"></div>
+    <button type="button" class="demo-pager demo-pager--next" id="pager-next" aria-label="下一页">›</button>
+  </div>
+  <div class="demo-pager-meta" id="pager-meta" aria-live="polite"></div>
+  <div id="clip-overlay" class="step-clip-overlay" hidden></div>
+  <div id="toast" class="demo-toast" hidden role="status"></div>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
