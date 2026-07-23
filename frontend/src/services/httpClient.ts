@@ -18,11 +18,39 @@ type ErrorBody = {
 };
 
 const DEFAULT_TIMEOUT_MS = 120_000;
+const VIP_CODE_STORAGE_KEY = 'makeupVipCode';
+const VIP_HEADER = 'X-Vip-Code';
 
 function apiBase(): string {
   const raw = import.meta.env.VITE_API_BASE_URL;
   if (raw === undefined || raw === '') return '';
   return raw.replace(/\/$/, '');
+}
+
+export function readVipCode(): string {
+  try {
+    return sessionStorage.getItem(VIP_CODE_STORAGE_KEY)?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export function writeVipCode(code: string) {
+  try {
+    const trimmed = code.trim();
+    if (trimmed) sessionStorage.setItem(VIP_CODE_STORAGE_KEY, trimmed);
+    else sessionStorage.removeItem(VIP_CODE_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function withVipHeaders(headers?: HeadersInit): Headers {
+  const merged = new Headers(headers ?? undefined);
+  if (!merged.has('Accept')) merged.set('Accept', 'application/json');
+  const vip = readVipCode();
+  if (vip) merged.set(VIP_HEADER, vip);
+  return merged;
 }
 
 async function parseError(response: Response): Promise<HttpError> {
@@ -47,10 +75,7 @@ export async function requestJson<T>(
     const response = await fetch(`${apiBase()}${path}`, {
       ...fetchInit,
       signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-        ...(fetchInit.headers ?? {}),
-      },
+      headers: withVipHeaders(fetchInit.headers),
     });
     if (!response.ok) throw await parseError(response);
     if (response.status === 204) return undefined as T;
@@ -69,10 +94,13 @@ export async function requestMultipart<T>(path: string, formData: FormData): Pro
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
   try {
+    const headers = withVipHeaders();
+    headers.delete('Content-Type');
     const response = await fetch(`${apiBase()}${path}`, {
       method: 'POST',
       body: formData,
       signal: controller.signal,
+      headers,
     });
     if (!response.ok) throw await parseError(response);
     return (await response.json()) as T;

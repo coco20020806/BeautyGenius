@@ -145,9 +145,11 @@ export function ParsingPage() {
         <h1>{isQueued ? '排队中' : isFailed ? '解析遇到问题' : '解析中，请稍候…'}</h1>
         <p>
           {isQueued
-            ? '服务器已满（最多 2 人同时使用），有空位后将自动重试'
+            ? progress.failureReason || '服务器繁忙，有空位后将自动重试'
             : isFailed
-              ? '你的视频和照片都已保留'
+              ? progress.failureReason?.includes('演示优先')
+                ? '演示优先通道已启动，请稍后再试'
+                : '你的视频和照片都已保留'
               : '正在把教程变成适合你的上妆方案'}
         </p>
       </header>

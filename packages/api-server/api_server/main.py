@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import json
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, Header, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from api_server.adjustment import ensure_task_ready_for_adjustment, run_adjustment_job
+from api_server.cancellation import cancellation
 from api_server.config import (
     CORS_ORIGINS,
     ENABLE_DEV_SHORTCUTS,
@@ -22,10 +24,11 @@ from api_server.config import (
 from api_server.dev_bootstrap import bootstrap_from_pinned_file
 from api_server.errors import ApiError, api_error_handler, new_request_id
 from api_server.media_urls import resolve_task_video_url
-from api_server.occupancy import JobKind, occupancy
+from api_server.occupancy import Cohort, JobKind, occupancy
 from api_server.photo_validation import validate_user_photo_for_upload
 from api_server.pipeline import run_task_pipeline
 from api_server.preview_assembler import assemble_makeup_preview
+from api_server.startup_reconcile import reconcile_zombie_processing_tasks
 from api_server.step_diagrams import (
     assemble_step_diagrams,
     ensure_task_ready_for_diagrams,
@@ -33,9 +36,24 @@ from api_server.step_diagrams import (
 )
 from api_server.store import store
 from api_server.tutorial_loader import load_tutorial_document
+from api_server.vip import (
+    VIP_HEADER,
+    apply_public_preempt,
+    busy_message,
+    extract_vip_code,
+    resolve_cohort,
+    stamp_task_cohort,
+)
 from makeup_preview import UserPhotoRejected
 
-app = FastAPI(title="Beauty Genius Makeup API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    reconcile_zombie_processing_tasks()
+    yield
+
+
+app = FastAPI(title="Beauty Genius Makeup API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -48,19 +66,36 @@ app.add_exception_handler(ApiError, api_error_handler)
 _running: set[str] = set()
 _diagram_running: set[str] = set()
 
-_SERVER_BUSY_MESSAGE = "排队中，服务器已满（最多 {max} 人同时使用），请稍后再试"
 
-
-def _require_occupancy(task_id: str, job: JobKind, *, request_id: str) -> None:
-    if occupancy.try_acquire(task_id, job):
+def _require_occupancy(
+    task_id: str,
+    job: JobKind,
+    *,
+    request_id: str,
+    cohort: Cohort = "public",
+) -> None:
+    if cohort == "judge":
+        apply_public_preempt(running=_running, diagram_running=_diagram_running)
+    if occupancy.try_acquire(task_id, job, cohort=cohort):
+        stamp_task_cohort(task_id, cohort)
         return
     raise ApiError(
         409,
         "SERVER_BUSY",
-        _SERVER_BUSY_MESSAGE.format(max=occupancy.max_concurrent),
+        busy_message(cohort=cohort),
         request_id=request_id,
-        details=occupancy.snapshot(),
+        details={**occupancy.snapshot(), "cohort": cohort},
     )
+
+
+def _vip_code_from_request(
+    request: Request,
+    *,
+    header_value: str | None = None,
+    body_code: str | None = None,
+) -> str | None:
+    header = header_value if header_value is not None else request.headers.get(VIP_HEADER)
+    return extract_vip_code(header_value=header, body_code=body_code)
 
 
 class AdjustmentBody(BaseModel):
@@ -71,6 +106,7 @@ class AdjustmentBody(BaseModel):
     concerns: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
     baseTutorialId: str | None = None
+    vipCode: str | None = None
 
 
 def _parse_bool(value: str | bool | None, *, default: bool = False) -> bool:
@@ -225,7 +261,12 @@ async def upload_photo(
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/analysis", status_code=202)
-async def start_analysis(task_id: str, background_tasks: BackgroundTasks) -> dict:
+async def start_analysis(
+    task_id: str,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    x_vip_code: Annotated[str | None, Header(alias=VIP_HEADER)] = None,
+) -> dict:
     req_id = new_request_id()
     try:
         task = store.load(task_id)
@@ -247,7 +288,9 @@ async def start_analysis(task_id: str, background_tasks: BackgroundTasks) -> dic
     if task_id in _running:
         return {"taskId": task_id, "status": "processing"}
 
-    _require_occupancy(task_id, "analysis", request_id=req_id)
+    cohort = resolve_cohort(_vip_code_from_request(request, header_value=x_vip_code))
+    cancellation.clear(task_id)
+    _require_occupancy(task_id, "analysis", request_id=req_id, cohort=cohort)
     store.mark_processing(task_id)
     _running.add(task_id)
 
@@ -257,9 +300,10 @@ async def start_analysis(task_id: str, background_tasks: BackgroundTasks) -> dic
         finally:
             _running.discard(task_id)
             occupancy.release(task_id, "analysis")
+            cancellation.clear(task_id)
 
     background_tasks.add_task(_run)
-    return {"taskId": task_id, "status": "processing"}
+    return {"taskId": task_id, "status": "processing", "cohort": cohort}
 
 
 @app.get("/api/v1/makeup/tasks/{task_id}/analysis")
@@ -313,7 +357,12 @@ async def get_tutorial(task_id: str) -> dict:
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/adjustment")
-async def save_adjustment(task_id: str, body: AdjustmentBody) -> dict[str, Any]:
+async def save_adjustment(
+    task_id: str,
+    body: AdjustmentBody,
+    request: Request,
+    x_vip_code: Annotated[str | None, Header(alias=VIP_HEADER)] = None,
+) -> dict[str, Any]:
     req_id = new_request_id()
     try:
         task = store.load(task_id)
@@ -321,8 +370,12 @@ async def save_adjustment(task_id: str, body: AdjustmentBody) -> dict[str, Any]:
         raise ApiError(404, "TASK_NOT_FOUND", "任务不存在", request_id=req_id)
 
     ensure_task_ready_for_adjustment(task, request_id=req_id)
-    _require_occupancy(task_id, "adjustment", request_id=req_id)
+    cohort = resolve_cohort(
+        _vip_code_from_request(request, header_value=x_vip_code, body_code=body.vipCode)
+    )
+    _require_occupancy(task_id, "adjustment", request_id=req_id, cohort=cohort)
     payload = body.model_dump(exclude_none=True)
+    payload.pop("vipCode", None)
     try:
         return run_adjustment_job(task_id, payload)
     except Exception as exc:  # noqa: BLE001
@@ -337,7 +390,12 @@ async def save_adjustment(task_id: str, body: AdjustmentBody) -> dict[str, Any]:
 
 
 @app.post("/api/v1/makeup/tasks/{task_id}/step-diagrams", status_code=202)
-async def start_step_diagrams(task_id: str, background_tasks: BackgroundTasks) -> dict:
+async def start_step_diagrams(
+    task_id: str,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    x_vip_code: Annotated[str | None, Header(alias=VIP_HEADER)] = None,
+) -> dict:
     req_id = new_request_id()
     try:
         task = store.load(task_id)
@@ -357,7 +415,9 @@ async def start_step_diagrams(task_id: str, background_tasks: BackgroundTasks) -
         if has_diagram:
             return {"taskId": task_id, "status": "completed"}
 
-    _require_occupancy(task_id, "step_diagrams", request_id=req_id)
+    cohort = resolve_cohort(_vip_code_from_request(request, header_value=x_vip_code))
+    cancellation.clear(task_id)
+    _require_occupancy(task_id, "step_diagrams", request_id=req_id, cohort=cohort)
     store.set_step_diagrams_processing(task_id)
     _diagram_running.add(task_id)
 
@@ -369,9 +429,10 @@ async def start_step_diagrams(task_id: str, background_tasks: BackgroundTasks) -
         finally:
             _diagram_running.discard(task_id)
             occupancy.release(task_id, "step_diagrams")
+            cancellation.clear(task_id)
 
     background_tasks.add_task(_run)
-    return {"taskId": task_id, "status": "processing"}
+    return {"taskId": task_id, "status": "processing", "cohort": cohort}
 
 
 @app.get("/api/v1/makeup/tasks/{task_id}/step-diagrams")

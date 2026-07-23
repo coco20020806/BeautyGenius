@@ -6,6 +6,7 @@ import time
 from typing import Any, Literal
 
 JobKind = Literal["analysis", "adjustment", "step_diagrams"]
+Cohort = Literal["public", "judge"]
 
 _DEFAULT_MAX = 2
 _DEFAULT_STALE_SECONDS = 45 * 60
@@ -50,15 +51,29 @@ class OccupancyManager:
         for task_id in stale_ids:
             del self._slots[task_id]
 
-    def try_acquire(self, task_id: str, job: JobKind) -> bool:
+    def try_acquire(
+        self,
+        task_id: str,
+        job: JobKind,
+        *,
+        cohort: Cohort = "public",
+    ) -> bool:
         with self._lock:
             self._purge_stale_unlocked()
             if task_id in self._slots:
-                self._slots[task_id] = {"job": job, "startedAt": time.time()}
+                self._slots[task_id] = {
+                    "job": job,
+                    "startedAt": time.time(),
+                    "cohort": cohort,
+                }
                 return True
             if len(self._slots) >= self.max_concurrent:
                 return False
-            self._slots[task_id] = {"job": job, "startedAt": time.time()}
+            self._slots[task_id] = {
+                "job": job,
+                "startedAt": time.time(),
+                "cohort": cohort,
+            }
             return True
 
     def release(self, task_id: str, job: JobKind | None = None) -> None:
@@ -70,6 +85,27 @@ class OccupancyManager:
                 return
             del self._slots[task_id]
 
+    def preempt_public(self) -> list[dict[str, Any]]:
+        """Remove all non-judge slots. Returns list of {taskId, job, cohort}."""
+        with self._lock:
+            self._purge_stale_unlocked()
+            removed: list[dict[str, Any]] = []
+            keep: dict[str, dict[str, Any]] = {}
+            for task_id, slot in self._slots.items():
+                cohort = slot.get("cohort") or "public"
+                if cohort == "judge":
+                    keep[task_id] = slot
+                else:
+                    removed.append(
+                        {
+                            "taskId": task_id,
+                            "job": slot.get("job"),
+                            "cohort": cohort,
+                        }
+                    )
+            self._slots = keep
+            return removed
+
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             self._purge_stale_unlocked()
@@ -78,6 +114,7 @@ class OccupancyManager:
                     "taskId": task_id,
                     "job": slot["job"],
                     "startedAt": slot["startedAt"],
+                    "cohort": slot.get("cohort") or "public",
                 }
                 for task_id, slot in self._slots.items()
             ]

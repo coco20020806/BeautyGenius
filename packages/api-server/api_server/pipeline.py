@@ -11,6 +11,7 @@ from tutorial_mapper import MapperConfig, run_mapper_job
 from video_parse import ParseConfig, run_parse_job
 from video_parse.preprocess import probe_video, resolve_ffmpeg, resolve_ffprobe
 
+from api_server.cancellation import TaskCancelled, cancellation
 from api_server.config import (
     JOBS_OUTPUT_ROOT,
     PARSE_OUTPUT_ROOT,
@@ -24,6 +25,7 @@ from api_server.eta import estimate_eta_total
 from api_server.preview_assembler import publish_media_files
 from api_server.progress import map_map_stage, map_parse_stage
 from api_server.store import store
+from api_server.vip import PREEMPTED_CODE, PREEMPTED_REASON
 
 
 def load_api_key() -> str:
@@ -46,8 +48,14 @@ def _resolve_parse_mode(task: dict) -> str:
     return mode if mode in {"fast", "full"} else "fast"
 
 
+def _ensure_not_cancelled(task_id: str) -> None:
+    cancellation.ensure_not_cancelled(task_id)
+
+
 def run_task_pipeline(task_id: str) -> None:
     try:
+        cancellation.clear(task_id)
+        _ensure_not_cancelled(task_id)
         task = store.load(task_id)
         video_path = Path(task["video_path"])
         if not video_path.is_file():
@@ -79,6 +87,7 @@ def run_task_pipeline(task_id: str) -> None:
         store.set_eta_context(task_id, video_duration_sec=duration_sec, eta_total_seconds=eta_total)
 
         def on_parse_progress(stage: int, message: str) -> None:
+            _ensure_not_cancelled(task_id)
             active_index, pct = map_parse_stage(stage)
             line = f"[{stage}/10] {message}"
             store.update_pipeline_step(
@@ -90,6 +99,7 @@ def run_task_pipeline(task_id: str) -> None:
                 skip_transfer=skip_transfer,
             )
 
+        _ensure_not_cancelled(task_id)
         store.update_pipeline_step(
             task_id,
             active_index=0,
@@ -110,7 +120,10 @@ def run_task_pipeline(task_id: str) -> None:
         parse_result = run_parse_job(video_path, PARSE_OUTPUT_ROOT, config=parse_config)
         parse_run_dir = parse_result.run_dir
 
+        _ensure_not_cancelled(task_id)
+
         def on_map_progress(stage: int, message: str) -> None:
+            _ensure_not_cancelled(task_id)
             active_index, pct = map_map_stage(stage)
             line = f"[map {stage}/6] {message}"
             store.update_pipeline_step(
@@ -135,6 +148,7 @@ def run_task_pipeline(task_id: str) -> None:
         )
         tutorial_path = mapper_result.tutorial_path
 
+        _ensure_not_cancelled(task_id)
         store.update_pipeline_step(
             task_id,
             active_index=1,
@@ -145,6 +159,7 @@ def run_task_pipeline(task_id: str) -> None:
         )
 
         def on_understand_progress(stage: int, message: str) -> None:
+            _ensure_not_cancelled(task_id)
             store.update_pipeline_step(
                 task_id,
                 active_index=1,
@@ -159,6 +174,7 @@ def run_task_pipeline(task_id: str) -> None:
             UnderstandingConfig(api_key=api_key, enabled=True, on_progress=on_understand_progress),
         )
 
+        _ensure_not_cancelled(task_id)
         store.update_pipeline_step(
             task_id,
             active_index=2,
@@ -193,6 +209,7 @@ def run_task_pipeline(task_id: str) -> None:
                 else None
             ),
         )
+        _ensure_not_cancelled(task_id)
         transfer_line = "[job] transfer 完成" if not skip_transfer else "[job] 已跳过 wan transfer（跳过妆容预览）"
         store.update_pipeline_step(
             task_id,
@@ -245,8 +262,19 @@ def run_task_pipeline(task_id: str) -> None:
             tutorial_path=str(tutorial_path) if tutorial_path else None,
             media_dir=str(media_dir),
         )
+    except TaskCancelled as exc:
+        store.mark_failed(task_id, reason=str(exc) or PREEMPTED_REASON, code=PREEMPTED_CODE)
     except UserPhotoRejected as exc:
         reason = exc.qa_doc.get("reason") or "用户照片未通过质检，请按拍摄指引重新上传"
         store.mark_failed(task_id, reason=reason, code="USER_PHOTO_REJECTED")
     except Exception as exc:  # noqa: BLE001 — surface pipeline errors to task store
+        # If already marked failed by preempt, keep that status.
+        try:
+            task = store.load(task_id)
+            if task.get("failureCode") == PREEMPTED_CODE:
+                return
+        except Exception:  # noqa: BLE001
+            pass
         store.mark_failed(task_id, reason=str(exc) or "解析失败")
+    finally:
+        cancellation.clear(task_id)

@@ -454,6 +454,11 @@ h1, h2, h3, p { margin-top: 0; }
 
 .placeholder-page { display: flex; flex-direction: column; }.placeholder-card { display: grid; margin: auto 0; place-items: center; text-align: center; }.placeholder-card > span { display: grid; width: 64px; height: 64px; margin-bottom: 15px; place-items: center; color: var(--rose); border-radius: 20px; background: var(--rose-soft); }.placeholder-card h2 { font-size: 15px; }.placeholder-card p { margin: 0; max-width: 260px; color: var(--muted); font-size: 11px; line-height: 1.7; }
 .dev-skip-wrap { margin: 18px 0 8px; text-align: center; }
+.vip-code-details { margin: 14px 0 8px; padding: 10px 12px; border: 1px solid rgba(65,43,38,.08); border-radius: 12px; background: rgba(255,253,251,.72); }
+.vip-code-details summary { cursor: pointer; color: var(--muted); font-size: 11px; }
+.vip-code-field { display: grid; gap: 8px; margin-top: 10px; }
+.vip-code-field span { color: var(--faint); font-size: 10px; line-height: 1.5; }
+.vip-code-field input { width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 13px; }
 .dev-skip-button { display: flex; width: 100%; min-height: 42px; align-items: center; justify-content: center; padding: 0 12px; color: var(--muted); border: 1px dashed var(--line); border-radius: 11px; background: rgba(255,255,255,.5); font-size: 10px; cursor: pointer; }
 .dev-skip-button:disabled { opacity: .65; cursor: wait; }
 .dev-skip-hint { margin: 6px 0 0; color: var(--faint); font-size: 8px; line-height: 1.45; }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '../components/BottomNav';
 import { MobileShell } from '../components/MobileShell';
+import { readVipCode, writeVipCode } from '../services/httpClient';
 import { makeupService } from '../services/makeupService';
 import recentDate from '../assets/recent-date.png';
 import recentNaturalDaily from '../assets/recent-natural-daily.png';
@@ -33,6 +34,7 @@ export function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [fastParse, setFastParse] = useState(true);
   const [skipMakeupPreview, setSkipMakeupPreview] = useState(false);
+  const [vipCode, setVipCode] = useState(() => readVipCode());
   const [devSkipLoading, setDevSkipLoading] = useState(false);
   const [devSkipError, setDevSkipError] = useState('');
 
@@ -70,6 +72,7 @@ export function UploadPage() {
     if (!file || loading) return;
     setLoading(true);
     setError('');
+    writeVipCode(vipCode);
     try {
       const result = await makeupService.uploadVideo(file, { fastParse, skipMakeupPreview });
       sessionStorage.setItem('makeupTask', JSON.stringify(result));
@@ -171,6 +174,24 @@ export function UploadPage() {
           ))}
         </div>
       </section>
+
+      <details className="vip-code-details">
+        <summary>评委口令（可选）</summary>
+        <label className="vip-code-field" htmlFor="vip-code">
+          <span>输入后本会话解析将走优先通道；评委之间排队，不会互相中断</span>
+          <input
+            id="vip-code"
+            type="password"
+            autoComplete="off"
+            value={vipCode}
+            onChange={(event) => {
+              setVipCode(event.target.value);
+              writeVipCode(event.target.value);
+            }}
+            placeholder="评委口令"
+          />
+        </label>
+      </details>
 
       {showDevSkip ? (
         <div className="dev-skip-wrap">

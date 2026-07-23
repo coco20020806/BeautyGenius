@@ -256,3 +256,7 @@ export async function fetchAnalysisSnapshot(taskId: string): Promise<AnalysisPro
 export function isServerBusyError(error: unknown): boolean {
   return error instanceof HttpError && error.code === 'SERVER_BUSY';
 }
+
+export function isPreemptedError(error: unknown): boolean {
+  return error instanceof HttpError && error.code === 'PREEMPTED_BY_VIP';
+}
